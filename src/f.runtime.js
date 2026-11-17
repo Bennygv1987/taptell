@@ -3,8 +3,15 @@
   var qs = new URLSearchParams(location.search);
   var slug = qs.get('s') || (location.pathname.match(/\/f\/([^\/?#]+)/) || [])[1];
   var msg = function(t){ el.innerHTML = '<div class="tt-msg">' + t + '</div>'; };
-  if(!slug || !C.supabaseUrl || !window.supabase){ msg('Dieser Funnel ist nicht verfügbar.'); return; }
+  if(!C.supabaseUrl || !window.supabase){ msg('Dieser Funnel ist nicht verfügbar.'); return; }
   var sb = window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey, {auth:{persistSession:false, autoRefreshToken:false}});
+  /* Eigene Domain (z. B. konfigurator.firma.de): Funnel über den Hostnamen finden */
+  if(!slug){
+    sb.rpc('resolve_domain', {p_host:location.hostname}).then(function(r){ if(r.data){ slug = r.data; start(); } else msg('Dieser Funnel ist nicht verfügbar.'); });
+    return start;
+  }
+  start();
+  function start(){
   var Q = {}; qs.forEach(function(v, k){ if(/^(utm_|gclid|fbclid|ref)/.test(k)) Q[k] = v; });
   sb.rpc('get_public_funnel', {p_slug:slug}).then(function(r){
     if(r.error || !r.data){ msg('Dieser Funnel ist nicht verfügbar.'); return; }
@@ -24,4 +31,5 @@
         if(S.redirect) setTimeout(function(){ location.href = S.redirect; }, 1500);
       }});
   });
+  }
 })();

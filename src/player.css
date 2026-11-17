@@ -275,3 +275,7 @@ textarea.fp-in{min-height:110px;resize:vertical}
   .fp-opt:active,.fp-btn:active,.fp-emo button:active,.fp-star:active,.fp-sopt:active{transform:none}
   .fp-face.pop{animation:none}.fp-btn.pulse{animation:none}
 }
+
+/* Ziffern/Buchstaben in Kreisen optisch exakt mittig (unabhängig von den Schrift-Metriken) */
+.fp-list .li,.fp-testi .av,.fp-steps i{line-height:1;font-variant-numeric:tabular-nums;text-box:trim-both cap alphabetic}
+.fp-list .li svg,.fp-opt .chk svg,.fp-cb .box svg,.fp-emo button{display:block}

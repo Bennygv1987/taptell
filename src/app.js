@@ -431,6 +431,7 @@ function viewSettings(){
     + '<div class="fld"><label>Standard-Webhook für neue Funnels</label><input class="inp" data-def="webhook" value="'+esc(db.defaults.webhook||'')+'" placeholder="https://hook.eu1.make.com/…"></div>'
     + '<p class="hint" style="margin-top:-6px">Jeder exportierte Funnel sendet Leads als JSON per POST an diese URL – z. B. an Make, Zapier, n8n oder eine Supabase Edge Function.</p>'
     + '<div class="callout" style="margin-top:14px">'+I('info')+'<div>Leads aus dem Live-Funnel kommen über den Webhook in dein System. In diesem Dashboard landen Leads aus der Vorschau sowie importierte Daten.</div></div></div></div>';
+  h += listsCard();
   h += '<div class="card"><div class="ch">'+I('file')+'<h3>Daten exportieren</h3></div><div class="cb"><p class="hint" style="margin:0 0 12px">Komplettes Backup (Funnels, Kontakte, Brand-Kit) als JSON.</p><button class="btn" data-a="exportAll">'+I('copy')+'Backup kopieren</button></div></div>';
   h += '<div class="card"><div class="ch">'+I('upload')+'<h3>Daten importieren</h3></div><div class="cb"><textarea class="inp" id="impj" placeholder="Backup- oder Funnel-JSON hier einfügen …" style="min-height:80px;font-family:ui-monospace,monospace;font-size:var(--fs-12)"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-a="importJ">Importieren</button><span style="flex:1"></span><button class="btn danger" data-a="resetAll">'+I('refresh',14)+'Zurücksetzen</button></div></div></div>';
   return h + '</div></div>';
@@ -507,7 +508,7 @@ function renderLeft(){
     var q = S.libq.toLowerCase();
     h += '<label class="search libsearch" style="min-width:0;height:34px;box-shadow:none">'+I('search')+'<input id="libq" placeholder="Element suchen …" value="'+esc(S.libq)+'"></label>';
     var groups = {}; T.LIB.forEach(function(l){ if(q && l.n.toLowerCase().indexOf(q) < 0) return; (groups[l.g] = groups[l.g] || []).push(l); });
-    if(!q || 'sektion'.indexOf(q) >= 0 || T.SECTIONS.some(function(s){ return s.n.toLowerCase().indexOf(q) >= 0; })) h += '<div class="libg"><h4>Fertige Sektionen</h4><div class="lib">' + T.SECTIONS.filter(function(s){ return !q || s.n.toLowerCase().indexOf(q) >= 0 || 'sektion'.indexOf(q) >= 0; }).map(function(s){ return '<div class="li wide" draggable="true" data-lib="'+s.id+'" data-a="addLib" title="Klicken oder ziehen">'+'<span class="lic">'+I(s.ic)+'</span>'+esc(s.n)+'</div>'; }).join('') + '</div></div>';
+    if(!q || 'sektion'.indexOf(q) >= 0 || T.SECTIONS.some(function(s){ return s.n.toLowerCase().indexOf(q) >= 0; })) h += '<div class="libg"><h4>Fertige Seiten</h4><div class="lib">' + T.SECTIONS.filter(function(s){ return !q || s.n.toLowerCase().indexOf(q) >= 0 || 'sektion'.indexOf(q) >= 0; }).map(function(s){ return '<div class="li wide" draggable="true" data-lib="'+s.id+'" data-a="addLib" title="Klick: als neue Seite einfügen · Ziehen: Inhalte in die aktuelle Seite übernehmen">'+'<span class="lic">'+I(s.ic)+'</span>'+esc(s.n)+'<span class="li-new">'+I('plus',12)+'Seite</span></div>'; }).join('') + '</div></div>';
     Object.keys(groups).forEach(function(g){ h += '<div class="libg"><h4>'+g+'</h4><div class="lib">' + groups[g].map(function(l){ return '<div class="li" draggable="true" data-lib="'+l.id+'" data-a="addLib" title="Klicken oder ziehen"><span class="lic">'+I(l.ic)+'</span>'+esc(l.n)+'</div>'; }).join('') + '</div></div>'; });
     h += '<p class="hint" style="text-align:center">Ziehe Elemente auf das Handy oder klicke, um sie unter dem markierten Element einzufügen.</p>';
   } else {
@@ -719,7 +720,8 @@ function panelSettings(){
     + '<div class="fld"><label>Preis-Anzeige für Besucher</label><div class="segf">'+[['exact','Exakt'],['range','Spanne'],['from','ab-Preis']].map(function(x){ return '<button data-a="seg" data-scope="s" data-k="priceMode" data-v="'+x[0]+'" data-t="string" class="'+((s.priceMode||'exact')===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div></div>'
     + '<div class="row2">'+((s.priceMode||'exact')==='range'?'<div class="fld"><label>Spanne ± %</label><input class="inp" type="number" data-s="priceRange" data-num value="'+(s.priceRange!=null&&s.priceRange!==''?s.priceRange:10)+'"></div>':'')+'<div class="fld"><label>Runden auf (€)</label><input class="inp" type="number" data-s="priceRound" data-num value="'+(s.priceRound||'')+'" placeholder="z. B. 50"></div></div>'
     + '<div class="hint">Formel: Grundpreis + Festpreise + (Preise pro Einheit × Menge). Die Menge kommt aus Schiebereglern oder Zahlenfeldern mit „Als Menge für Preisberechnung“. Intern und in der Anfrage wird immer der exakte Preis gespeichert.</div></div>';
-  h += '<div class="psec"><h5>'+I('zap',13)+'Integrationen</h5><div class="fld"><label>Webhook-URL</label><input class="inp" data-s="webhook" value="'+esc(s.webhook||'')+'" placeholder="https://hook.eu1.make.com/…"><div class="hint">Leads werden beim Absenden als JSON gesendet (Make, Zapier, n8n, Supabase Edge Function).</div></div>'
+  h += '<div class="psec"><h5>'+I('send',13)+'Automationen</h5><div class="ausum">' + autoSummary(f).map(function(x){ return '<div class="aus'+(x[3]?' on':'')+'">'+I(x[0],13)+'<span>'+x[1]+'</span><b>'+esc(x[2])+'</b></div>'; }).join('') + '</div><button class="btn sm" style="width:100%;justify-content:center;margin-top:8px" data-a="autoOpen">'+I('settings',13)+'Automationen bearbeiten</button><div class="hint">E-Mails nach jeder Anfrage, Regeln wie Sofort-Alarm, Webhooks und eigene Domain.</div></div>';
+  h += '<div class="psec"><h5>'+I('zap',13)+'Integrationen</h5><div class="fld"><label>Webhook-URL (aus dem Browser)</label><input class="inp" data-s="webhook" value="'+esc(s.webhook||'')+'" placeholder="https://hook.eu1.make.com/…"><div class="hint">Leads werden beim Absenden als JSON gesendet (Make, Zapier, n8n, Supabase Edge Function).</div></div>'
     + '<div class="fld"><label>Weiterleitung nach Absenden (optional)</label><input class="inp" data-s="redirect" value="'+esc(s.redirect||'')+'" placeholder="https://deine-seite.de/danke"></div>'
     + '<div class="fld"><label>Meta Pixel ID (optional)</label><input class="inp" data-s="pixel" value="'+esc(s.pixel||'')+'" placeholder="123456789012345"><div class="hint">Feuert „PageView“ und „Lead“ im exportierten Funnel.</div></div></div>';
   h += '<div class="psec"><h5>'+I('user',13)+'Personalisierung</h5><p class="hint" style="margin:0 0 10px">Wiederhole Eingaben des Besuchers in späteren Texten, z. B. „Danke, {{vorname}}!“. In jedem Textfeld fügst du sie über <b>Variable</b> ein. Mit <code>{{vorname|du}}</code> legst du fest, was erscheint, wenn das Feld leer bleibt.</p><div class="varrows">' + FP.vars(f).map(function(v){ return '<button class="varrow" data-a="copyVar" data-v="{{'+esc(v.key)+'}}" title="Kopieren"><span>'+esc(v.label)+'</span><code>{{'+esc(v.key)+'}}</code></button>'; }).join('') + '</div></div>';
@@ -746,7 +748,16 @@ function makeFromLib(id){
 }
 function autoKey(b){ return uniqueKey(b.type === 'choice' ? 'frage' : b.type === 'slider' ? 'wert' : b.type); }
 function uniqueKey(base){ var f = F(), keys = FP.allBlocks(f).map(function(b){ return b.props.key; }); if(keys.indexOf(base) < 0) return base; var i = 2; while(keys.indexOf(base+i) >= 0) i++; return base + i; }
+var SECTION_PAGE = {'s-thanks':{name:'Danke', extra:{allowBack:false, autoButton:false}}, 's-hero':{name:'Start'}, 's-contact':{name:'Kontakt'}, 's-book':{name:'Termin'}};
+function addSectionPage(id){
+  var f = F(), sp = SECTION_PAGE[id] || {name:'Neue Seite'}; snap(true);
+  var p = T.P(sp.name, makeFromLib(id), Object.assign({}, sp.extra||{}));
+  var at = S.pi + 1; f.pages.splice(at, 0, p); S.pi = at; S.sel = null; S.rtab = 'page';
+  touch(); renderLeft(); renderCanvas(); renderRight();
+  toast('Neue Seite „'+sp.name+'“ nach Seite '+at+' eingefügt');
+}
 function addFromLibClick(id){
+  if(/^s-/.test(id)) return addSectionPage(id); /* ganze Seiten nie in die offene Seite mischen */
   var blocks = makeFromLib(id), pg = curPage(), at = pg.blocks.length;
   if(S.sel){ var ix = pg.blocks.map(function(b){ return b.id; }).indexOf(S.sel); if(ix >= 0) at = ix + 1; }
   else { var lb = pg.blocks.length ? pg.blocks[pg.blocks.length-1] : null; if(lb && lb.type === 'button') at = pg.blocks.length - 1; }
@@ -1060,6 +1071,173 @@ function drawQR(url){
 }
 function slug(s){ return String(s).toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
 
+/* ================= AUTOMATIONEN (E-Mails, Regeln, Webhooks, Domain) ================= */
+function auto(f){ f.settings.automation = f.settings.automation || {}; var a = f.settings.automation; a.notify = a.notify || {enabled:false, to:'', lists:[], subject:'Neue Anfrage: {{funnel}}', body:'Es ist eine neue Anfrage über „{{funnel}}“ eingegangen.'}; a.confirm = a.confirm || {enabled:false, subject:'Danke für deine Anfrage, {{vorname|}}', body:'Wir haben deine Anfrage erhalten und melden uns in Kürze bei dir.', replyTo:''}; a.rules = a.rules || []; a.webhooks = a.webhooks || []; return a; }
+function lists(){ db.lists = db.lists || []; return db.lists; }
+function genSecret(){ var a = new Uint8Array(24); (window.crypto || window.msCrypto).getRandomValues(a); return 'whsec_' + Array.prototype.map.call(a, function(b){ return ('0'+b.toString(16)).slice(-2); }).join(''); }
+function splitMails(s){ return String(s||'').split(/[\s,;]+/).map(function(x){ return x.trim(); }).filter(function(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(x); }); }
+function autoSummary(f){
+  var a = auto(f), n = splitMails(a.notify.to).length + (a.notify.lists||[]).reduce(function(s, id){ var l = lists().filter(function(x){ return x.id === id; })[0]; return s + (l ? l.emails.length : 0); }, 0);
+  return [
+    ['mail', 'E-Mail an Betrieb', a.notify.enabled ? (n ? n + ' Empfänger' : 'aktiv – Empfänger fehlen') : 'aus', a.notify.enabled && n],
+    ['send', 'Bestätigung an Interessent', a.confirm.enabled ? 'aktiv' : 'aus', a.confirm.enabled],
+    ['branch', 'Regeln', a.rules.length ? a.rules.length + ' aktiv' : 'keine', a.rules.length],
+    ['zap', 'Webhooks', a.webhooks.filter(function(h){ return h.url && h.active !== false; }).length ? a.webhooks.filter(function(h){ return h.url && h.active !== false; }).length + ' aktiv' : 'keine', a.webhooks.length],
+    ['globe', 'Eigene Domain', (f.settings.domain && f.settings.domain.hostname) ? f.settings.domain.hostname : 'keine', f.settings.domain && f.settings.domain.status === 'active']
+  ];
+}
+/* Beispielwerte für Vorschau: Variablen des Funnels mit Platzhaltern */
+function sampleVars(f){
+  var v = {funnel:f.name, vorname:'Max', name:'Max Mustermann', email:'max@beispiel.de', telefon:'+49 170 1234567', total:FP.money(2490, f.settings.currency), datum:new Date().toLocaleString('de-DE'), link:location.origin + location.pathname + '#contacts'};
+  FP.vars(f).forEach(function(x){ if(v[x.key] == null) v[x.key] = x.type === 'choice' ? 'Beispiel-Auswahl' : x.type === 'rating' ? '4 / 5' : 'Beispiel'; });
+  return v;
+}
+function renderTpl(t, v){ return String(t||'').replace(/\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g, function(m, k, fb){ return v[k] ? v[k] : (fb||'').trim(); }); }
+function emailPreview(f, kind){
+  var a = auto(f), v = sampleVars(f), t = f.theme || {}, p = t.primary || '#1c2e3d';
+  var c = kind === 'confirm' ? a.confirm : a.notify;
+  var subject = renderTpl(c.subject, v), intro = renderTpl(c.body, v);
+  var rows = FP.vars(f).filter(function(x){ return x.type !== 'calc' && (kind !== 'confirm' || ['email','telefon'].indexOf(x.key) < 0); }).slice(0, 8).map(function(x){ return '<tr><td style="padding:9px 0;border-bottom:1px solid #eef0f3;color:#737985;font-size:13px;width:42%">'+esc(x.label)+'</td><td style="padding:9px 0;border-bottom:1px solid #eef0f3;font-size:14px;color:#12141a">'+esc(v[x.key])+'</td></tr>'; }).join('');
+  var logo = t.logoImg && !/^data:/.test(t.logoImg) ? t.logoImg : (t.logoImg || '');
+  return {subject:subject, html:'<!doctype html><html><body style="margin:0;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif"><div style="padding:24px 12px"><div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6e8ec"><div style="height:4px;background:'+esc(p)+'"></div><div style="padding:24px 28px 6px">'+(logo?'<img src="'+esc(logo)+'" style="height:32px;display:block;margin-bottom:18px" alt="">':'')+'<h1 style="margin:0 0 8px;font-size:19px;line-height:1.3;color:#12141a">'+esc(subject)+'</h1><p style="margin:0;font-size:14.5px;line-height:1.55;color:#3d424d;white-space:pre-line">'+esc(intro)+'</p></div>'+(rows?'<div style="padding:12px 28px 0"><table style="width:100%;border-collapse:collapse">'+rows+'</table></div>':'')+'<div style="padding:12px 28px 0"><div style="background:#f5f6f8;border-radius:8px;padding:11px 13px;font-size:14px;color:#3d424d">Gesamt: <b style="color:#12141a">'+esc(v.total)+'</b></div></div>'+(kind!=='confirm'?'<div style="padding:20px 28px 0"><span style="display:inline-block;background:'+esc(p)+';color:#fff;font-weight:600;font-size:14px;padding:11px 16px;border-radius:8px">Im Dashboard öffnen</span></div>':'')+'<div style="padding:24px 28px;font-size:12px;color:#9aa0ab">'+(kind==='confirm'?esc(f.name):'Gesendet mit TapTell')+'</div></div></div></body></html>'};
+}
+function autoModal(f, tab){
+  tab = tab || 'notify';
+  var a = auto(f);
+  var fld = function(label, inner, hint){ return '<div class="fld"><label>'+label+'</label>'+inner+(hint?'<div class="hint">'+hint+'</div>':'')+'</div>'; };
+  var fldv = function(label, inner, hint){ return '<div class="fld"><div class="flh"><label>'+label+'</label><button class="varbtn" data-a="insVar">'+I('user',12)+'Variable</button></div>'+inner+(hint?'<div class="hint">'+hint+'</div>':'')+'</div>'; };
+  var tgl = function(k, on, label){ return '<label class="tgl"><span>'+label+'</span><input type="checkbox" data-au="'+k+'" data-bool'+(on?' checked':'')+'><span class="sw"></span></label>'; };
+  var listChips = function(sel, path){ return lists().length ? '<div class="chips-l">'+lists().map(function(l){ var on = (sel||[]).indexOf(l.id) >= 0; return '<button class="chip'+(on?' on':'')+'" data-a="auList" data-path="'+path+'" data-id="'+l.id+'">'+esc(l.name)+' <span style="opacity:.6">('+l.emails.length+')</span></button>'; }).join('')+'</div>' : '<div class="hint" style="margin:0">Noch keine Listen. Lege sie unter <b>Einstellungen → Empfängerlisten</b> an.</div>'; };
+  var demoNote = REMOTE ? '' : '<div class="callout" style="margin-bottom:14px">'+I('info')+'<div><b>Demo-Modus:</b> Du kannst alles einrichten und als Vorschau ansehen. Echt versendet wird, sobald TapTell mit Supabase verbunden ist.</div></div>';
+  var body = function(){
+    var h = '<div class="tabs2">'+[['notify','E-Mail an Betrieb'],['confirm','Bestätigung'],['rules','Regeln'],['hooks','Webhooks'],['domain','Domain']].map(function(x){ return '<button class="'+(tab===x[0]?'on':'')+'" data-at="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>' + demoNote;
+    if(tab === 'notify'){
+      h += '<div class="au2"><div>' + tgl('notify.enabled', a.notify.enabled, 'Bei jeder neuen Anfrage eine E-Mail senden')
+        + fld('Empfänger', '<input class="inp" data-au="notify.to" value="'+esc(a.notify.to||'')+'" placeholder="info@firma.de, vertrieb@firma.de">', 'Mehrere Adressen mit Komma trennen.')
+        + fld('Empfängerlisten', listChips(a.notify.lists, 'notify.lists'))
+        + fldv('Betreff', '<input class="inp" data-au="notify.subject" value="'+esc(a.notify.subject||'')+'">')
+        + fldv('Einleitung', '<textarea class="inp" rows="3" data-au="notify.body">'+esc(a.notify.body||'')+'</textarea>', 'Darunter folgen automatisch alle Antworten, bei Bildkarten mit Bild, sowie der Preis.')
+        + '<div style="display:flex;gap:8px"><button class="btn sm" data-a="auTest" data-k="email">'+I('send',13)+'Testmail an mich</button></div></div>'
+        + '<div class="au-prev"><div class="au-subj">'+I('mail',13)+'<span>'+esc(emailPreview(f,'notify').subject)+'</span></div><iframe title="Vorschau" data-prev="notify"></iframe></div></div>';
+    } else if(tab === 'confirm'){
+      h += '<div class="au2"><div>' + tgl('confirm.enabled', a.confirm.enabled, 'Interessent erhält eine Bestätigung')
+        + fldv('Betreff', '<input class="inp" data-au="confirm.subject" value="'+esc(a.confirm.subject||'')+'">')
+        + fldv('Text', '<textarea class="inp" rows="4" data-au="confirm.body">'+esc(a.confirm.body||'')+'</textarea>', 'Darunter folgt eine Übersicht der Auswahl – ohne Kontaktdaten.')
+        + fld('Antworten gehen an', '<input class="inp" data-au="confirm.replyTo" value="'+esc(a.confirm.replyTo||'')+'" placeholder="info@firma.de">', 'Wenn der Interessent auf die Mail antwortet.')
+        + '<div class="hint">Wird nur verschickt, wenn im Funnel ein E-Mail-Feld ausgefüllt wurde.</div>'
+        + '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" data-a="auTest" data-k="confirm">'+I('send',13)+'Testmail an mich</button></div></div>'
+        + '<div class="au-prev"><div class="au-subj">'+I('mail',13)+'<span>'+esc(emailPreview(f,'confirm').subject)+'</span></div><iframe title="Vorschau" data-prev="confirm"></iframe></div></div>';
+    } else if(tab === 'rules'){
+      var vars = FP.vars(f).filter(function(x){ return x.key !== 'total_exakt' && x.key !== 'total'; }).concat([{key:'total', label:'Gesamtpreis (€)'}]);
+      h += '<p class="hint" style="margin:0 0 12px">Zusätzliche Empfänger, wenn eine Bedingung zutrifft – z. B. <b>Sofort-Alarm</b> an den Chef bei schlechter Bewertung oder an die Verkaufsleitung ab einem bestimmten Preis. Der Betreff erhält dann einen Hinweis.</p>'
+        + (a.rules.length ? '' : '<div class="emptyp" style="padding:18px">'+I('branch',18)+'<div>Noch keine Regeln.</div></div>')
+        + a.rules.map(function(r, i){ return '<div class="rule"><div class="rule-r"><span class="rl">Wenn</span><select class="inp" data-ar="'+i+'" data-rk="field">'+vars.map(function(x){ return '<option value="'+esc(x.key)+'"'+(r.field===x.key?' selected':'')+'>'+esc(x.label)+'</option>'; }).join('')+'</select>'
+          + '<select class="inp" data-ar="'+i+'" data-rk="op" style="width:150px">'+[['lte','kleiner/gleich'],['gte','größer/gleich'],['eq','ist gleich'],['contains','enthält'],['any','ausgefüllt']].map(function(o){ return '<option value="'+o[0]+'"'+(r.op===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select>'
+          + (r.op !== 'any' ? '<input class="inp" data-ar="'+i+'" data-rk="value" value="'+esc(r.value||'')+'" placeholder="Wert" style="width:110px">' : '') + '<button class="ibtn" data-a="auRuleDel" data-i="'+i+'" title="Regel löschen">'+I('trash')+'</button></div>'
+          + '<div class="rule-r"><span class="rl">dann an</span><input class="inp" data-ar="'+i+'" data-rk="to" value="'+esc(r.to||'')+'" placeholder="chef@firma.de"><select class="inp" data-ar="'+i+'" data-rk="list" style="width:190px"><option value="">+ Liste (optional)</option>'+lists().map(function(l){ return '<option value="'+l.id+'"'+((r.lists||[])[0]===l.id?' selected':'')+'>'+esc(l.name)+'</option>'; }).join('')+'</select></div>'
+          + '<div class="rule-r"><span class="rl">Hinweis</span><input class="inp" data-ar="'+i+'" data-rk="label" value="'+esc(r.label||'')+'" placeholder="z. B. Schlechte Bewertung"></div></div>'; }).join('')
+        + '<button class="btn sm" data-a="auRuleAdd">'+I('plus',13)+'Regel hinzufügen</button>';
+    } else if(tab === 'hooks'){
+      h += '<p class="hint" style="margin:0 0 12px">Jede neue Anfrage wird als JSON an diese Adressen gesendet – z. B. an Make, Zapier, n8n oder dein CRM. Mit Signatur, 3 Zustellversuchen und Protokoll.</p>'
+        + (a.webhooks.length ? '' : '<div class="emptyp" style="padding:18px">'+I('zap',18)+'<div>Noch keine Webhooks.</div></div>')
+        + a.webhooks.map(function(w, i){ return '<div class="rule"><div class="rule-r"><input class="inp" data-aw="'+i+'" data-wk="name" value="'+esc(w.name||'')+'" placeholder="Name, z. B. Make – CRM" style="width:180px"><input class="inp" data-aw="'+i+'" data-wk="url" value="'+esc(w.url||'')+'" placeholder="https://hook.eu1.make.com/…"><label class="tgl" style="margin:0;flex:none"><input type="checkbox" data-aw="'+i+'" data-wk="active" data-bool'+(w.active!==false?' checked':'')+'><span class="sw"></span></label><button class="ibtn" data-a="auHookDel" data-i="'+i+'" title="Webhook löschen">'+I('trash')+'</button></div>'
+          + '<div class="rule-r"><span class="rl">Signatur</span><code class="sec">'+esc(w.secret ? w.secret.slice(0,10)+'••••••••'+w.secret.slice(-4) : '–')+'</code><button class="btn ghost sm" data-a="auSecCopy" data-i="'+i+'">'+I('copy',13)+'Kopieren</button><button class="btn ghost sm" data-a="auSecNew" data-i="'+i+'">'+I('refresh',13)+'Neu</button><span style="flex:1"></span><button class="btn sm" data-a="auTest" data-k="webhook" data-i="'+i+'"'+(w.url?'':' disabled')+'>'+I('play',13)+'Testen</button></div></div>'; }).join('')
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-a="auHookAdd">'+I('plus',13)+'Webhook hinzufügen</button><button class="btn ghost sm" data-a="auLog">'+I('list',13)+'Zustell-Protokoll</button></div>'
+        + '<details class="advx"><summary>'+I('code',13)+'Signatur prüfen (für Entwickler)</summary><pre class="code" style="font-size:var(--fs-12);white-space:pre-wrap">Header:  X-TapTell-Signature: t=&lt;timestamp&gt;,v1=&lt;hmac&gt;\nPrüfung: hmac_sha256(secret, t + "." + rohe_body) == v1\nEvent:   X-TapTell-Event: lead.created</pre></details>';
+    } else {
+      var d = f.settings.domain || {}, tgt = 'cname.vercel-dns.com';
+      h += '<p class="hint" style="margin:0 0 12px">Zeige den Funnel unter einer eigenen Adresse, z. B. <b>konfigurator.firma.de</b>. Nach dem Verbinden muss beim Domain-Anbieter ein DNS-Eintrag gesetzt werden – TapTell prüft ihn und das SSL-Zertifikat wird automatisch ausgestellt.</p>';
+      if(!d.hostname) h += '<div class="fld"><label>Domain</label><div style="display:flex;gap:8px"><input class="inp" id="audom" placeholder="konfigurator.firma.de"><button class="btn pri sm" data-a="auDomAdd">Verbinden</button></div><div class="hint">Am besten eine Subdomain verwenden, damit die Firmen-Website unverändert bleibt.</div></div>';
+      else h += '<div class="dombox"><div class="domh"><b>'+esc(d.hostname)+'</b><span class="pill '+(d.status==='active'?'live':'draft')+'">'+(d.status==='active'?'Aktiv':'Wartet auf DNS')+'</span></div>'
+        + '<table class="dnst"><tr><th>Typ</th><th>Name</th><th>Ziel</th></tr><tr><td>CNAME</td><td><code>'+esc(d.hostname.split('.').slice(0,-2).join('.') || '@')+'</code></td><td><code>'+esc(d.target || tgt)+'</code> <button class="ibtn" data-a="auDnsCopy" title="Ziel kopieren">'+I('copy',12)+'</button></td></tr></table>'
+        + (d.note ? '<div class="hint">'+esc(d.note)+'</div>' : '<div class="hint">Diesen Eintrag beim Domain-Anbieter des Kunden setzen (z. B. IONOS, Strato, All-Inkl). Änderungen brauchen meist wenige Minuten, selten bis zu 24 Stunden.</div>')
+        + '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" data-a="auDomCheck">'+I('refresh',13)+'Jetzt prüfen</button><button class="btn ghost sm danger" data-a="auDomDel">Entfernen</button></div></div>';
+    }
+    return h;
+  };
+  var m = modal({title:'Automationen', sub:'„'+f.name+'“ – was nach einer neuen Anfrage passiert.', size:'wide au-modal', body:'<div id="aub">'+body()+'</div>', foot:'<span class="hint" style="margin:0 auto 0 0">Änderungen werden automatisch gespeichert.</span><button class="btn pri" data-close>Fertig</button>',
+    onOpen:function(el){
+      var rerender = function(keepFocus){ var act = document.activeElement, sel = act && (act.getAttribute('data-au') || act.getAttribute('data-ar') || act.getAttribute('data-aw')) ? act : null, key = sel ? ['data-au','data-ar','data-aw','data-rk','data-wk'].map(function(k){ return sel.getAttribute(k); }).join('|') : null, pos = sel && sel.selectionStart;
+        el.querySelector('#aub').innerHTML = body(); paint();
+        if(key){ var n = Array.prototype.filter.call(el.querySelectorAll('input,textarea,select'), function(x){ return ['data-au','data-ar','data-aw','data-rk','data-wk'].map(function(k){ return x.getAttribute(k); }).join('|') === key; })[0]; if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(e){} } } };
+      var paint = function(){ var fr = el.querySelector('iframe[data-prev]'); if(fr){ fr.srcdoc = emailPreview(f, fr.getAttribute('data-prev')).html; } var s = el.querySelector('.au-subj span'); if(s) s.textContent = emailPreview(f, tab === 'confirm' ? 'confirm' : 'notify').subject; };
+      var setPath = function(path, val){ var p = path.split('.'), o = a; for(var i=0;i<p.length-1;i++) o = o[p[i]]; o[p[p.length-1]] = val; };
+      var changed = function(full){ touch(); if(S.view === 'editor') renderRight(); if(full) rerender(); else paint(); };
+      paint();
+      el.addEventListener('input', function(e){
+        var t = e.target;
+        if(t.hasAttribute('data-au')){ setPath(t.getAttribute('data-au'), t.hasAttribute('data-bool') ? t.checked : t.value); changed(false); }
+        else if(t.hasAttribute('data-ar')){ var r = a.rules[+t.getAttribute('data-ar')], rk = t.getAttribute('data-rk'); if(rk === 'list') r.lists = t.value ? [t.value] : []; else r[rk] = t.value; changed(rk === 'op'); }
+        else if(t.hasAttribute('data-aw')){ var w = a.webhooks[+t.getAttribute('data-aw')], wk = t.getAttribute('data-wk'); w[wk] = t.hasAttribute('data-bool') ? t.checked : t.value.trim(); changed(false); if(wk === 'url'){ var tb = t.closest('.rule').querySelector('[data-a="auTest"]'); if(tb) tb.disabled = !w.url; } }
+      });
+      el.addEventListener('change', function(e){ var t = e.target; if(t.tagName === 'SELECT' || t.type === 'checkbox') t.dispatchEvent(new Event('input', {bubbles:true})); });
+      el.addEventListener('click', function(e){
+        var at = e.target.closest('[data-at]'); if(at){ tab = at.getAttribute('data-at'); rerender(); return; }
+        var b = e.target.closest('[data-a]'); if(!b || !el.contains(b)) return; var act = b.getAttribute('data-a'), i = +b.getAttribute('data-i');
+        if(act === 'auList'){ e.stopPropagation(); var path = b.getAttribute('data-path'), id = b.getAttribute('data-id'), arr = (path === 'notify.lists' ? a.notify.lists : []) || []; var ix = arr.indexOf(id); if(ix >= 0) arr.splice(ix, 1); else arr.push(id); a.notify.lists = arr; changed(true); }
+        else if(act === 'auRuleAdd'){ var v0 = FP.vars(f).filter(function(x){ return x.type === 'rating'; })[0]; a.rules.push({id:uid(), field:v0 ? v0.key : 'total', op:v0 ? 'lte' : 'gte', value:v0 ? '3' : '3000', to:'', lists:[], label:v0 ? 'Schlechte Bewertung' : 'Großer Auftrag'}); changed(true); }
+        else if(act === 'auRuleDel'){ a.rules.splice(i, 1); changed(true); }
+        else if(act === 'auHookAdd'){ a.webhooks.push({id:uid(), name:'', url:'', active:true, secret:genSecret(), events:['lead.created']}); changed(true); }
+        else if(act === 'auHookDel'){ confirmBox('Webhook löschen?', 'Dieser Webhook erhält danach keine Anfragen mehr.', 'Löschen', function(){ a.webhooks.splice(i, 1); changed(true); }, true); }
+        else if(act === 'auSecCopy'){ copyText(a.webhooks[i].secret, 'Signatur-Geheimnis kopiert'); }
+        else if(act === 'auSecNew'){ confirmBox('Neues Geheimnis erzeugen?', 'Der Empfänger muss danach das neue Geheimnis zur Prüfung verwenden.', 'Erzeugen', function(){ a.webhooks[i].secret = genSecret(); changed(true); }); }
+        else if(act === 'auTest'){ autoTest(f, b.getAttribute('data-k'), a.webhooks[i]); }
+        else if(act === 'auLog'){ deliveryLog(f); }
+        else if(act === 'auDomAdd'){ domainAdd(f, el.querySelector('#audom').value, rerender); }
+        else if(act === 'auDomCheck'){ domainCheck(f, rerender); }
+        else if(act === 'auDomDel'){ confirmBox('Domain entfernen?', 'Der Funnel ist danach nur noch unter seinem TapTell-Link erreichbar.', 'Entfernen', function(){ domainRemove(f, rerender); }, true); }
+        else if(act === 'auDnsCopy'){ copyText((f.settings.domain||{}).target || 'cname.vercel-dns.com', 'DNS-Ziel kopiert'); }
+      }, true);
+    }});
+  return m;
+}
+function autoTest(f, kind, hook){
+  if(!REMOTE){
+    if(kind === 'webhook'){ toast('Demo-Modus: Webhook-Test geht erst mit Supabase. Beispiel-Daten stehen unter Veröffentlichen → Erweitert.'); return; }
+    var pv = emailPreview(f, kind === 'confirm' ? 'confirm' : 'notify');
+    modal({title:'Test-E-Mail (Vorschau)', sub:'Im Demo-Modus wird nichts versendet – so käme die Mail an.', size:'mid', body:'<div class="au-subj">'+I('mail',13)+'<span>'+esc(pv.subject)+'</span></div><iframe class="au-big" title="Vorschau" srcdoc="'+esc(pv.html)+'"></iframe>', foot:'<button class="btn pri" data-close>Schließen</button>'});
+    return;
+  }
+  toast(kind === 'webhook' ? 'Sende Test an Webhook …' : 'Sende Testmail …');
+  sb.functions.invoke('lead-notify', {body:{test:kind, funnel_id:f.id, webhook_id:hook && hook.id, automation:auto(f)}}).then(function(r){
+    var err = r.error || (r.data && r.data.error); if(err) return toast('Test fehlgeschlagen: ' + (err.message || err));
+    var res = (r.data && r.data.results) || []; if(!res.length) return toast('Nichts gesendet – prüfe Empfänger bzw. URL.');
+    var bad = res.filter(function(x){ return x.status !== 'ok' && x.status !== 'test'; });
+    toast(bad.length ? 'Fehler: ' + (bad[0].error || bad[0].status) : (kind === 'webhook' ? 'Webhook antwortet ' + (res[0].http || 'OK') : 'Testmail verschickt an ' + res[0].target));
+  });
+}
+function deliveryLog(f){
+  var draw = function(rows){ return rows.length ? '<table class="t"><thead><tr><th>Zeit</th><th>Art</th><th>Ziel</th><th>Status</th></tr></thead><tbody>'+rows.map(function(r){ return '<tr><td>'+fmtDT(new Date(r.created_at).getTime())+'</td><td>'+(r.kind==='email'?'E-Mail':'Webhook')+'</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.target)+'</td><td><span class="pill '+(r.status==='ok'||r.status==='test'?'live':'draft')+'">'+(r.status==='ok'?'zugestellt':r.status==='test'?'Test':r.status==='skipped'?'übersprungen':'fehlgeschlagen')+(r.http_status?' · '+r.http_status:'')+'</span>'+(r.error?'<div class="sub">'+esc(r.error.slice(0,120))+'</div>':'')+(r.attempts>1?'<div class="sub">'+r.attempts+' Versuche</div>':'')+'</td></tr>'; }).join('')+'</tbody></table>' : '<div class="emptyp">'+I('list',18)+'<div>Noch keine Zustellungen.</div></div>'; };
+  var m = modal({title:'Zustell-Protokoll', sub:'Die letzten 50 E-Mails und Webhooks von „'+f.name+'“.', size:'mid', body:'<div id="dlog">'+(REMOTE?'<div class="emptyp">Lädt …</div>':'<div class="emptyp">'+I('info',18)+'<div>Das Protokoll füllt sich, sobald TapTell mit Supabase verbunden ist.</div></div>')+'</div>', foot:'<button class="btn pri" data-close>Schließen</button>'});
+  if(REMOTE) sb.from('deliveries').select('*').eq('funnel_id', f.id).order('created_at', {ascending:false}).limit(50).then(function(r){ var box = m.el.querySelector('#dlog'); if(box) box.innerHTML = r.error ? '<div class="emptyp">'+esc(r.error.message)+'</div>' : draw(r.data || []); });
+}
+function domainAdd(f, host, done){
+  host = String(host||'').trim().toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'');
+  if(!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) return toast('Bitte eine gültige Domain eingeben, z. B. konfigurator.firma.de');
+  if(!REMOTE){ f.settings.domain = {hostname:host, status:'pending', target:'cname.vercel-dns.com'}; touch(); done(); return; }
+  sb.functions.invoke('domain-manage', {body:{action:'add', hostname:host, funnel_id:f.id}}).then(function(r){ var err = r.error || (r.data && r.data.error); if(err) return toast(err.message || err); var d = r.data.domain; f.settings.domain = {id:d.id, hostname:d.hostname, status:d.status, target:((d.detail||{}).dns||{}).value}; touch(); done(); });
+}
+function domainCheck(f, done){
+  var d = f.settings.domain || {};
+  if(!REMOTE){ d.note = 'Demo-Modus: Die Prüfung läuft, sobald TapTell mit Supabase verbunden ist.'; touch(); done(); return; }
+  toast('Prüfe DNS …');
+  sb.functions.invoke('domain-manage', {body:{action:'verify', id:d.id}}).then(function(r){ var err = r.error || (r.data && r.data.error); if(err) return toast(err.message || err); d.status = r.data.status; d.note = r.data.note; touch(); done(); toast(d.status === 'active' ? 'Domain ist aktiv' : r.data.note); });
+}
+function domainRemove(f, done){
+  var d = f.settings.domain || {};
+  var fin = function(){ delete f.settings.domain; touch(); done(); };
+  if(!REMOTE || !d.id) return fin();
+  sb.functions.invoke('domain-manage', {body:{action:'remove', id:d.id}}).then(function(r){ var err = r.error || (r.data && r.data.error); if(err) return toast(err.message || err); fin(); });
+}
+/* Empfängerlisten in den Einstellungen */
+function listsCard(){
+  return '<div class="card"><div class="ch">'+I('users')+'<h3>Empfängerlisten</h3></div><div class="cb"><p class="hint" style="margin:0 0 12px">Gruppen von E-Mail-Adressen, die du in jedem Funnel für Benachrichtigungen und Regeln auswählen kannst – z. B. „Vertrieb Gehlen“ oder „Geschäftsführung“.</p>'
+    + (lists().length ? lists().map(function(l, i){ return '<div class="rule"><div class="rule-r"><input class="inp" data-ll="'+i+'" data-lk="name" value="'+esc(l.name)+'" placeholder="Name der Liste" style="width:200px"><select class="inp" data-ll="'+i+'" data-lk="clientId" style="width:200px"><option value="">Alle Kunden</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(l.clientId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select><span style="flex:1"></span><button class="ibtn" data-a="listDel" data-i="'+i+'" title="Liste löschen">'+I('trash')+'</button></div><textarea class="inp" rows="2" data-ll="'+i+'" data-lk="emails" placeholder="a@firma.de, b@firma.de">'+esc(l.emails.join(', '))+'</textarea></div>'; }).join('') : '<div class="emptyp" style="padding:16px">'+I('users',18)+'<div>Noch keine Listen.</div></div>')
+    + '<button class="btn sm" data-a="listAdd">'+I('plus',13)+'Liste anlegen</button></div></div>';
+}
+function listToRow(l){ return {id:l.id, client_id:l.clientId || null, name:l.name || 'Liste', emails:l.emails || []}; }
+function rowToList(r){ return {id:r.id, clientId:r.client_id || '', name:r.name, emails:r.emails || []}; }
+
 /* ================= TENANTS, AUTH & REMOTE ================= */
 var TT_LOGO = '%%TT_LOGO%%', TT_LOGO_W = '%%TT_LOGO_W%%';
 var CONFIG = window.FS_CONFIG || null;
@@ -1235,7 +1413,7 @@ function removeUser(id, cb){
 function viewAs(cid){ S.as = cid; S.view = 'funnels'; S.cf = {funnel:'all', status:'all', q:''}; S.afid = null; render(); }
 
 /* ---------- remote (Supabase) ---------- */
-function emptyDb(){ return {version:2, funnels:[], leads:[], clients:[], users:[], brand:T.theme('clean'), defaults:{webhook:''}, fonts:{google:[], uploaded:[]}}; }
+function emptyDb(){ return {version:2, funnels:[], leads:[], clients:[], users:[], lists:[], brand:T.theme('clean'), defaults:{webhook:''}, fonts:{google:[], uploaded:[]}}; }
 function loadScript(src){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 var SNAP = {funnels:{}, leads:{}, clients:{}, settings:''}, syncing = false, syncAgain = false;
 function funnelToRow(f){ ensureSlug(f); return {id:f.id, name:f.name, slug:f.slug, status:f.status, client_id:f.clientId || null, shared:!!f.shared, theme:f.theme, settings:f.settings, pages:f.pages, created_at:new Date(f.createdAt||Date.now()).toISOString(), updated_at:new Date(f.updatedAt||Date.now()).toISOString()}; }
@@ -1256,7 +1434,8 @@ async function afterLogin(u){
   render();
 }
 async function loadRemote(){
-  var q = await Promise.all([sb.from('clients').select('*'), sb.from('funnels').select('*'), sb.from('leads').select('*').order('created_at', {ascending:false}).limit(10000), sb.rpc('funnel_stats'), sb.from('app_settings').select('data').eq('id', 1).maybeSingle(), realAdmin() ? sb.from('profiles').select('*') : Promise.resolve({data:[]})]);
+  var q = await Promise.all([sb.from('clients').select('*'), sb.from('funnels').select('*'), sb.from('leads').select('*').order('created_at', {ascending:false}).limit(10000), sb.rpc('funnel_stats'), sb.from('app_settings').select('data').eq('id', 1).maybeSingle(), realAdmin() ? sb.from('profiles').select('*') : Promise.resolve({data:[]}), realAdmin() ? sb.from('recipient_lists').select('*') : Promise.resolve({data:[]})]);
+  if(q[6].error){ console.warn('recipient_lists:', q[6].error.message); q[6] = {data:[]}; } /* Tabelle erst nach automation.sql vorhanden */
   q.forEach(function(r){ if(r.error) throw r.error; });
   var stats = {}; (q[3].data || []).forEach(function(r){ stats[r.funnel_id] = {views:+r.views || 0, starts:+r.starts || 0, completes:+r.completes || 0, pages:r.pages || {}, daily:r.daily || {}}; });
   var set = (q[4].data && q[4].data.data) || {};
@@ -1264,9 +1443,11 @@ async function loadRemote(){
   db.clients = (q[0].data || []).map(rowToClient);
   db.funnels = (q[1].data || []).map(function(r){ return rowToFunnel(r, stats[r.id]); }).sort(function(a, b){ return b.updatedAt - a.updatedAt; });
   db.leads = (q[2].data || []).map(rowToLead);
+  db.lists = (q[6].data || []).map(rowToList);
   db.users = (q[5].data || []).map(function(p){ return {id:p.id, email:p.email, name:p.name, role:p.role, clientId:p.client_id}; });
   if(set.brand) db.brand = set.brand; if(set.defaults) db.defaults = set.defaults; if(set.fonts) db.fonts = set.fonts;
-  SNAP = {funnels:{}, leads:{}, clients:{}, settings:JSON.stringify(settingsPayload())};
+  SNAP = {funnels:{}, leads:{}, clients:{}, recipient_lists:{}, settings:JSON.stringify(settingsPayload())};
+  db.lists.forEach(function(l){ SNAP.recipient_lists[l.id] = JSON.stringify(listToRow(l)); });
   db.funnels.forEach(function(f){ SNAP.funnels[f.id] = JSON.stringify(funnelToRow(f)); });
   db.leads.forEach(function(l){ SNAP.leads[l.id] = JSON.stringify(leadToRow(l)); });
   db.clients.forEach(function(c){ SNAP.clients[c.id] = JSON.stringify(clientToRow(c)); });
@@ -1293,6 +1474,7 @@ async function syncRemote(){
       await syncTable('funnels', db.funnels, funnelToRow);
       var sp = JSON.stringify(settingsPayload()); if(sp !== SNAP.settings){ var r = await sb.from('app_settings').upsert({id:1, data:settingsPayload()}); if(r.error) throw r.error; SNAP.settings = sp; }
       await syncTable('leads', db.leads, leadToRow);
+      try{ await syncTable('recipient_lists', lists(), listToRow); }catch(e){ console.warn('recipient_lists:', e.message || e); }
     } else {
       await syncTable('leads', visibleLeads(), leadToRow, ['status','notes']);
     }
@@ -1364,6 +1546,9 @@ var ACT = {
     {k:'p', l:'Ab hier testen', ic:'play', fn:function(){ openPreview(f, i); }},
     '-', {k:'x', l:'Löschen', ic:'trash', danger:true, fn:function(){ delPage(i); }}]); },
   addPage:addPage,
+  autoOpen:function(){ autoModal(F()); },
+  listAdd:function(){ lists().push({id:uid(), name:'Neue Liste', clientId:'', emails:[]}); save(); render(); },
+  listDel:function(el){ var i = +el.getAttribute('data-i'); confirmBox('Liste löschen?', '„'+lists()[i].name+'“ wird aus allen Funnels entfernt.', 'Löschen', function(){ var id = lists()[i].id; lists().splice(i,1); db.funnels.forEach(function(f){ var a = f.settings.automation; if(!a) return; if(a.notify && a.notify.lists) a.notify.lists = a.notify.lists.filter(function(x){ return x !== id; }); (a.rules||[]).forEach(function(r){ r.lists = (r.lists||[]).filter(function(x){ return x !== id; }); }); }); save(); render(); }, true); },
   emoSet:function(el){ var b = selBlock(); if(!b) return; snap(true); b.props.emojis = el.getAttribute('data-v'); touch(); renderCanvas(true); renderRight(); },
   rrAdd:function(){ var b = selBlock(); if(!b) return; snap(true); var mx = FP.rateMax(b.props), r = b.props.routes || []; b.props.routes = r.concat([r.length ? {min:Math.min(mx, (+r[r.length-1].max||0)+1), max:mx, goto:''} : {min:1, max:Math.max(1, Math.floor(mx*0.6)), goto:''}]); touch(); renderRight(); renderLeft(); renderCanvas(true); },
   rrDel:function(el){ var b = selBlock(); if(!b) return; snap(true); b.props.routes.splice(+el.getAttribute('data-i'),1); touch(); renderRight(); renderLeft(); renderCanvas(true); },
@@ -1437,6 +1622,7 @@ document.addEventListener('input', function(e){
   if(el.id === 'cq'){ S.cf.q = el.value; var p2 = el.selectionStart; render(); var n2 = $('#cq'); n2.focus(); n2.setSelectionRange(p2,p2); return; }
   if(el.id === 'qrurl'){ var pf = F() || null; clearTimeout(window.__qrT); window.__qrT = setTimeout(function(){ drawQR(el.value.trim()); var pc = $('#pubcode'); if(pc) pc.value = el.value.trim(); }, 300); if(pf){ pf.settings.hostedUrl = el.value.trim(); save(); } return; }
   if(el.id === 'libq'){ S.libq = el.value; var p3 = el.selectionStart; renderLeft(); var n3 = $('#libq'); n3.focus(); n3.setSelectionRange(p3,p3); return; }
+  if(el.hasAttribute('data-ll')){ var lo = lists()[+el.getAttribute('data-ll')], lk = el.getAttribute('data-lk'); if(!lo) return; lo[lk] = lk === 'emails' ? splitMails(el.value) : el.value; save(); return; }
   if(el.hasAttribute('data-fslug')){ var sf = F(), sv = slug(el.value), hint = $('#fslugh'), bad = !sv || slugTaken(sv, sf.id); el.parentNode.classList.toggle('err', bad); if(hint){ hint.classList.toggle('errt', bad); hint.textContent = !sv ? 'Bitte gib eine Adresse ein.' : bad ? 'Diese Adresse ist schon vergeben.' : publicUrl({slug:sv}); } if(!bad){ sf.slug = sv; touch(); } return; }
   if(el.id === 'fname' || el.hasAttribute('data-fn')){ var f = F(); snap(); f.name = el.value || 'Unbenannt'; touch(); if(el.id === 'fname') el.size = Math.max(8, el.value.length); else { var fn = $('#fname'); if(fn) fn.value = f.name; } return; }
   if(el.hasAttribute('data-brand')){ var k0 = el.getAttribute('data-brand'), v0 = readVal(el); db.brand[k0] = v0; syncColor(el, 'brand', k0, v0); rangeLabel(el); save(); return; }

@@ -58,3 +58,18 @@ Strichstärken: 400 Text, 550 Bedienelemente, 600 Hervorhebung, 650 Titel und Ke
 - **Flächen:** `.card` mit `.ch` (Kopf) und `.cb` (Inhalt), `.kpi`, `.modal`, `.dd` (Dropdown)
 - **Status:** `.pill.live`, `.pill.draft`, `.tag`, `.chip`
 - **Leere Zustände:** `.empty`, `.emptyp`
+
+## Bewegung
+
+Grundlage sind die Emil-Kowalski-Skills in `.claude/skills/` (siehe `CLAUDE.md`). Tokens in `src/app.css` und `src/player.css`:
+
+| Token | Wert | Einsatz |
+|---|---|---|
+| `--ease-out` | `cubic-bezier(.23,1,.32,1)` | Ein- und Ausblenden, Druck-Feedback (Standard) |
+| `--ease-in-out` | `cubic-bezier(.77,0,.175,1)` | Bewegung auf dem Bildschirm (Fortschrittsbalken, Größenwechsel) |
+| `--ease-drawer` | `cubic-bezier(.32,.72,0,1)` | Schubladen / Seitenleisten |
+| `--dur-press` | 160 ms | Druck-Feedback `scale(.97)` |
+| `--dur-fast` / `--dur-pop` | 150 / 200 ms | Farbwechsel, Dropdowns, Hover |
+| `--dur-modal` | 260 ms | Modals (Toasts: 400 ms `ease`) |
+
+Hover-Bewegung nur mit Maus, Dropdowns wachsen aus dem Auslöser, bei „Bewegung reduzieren“ sanfte Einblendung statt Bewegung.
