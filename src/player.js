@@ -78,22 +78,34 @@ FP.computeTotal = function(f, answers){
         if(+o.unitPrice){ unitSum += +o.unitPrice; unitItems.push(o); }
       });
     }
-    if(b.type === 'slider' && b.props.isQuantity){ var q = v != null ? +v : +b.props.def; qty = q; unit = b.props.unit || ''; }
+    if((b.type === 'slider' || (b.type === 'input' && b.props.inputType === 'number')) && b.props.isQuantity){
+      var raw = v != null && v !== '' && !isNaN(+v) ? +v : +b.props.def || 0, fac = +b.props.qtyFactor || 1, qv = raw * fac;
+      qty = qty == null ? qv : qty * qv; if(b.props.unit && !unit) unit = b.props.unit;
+    }
   });
+  if(qty != null) qty = Math.round(qty * 100) / 100;
   var q = qty == null ? 1 : qty;
-  unitItems.forEach(function(o){ items.push({label:o.label, amount:o.unitPrice*q, detail: FP.money(o.unitPrice, s.currency)+(unit?'/'+unit:'')+(qty!=null?' × '+q+' '+unit:'')}); });
+  unitItems.forEach(function(o){ items.push({label:o.label, amount:o.unitPrice*q, detail: FP.money(o.unitPrice, s.currency)+(unit?'/'+unit:'')+(qty!=null?' × '+q.toLocaleString('de-DE')+' '+unit:'')}); });
   return {items:items, total: fixed + unitSum*q, qty:qty, unit:unit, score:score};
 };
 
+/* Preisanzeige nach außen: exakt, Spanne oder „ab“ – intern bleibt der exakte Wert */
+FP.roundPrice = function(n, r){ r = +r || 0; return r > 0 ? Math.round(n / r) * r : n; };
+FP.priceText = function(f, total){
+  var s = f.settings || {}, cur = s.currency, r = s.priceRound, mode = s.priceMode || 'exact';
+  if(mode === 'range'){ var pct = s.priceRange != null && s.priceRange !== '' ? +s.priceRange : 10; return FP.money(FP.roundPrice(total * (1 - pct/100), r), cur) + ' – ' + FP.money(FP.roundPrice(total * (1 + pct/100), r), cur); }
+  if(mode === 'from') return 'ab ' + FP.money(FP.roundPrice(total, r), cur);
+  return FP.money(FP.roundPrice(total, r), cur);
+};
 FP.readable = function(f, answers){
   var out = [];
   (f.pages||[]).forEach(function(pg){ (pg.blocks||[]).forEach(function(b){
     var k = keyOf(b), v = answers[k], p = b.props || {};
     if(v == null || v === '' || (Array.isArray(v) && !v.length)) return;
-    var label = p.question || p.label || pg.name || k, val = v, extra = null;
+    var label = p.question || p.label || (b.type === 'input' && p.placeholder ? String(p.placeholder).replace(/\s*\(optional\)\s*$/i,'') : '') || pg.name || k, val = v, extra = null;
     if(b.type === 'choice') val = [].concat(v).map(function(id){ var o=(p.options||[]).filter(function(o){return o.id===id;})[0]; return o?o.label:''; }).filter(Boolean).join(', ');
     else if(b.type === 'slider') val = v + (p.unit ? ' ' + p.unit : '');
-    else if(b.type === 'rating') val = p.style === 'nps' ? v + ' / 10' : v + ' / ' + (p.max||5) + ' ★';
+    else if(b.type === 'rating') val = p.style === 'nps' ? v + ' / 10' : p.style === 'emoji' || p.style === 'slider' ? v + ' / ' + FP.rateMax(p) + ' ' + FP.faceFor(p, +v) : v + ' / ' + (p.max||5) + ' ★';
     else if(b.type === 'calendar') val = fmtDate(v.date) + (v.time ? ' · ' + v.time + ' Uhr' : '');
     else if(b.type === 'checkbox'){ label = 'Einwilligung'; val = v ? 'Ja' : 'Nein'; }
     else if(b.type === 'signature'){ val = 'Unterschrieben'; extra = v; }
@@ -113,11 +125,12 @@ FP.vars = function(f){
     add(p.key, String(p.label || p.question || pg.name || p.key).replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\{\{[^}]*\}\}/g,'…').trim(), b.type);
   }); });
   if(seen.name && !seen.vorname) add('vorname', 'Vorname (aus Name)', 'input');
-  add('total', 'Gesamtpreis', 'calc'); add('score', 'Punktzahl', 'calc');
+  add('total', 'Gesamtpreis (wie angezeigt)', 'calc'); add('total_exakt', 'Gesamtpreis (exakt)', 'calc'); add('score', 'Punktzahl', 'calc');
   return out;
 };
 FP.varValue = function(k, f, answers, map){
-  if(k === 'total') return FP.money(FP.computeTotal(f, answers).total, (f.settings||{}).currency);
+  if(k === 'total') return FP.priceText(f, FP.computeTotal(f, answers).total);
+  if(k === 'total_exakt') return FP.money(FP.computeTotal(f, answers).total, (f.settings||{}).currency);
   if(k === 'score') return String(FP.computeTotal(f, answers).score);
   if(k === 'vorname' && !map.vorname && map.name) return String(map.name).split(' ')[0];
   return map[k] != null ? String(map[k]) : '';
@@ -154,6 +167,15 @@ function vimeoId(u){ var m = String(u||'').match(/vimeo\.com\/(?:video\/)?(\d+)/
 
 function initials(n){ return String(n||'?').split(' ').map(function(s){return s[0];}).join('').slice(0,2).toUpperCase(); }
 
+/* Bewertung: Emoji-Sätze */
+FP.EMO_SETS = {2:['👎','👍'], 3:['🙁','😐','😀'], 4:['😥','🙁','🙂','😀'], 5:['😥','🙁','😐','🙂','😀'], 6:['😫','😥','🙁','🙂','😀','🤩'], 7:['😫','😥','🙁','😐','🙂','😀','🤩']};
+FP.emojiList = function(p){
+  var custom = String(p.emojis || '').trim().split(/\s+/).filter(Boolean);
+  if(custom.length >= 2) return custom;
+  var n = Math.max(2, Math.min(7, +p.max || 5)); return FP.EMO_SETS[n] || FP.EMO_SETS[5];
+};
+FP.rateMax = function(p){ return p.style === 'emoji' ? FP.emojiList(p).length : p.style === 'nps' ? 10 : (+p.max || (p.style === 'slider' ? 10 : 5)); };
+FP.faceFor = function(p, v){ var list = FP.emojiList(p), mx = FP.rateMax(p), mn = p.style === 'nps' ? 0 : 1; var t = mx > mn ? (v - mn) / (mx - mn) : 0; return list[Math.max(0, Math.min(list.length - 1, Math.round(t * (list.length - 1))))]; };
 FP.renderBlock = function(b, ctx){
   var p = b.props || {}, a = ctx.answers || {}, k = keyOf(b), err = ctx.errors && ctx.errors[b.id], v = a[k], cur = (ctx.f.settings||{}).currency, h = '';
   var T = function(s){
@@ -237,6 +259,17 @@ FP.renderBlock = function(b, ctx){
         h = label(p.label) + '<div class="fp-nps">';
         for(var n=0;n<=10;n++) h += '<button class="'+(v===n?'on':'')+'" data-act="rate" data-bid="'+b.id+'" data-v="'+n+'">'+n+'</button>';
         h += '</div><div class="fp-rlab"><span>'+esc(p.minLabel||'Unwahrscheinlich')+'</span><span>'+esc(p.maxLabel||'Sehr wahrscheinlich')+'</span></div>';
+      } else if(p.style === 'emoji'){
+        var el2 = FP.emojiList(p);
+        h = label(p.label) + '<div class="fp-emo n'+el2.length+'">' + el2.map(function(e, i){ return '<button class="'+(v===i+1?'on':'')+(v!=null&&v!==i+1?' dim':'')+'" data-act="rate" data-bid="'+b.id+'" data-v="'+(i+1)+'" aria-label="'+(i+1)+' von '+el2.length+'">'+esc(e)+'</button>'; }).join('') + '</div>'
+          + (p.minLabel||p.maxLabel ? '<div class="fp-rlab"><span>'+esc(p.minLabel)+'</span><span>'+esc(p.maxLabel)+'</span></div>' : '');
+      } else if(p.style === 'slider'){
+        var smx = FP.rateMax(p), sv2 = v != null ? +v : Math.round((1 + smx) / 2), pc2 = smx > 1 ? (sv2 - 1) / (smx - 1) * 100 : 0;
+        h = label(p.label) + '<div class="fp-face'+(v==null?' idle':'')+'" data-face="'+b.id+'">'+esc(FP.faceFor(p, sv2))+'</div>'
+          + (p.showValue !== false ? '<div class="fp-rv fp-rv-c"><span data-rv="'+b.id+'">'+(v==null?'–':sv2)+'</span><small>/ '+smx+'</small></div>' : '')
+          + '<input type="range" class="fp-range fp-rate" data-key="'+esc(k)+'" data-bid="'+b.id+'" min="1" max="'+smx+'" step="1" value="'+sv2+'" style="--fill:'+pc2+'%" aria-label="Bewertung">'
+          + (p.minLabel||p.maxLabel ? '<div class="fp-rlab"><span>'+esc(p.minLabel)+'</span><span>'+esc(p.maxLabel)+'</span></div>' : '')
+          + (v==null && !ctx.edit ? '<div class="fp-hint-c">Regler bewegen</div>' : '');
       } else {
         var mx = p.max || 5;
         h = label(p.label) + '<div class="fp-stars">';
@@ -267,16 +300,20 @@ FP.renderBlock = function(b, ctx){
       h = '<div class="fp-faq">' + (p.items||[]).map(function(it){ return '<details><summary>'+esc(it.q)+'</summary><p>'+md(it.a)+'</p></details>'; }).join('') + '</div>';
       break;
     case 'summary':
-      var t = FP.computeTotal(ctx.f, a);
+      var t = FP.computeTotal(ctx.f, a), sset = ctx.f.settings || {}, exact = (sset.priceMode||'exact') === 'exact';
+      var tot = (p.prefix && exact ? esc(p.prefix)+' ' : '') + esc(FP.priceText(ctx.f, t.total));
+      var row = function(it){ return '<div class="row"><span>'+esc(it.label)+(it.detail && exact?'<small>'+esc(it.detail)+'</small>':'')+'</span><span>'+(exact?FP.money(it.amount,cur):IC.check)+'</span></div>'; };
       if(p.compact){
-        h = '<div class="fp-sum compact" data-sum="'+b.id+'"><div class="lab">'+esc(p.title||'Geschätzter Preis')+'</div><b>'+(p.prefix?esc(p.prefix)+' ':'')+FP.money(t.total,cur)+'</b>'+(p.note?'<div class="nt">'+esc(p.note)+'</div>':'')+'</div>';
+        h = '<div class="fp-sum compact" data-sum="'+b.id+'"><div class="lab">'+esc(p.title||'Geschätzter Preis')+'</div><b>'+tot+'</b>'+(p.note?'<div class="nt">'+T(p.note)+'</div>':'')+'</div>';
+      } else if(p.variant === 'offer'){
+        var d = new Date(), vd = +p.validDays || 14, until = new Date(d.getTime() + vd*864e5);
+        h = '<div class="fp-sum offer" data-sum="'+b.id+'"><div class="oh"><div><h4>'+T(p.title||'Dein persönliches Angebot')+'</h4><div class="od">Erstellt am '+d.toLocaleDateString('de-DE')+' · gültig bis '+until.toLocaleDateString('de-DE')+'</div></div>'+IC.check.replace('<svg','<svg class="ok"')+'</div>';
+        if(p.showItems !== false){ if(!t.items.length) h += '<div class="row"><span>Noch keine Auswahl</span><span>–</span></div>'; t.items.forEach(function(it){ h += row(it); }); }
+        h += '<div class="tot"><span>'+esc(p.totalLabel||'Gesamtpreis')+'</span><b>'+tot+'</b></div><div class="nt">'+(p.note?T(p.note):(exact?'Inkl. MwSt. · unverbindlich':'Unverbindliche Preisspanne – das genaue Angebot erhältst du nach kurzer Prüfung.'))+'</div></div>';
       } else {
-        h = '<div class="fp-sum" data-sum="'+b.id+'"><h4>'+esc(p.title||'Deine Zusammenfassung')+'</h4>';
-        if(p.showItems !== false){
-          if(!t.items.length) h += '<div class="row"><span>Noch keine Auswahl</span><span>–</span></div>';
-          t.items.forEach(function(it){ h += '<div class="row"><span>'+esc(it.label)+(it.detail?'<small>'+esc(it.detail)+'</small>':'')+'</span><span>'+FP.money(it.amount,cur)+'</span></div>'; });
-        }
-        h += '<div class="tot"><span>'+esc(p.totalLabel||'Gesamt')+'</span><b>'+(p.prefix?esc(p.prefix)+' ':'')+FP.money(t.total,cur)+'</b></div>'+(p.note?'<div class="nt">'+esc(p.note)+'</div>':'')+'</div>';
+        h = '<div class="fp-sum" data-sum="'+b.id+'"><h4>'+T(p.title||'Deine Zusammenfassung')+'</h4>';
+        if(p.showItems !== false){ if(!t.items.length) h += '<div class="row"><span>Noch keine Auswahl</span><span>–</span></div>'; t.items.forEach(function(it){ h += row(it); }); }
+        h += '<div class="tot"><span>'+esc(p.totalLabel||'Gesamt')+'</span><b>'+tot+'</b></div>'+(p.note?'<div class="nt">'+T(p.note)+'</div>':'')+'</div>';
       }
       break;
     case 'trust':
@@ -324,7 +361,7 @@ FP.renderBlock = function(b, ctx){
   return '<div class="'+cl+'" data-bid="'+b.id+'" data-type="'+b.type+'" style="'+st+'"'+(ctx.edit?' draggable="true"':'')+'>'+h+(err?'<div class="fp-errmsg">'+esc(err)+'</div>':'')+'</div>';
 };
 
-FP.hasButton = function(page){ return (page.blocks||[]).some(function(b){ return b.type==='button' || (b.type==='choice' && b.props.autoNext && !b.props.multi); }); };
+FP.hasButton = function(page){ return (page.blocks||[]).some(function(b){ return b.type==='button' || (b.type==='choice' && b.props.autoNext && !b.props.multi) || (b.type==='rating' && b.props.autoNext); }); };
 
 FP.renderShell = function(f, idx, inner, opts){
   opts = opts || {};
@@ -413,6 +450,12 @@ FP.mount = function(root, f, opts){
         if(o && o.goto) routed = o.goto;
       }
     });
+    if(!routed) page.blocks.forEach(function(b){
+      if(b.type === 'rating' && (b.props.routes||[]).length){
+        var rv = st.answers[keyOf(b)]; if(rv == null) return;
+        (b.props.routes||[]).forEach(function(r){ if(!routed && r.goto && rv >= +r.min && rv <= +r.max) routed = r.goto; });
+      }
+    });
     if(routed) return routed;
     if(page.scoreRoutes && page.scoreRoutes.length){
       var sc = FP.computeTotal(f, st.answers).score;
@@ -493,9 +536,23 @@ FP.mount = function(root, f, opts){
     else if(act === 'sigclr'){ e.preventDefault(); delete st.answers[keyOf(b)]; render(); }
   });
 
+  root.addEventListener('change', function(e){
+    var el = e.target; if(!el || el.type !== 'range') return;
+    var b = blockById(el.getAttribute('data-bid')); if(!b || b.type !== 'rating' || !b.props.autoNext) return;
+    clearTimeout(timer); timer = setTimeout(function(){ go(); }, 450);
+  });
   root.addEventListener('input', function(e){
     var el = e.target, k = el.getAttribute && el.getAttribute('data-key'); if(!k) return;
     var b = blockById(el.getAttribute('data-bid'));
+    if(el.type === 'range' && b && b.type === 'rating'){
+      var rv0 = +el.value, rmx = FP.rateMax(b.props); setAns(b, rv0);
+      el.style.setProperty('--fill', (rmx > 1 ? (rv0 - 1) / (rmx - 1) * 100 : 0) + '%');
+      var fc = root.querySelector('[data-face="'+b.id+'"]'); if(fc){ var nf = FP.faceFor(b.props, rv0); if(fc.textContent !== nf){ fc.textContent = nf; fc.classList.remove('pop'); void fc.offsetWidth; fc.classList.add('pop'); } fc.classList.remove('idle'); }
+      var rvv = root.querySelector('[data-rv="'+b.id+'"]'); if(rvv) rvv.textContent = rv0;
+      var hn = el.parentNode.querySelector('.fp-hint-c'); if(hn) hn.remove();
+      var er = el.closest('.fp-b'); if(er && er.classList.contains('fp-err')){ er.classList.remove('fp-err'); var em = er.querySelector('.fp-errmsg'); if(em) em.remove(); }
+      return;
+    }
     if(el.type === 'range'){
       var v = +el.value; st.answers[k] = v;
       var pct = ((v - b.props.min) / ((b.props.max - b.props.min)||1)) * 100; el.style.setProperty('--fill', pct+'%');
@@ -504,6 +561,7 @@ FP.mount = function(root, f, opts){
     } else {
       st.answers[k] = el.value;
       if(st.errors[b.id]){ delete st.errors[b.id]; var w = el.closest('.fp-b'); if(w){ w.classList.remove('fp-err'); var m = w.querySelector('.fp-errmsg'); if(m) m.remove(); } }
+      if(b && b.props.isQuantity) refreshSums();
     }
   });
 

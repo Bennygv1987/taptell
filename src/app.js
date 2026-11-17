@@ -224,17 +224,20 @@ function render(){
   if(S.needPw) return renderSetPassword();
   if(!isAdmin() && ['editor','templates','settings','customers'].indexOf(S.view) >= 0) S.view = 'funnels';
   if(S.view === 'editor') return renderEditor();
-  var vl = visibleLeads(), vf = visibleFunnels();
+  if(S.scope === undefined){ try{ S.scope = localStorage.getItem('tt.scope') || ''; }catch(e){ S.scope = ''; } }
+  if(S.scope && S.scope !== '-' && !clientById(S.scope)) S.scope = '';
+  var vl = scopedLeads(), vf = scopedFunnels();
   var nLeadsNew = vl.filter(function(l){ return l.status === 'neu'; }).length;
   var cl = !isAdmin() ? clientById(myClientId()) : null;
   var nav = isAdmin()
-    ? [['funnels','Funnels','funnel',db.funnels.length],['customers','Kunden','folder',(db.clients||[]).length],['contacts','Kontakte','users',nLeadsNew],['analytics','Analytics','chart'],['templates','Vorlagen','layout'],['settings','Einstellungen','settings']]
+    ? [['§','Arbeitsbereich'],['funnels','Funnels','funnel',vf.length],['contacts','Kontakte','users',nLeadsNew],['analytics','Analytics','chart'],['§','Verwaltung'],['customers','Kunden','folder',(db.clients||[]).length],['templates','Vorlagen','layout'],['settings','Einstellungen','settings']]
     : [['funnels','Übersicht','grid',vf.length],['contacts','Kontakte','users',nLeadsNew],['analytics','Analytics','chart']];
   var brand = cl ? '<div class="brand">'+(cl.logo?'<div class="lg" style="background:#fff center/contain no-repeat url(&quot;'+esc(cl.logo)+'&quot;);box-shadow:0 0 0 1px var(--line)"></div>':'<div class="lg">'+I('layers')+'</div>')+'<div>'+esc(cl.name)+'<small>Kundenportal · TapTell</small></div></div>'
     : '<div class="brand tt"><img src="'+TT_LOGO+'" alt="TapTell"><small>'+(REMOTE?'Admin':'Admin · Demo-Modus')+'</small></div>';
   var html = '<div class="shell"><aside class="side">' + brand
-    + nav.map(function(n){ return '<button class="nav'+(S.view===n[0]?' on':'')+'" data-a="nav" data-v="'+n[0]+'">'+I(n[2])+n[1]+(n[3]?'<span class="ct">'+n[3]+'</span>':'')+'</button>'; }).join('')
-    + (isAdmin() ? '<div class="sec">Schnellzugriff</div>' + db.funnels.slice(0,5).map(function(f){ return '<button class="nav" data-a="edit" data-id="'+f.id+'"><span style="width:7px;height:7px;border-radius:50%;background:'+(f.status==='live'?'var(--ok)':'#c4c7d0')+';margin:0 4px 0 5px;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</span></button>'; }).join('') : '')
+    + (isAdmin() ? (function(){ var s = scopeId(), c = s && s !== '-' ? clientById(s) : null; return '<button class="scope" data-a="scope" title="Arbeitsbereich wechseln"><span class="sav">'+(c && c.logo ? '<i style="background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;)"></i>' : I(!s?'grid':s==='-'?'layers':'folder',14))+'</span><span class="stx"><small>Arbeitsbereich</small><b>'+esc(scopeLabel())+'</b></span>'+I('chevDown',14)+'</button>'; })() : '')
+    + nav.map(function(n){ if(n[0] === '§') return '<div class="sec">'+n[1]+'</div>'; return '<button class="nav'+(S.view===n[0]?' on':'')+'" data-a="nav" data-v="'+n[0]+'">'+I(n[2])+n[1]+(n[3]?'<span class="ct">'+n[3]+'</span>':'')+'</button>'; }).join('')
+    + (isAdmin() && vf.length ? '<div class="sec">Zuletzt bearbeitet</div>' + vf.slice().sort(function(a,b){ return (b.updatedAt||0)-(a.updatedAt||0); }).slice(0,5).map(function(f){ return '<button class="nav" data-a="edit" data-id="'+f.id+'"><span style="width:7px;height:7px;border-radius:50%;background:'+(f.status==='live'?'var(--ok)':'var(--n300)')+';margin:0 4px 0 5px;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</span></button>'; }).join('') : '')
     + '<div class="foot"><div class="av">'+esc((S.user.name||S.user.email||'?')[0].toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="color:var(--ink);font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(S.user.name||S.user.email)+'</div><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(S.user.role==='admin'?'Administrator':'Kunde')+'</div></div><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',15)+'</button></div></aside><main class="main" id="main"></main></div>';
   $('#app').innerHTML = html;
   var m = $('#main');
@@ -249,17 +252,18 @@ function render(){
 
 /* ---------- views: funnels ---------- */
 function viewFunnels(){
-  var fs = db.funnels.filter(function(f){ return (S.filter === 'all' || f.status === S.filter) && (!S.q || f.name.toLowerCase().indexOf(S.q.toLowerCase()) >= 0) && (!S.fclient || (S.fclient === '-' ? !f.clientId : f.clientId === S.fclient)); });
-  var views = 0, leads = db.leads.length, comp = 0; db.funnels.forEach(function(f){ views += f.stats.views; comp += f.stats.completes; });
-  var week = db.leads.filter(function(l){ return l.createdAt > Date.now() - 7*864e5; }).length;
-  var live = db.funnels.filter(function(f){ return f.status === 'live'; }).length;
-  var h = '<div class="page"><div class="ph"><div><h1>Funnels</h1><p>Erstelle, gestalte und verwalte deine mobilen Funnels.</p></div><div class="sp"></div><button class="btn pri" data-a="newFunnel">'+I('plus')+'Neuer Funnel</button></div>';
+  var SF = scopedFunnels(), SL = scopedLeads();
+  var fs = SF.filter(function(f){ return (S.filter === 'all' || f.status === S.filter) && (!S.q || f.name.toLowerCase().indexOf(S.q.toLowerCase()) >= 0) && (!S.fclient || (S.fclient === '-' ? !f.clientId : f.clientId === S.fclient)); });
+  var views = 0, leads = SL.length, comp = 0; SF.forEach(function(f){ views += f.stats.views; comp += f.stats.completes; });
+  var week = SL.filter(function(l){ return l.createdAt > Date.now() - 7*864e5; }).length;
+  var live = SF.filter(function(f){ return f.status === 'live'; }).length;
+  var h = '<div class="page"><div class="ph"><div><h1>Funnels</h1><p>'+(scopeId()?'Funnels von <b>'+esc(scopeLabel())+'</b>.':'Erstelle, gestalte und verwalte deine mobilen Funnels.')+'</p></div><div class="sp"></div><button class="btn pri" data-a="newFunnel">'+I('plus')+'Neuer Funnel</button></div>';
   h += '<div class="kpis">'
-    + kpi('Aktive Funnels', live + ' / ' + db.funnels.length, 'live geschaltet', 'funnel')
+    + kpi('Aktive Funnels', live + ' / ' + SF.length, 'live geschaltet', 'funnel')
     + kpi('Aufrufe', fmtNum(views), 'gesamt', 'eye')
     + kpi('Leads', fmtNum(leads), '<b>+'+week+'</b> in den letzten 7 Tagen', 'inbox')
     + kpi('Ø Conversion', (views ? (comp/views*100) : 0).toFixed(1).replace('.',',') + ' %', 'Aufruf → Abschluss', 'percent') + '</div>';
-  h += '<div class="toolbar"><div class="seg">'+[['all','Alle'],['live','Live'],['draft','Entwurf']].map(function(x){ return '<button class="'+(S.filter===x[0]?'on':'')+'" data-a="ffilter" data-v="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div><div style="flex:1"></div><select class="inp" id="fcl" style="width:210px;height:36px"><option value="">Alle Kunden</option><option value="-"'+(S.fclient==='-'?' selected':'')+'>Ohne Kunde (intern)</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(S.fclient===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select><label class="search">'+I('search')+'<input id="fq" placeholder="Funnels durchsuchen …" value="'+esc(S.q)+'"></label></div>';
+  h += '<div class="toolbar"><div class="seg">'+[['all','Alle'],['live','Live'],['draft','Entwurf']].map(function(x){ return '<button class="'+(S.filter===x[0]?'on':'')+'" data-a="ffilter" data-v="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div><div style="flex:1"></div>'+(scopeId()?'':'<select class="inp" id="fcl" style="width:210px;height:36px"><option value="">Alle Kunden</option><option value="-"'+(S.fclient==='-'?' selected':'')+'>Ohne Kunde (intern)</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(S.fclient===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select>')+'<label class="search">'+I('search')+'<input id="fq" placeholder="Funnels durchsuchen …" value="'+esc(S.q)+'"></label></div>';
   h += '<div class="grid">';
   fs.forEach(function(f){
     var lc = leadsOf(f.id).length;
@@ -300,25 +304,25 @@ function duplicateFunnel(f){
   var c = clone(f); c.id = uid()+uid().slice(0,4); c.name = f.name + ' (Kopie)'; c.status = 'draft'; c.createdAt = c.updatedAt = Date.now(); c.stats = {views:0,starts:0,completes:0,pages:{},daily:{}}; delete c.demo;
   var map = {};
   c.pages.forEach(function(p){ var n = uid(); map[p.id] = n; p.id = n; p.blocks.forEach(function(b){ b.id = uid(); }); });
-  c.pages.forEach(function(p){ if(p.next) p.next = map[p.next] || ''; (p.scoreRoutes||[]).forEach(function(r){ r.goto = map[r.goto] || ''; }); p.blocks.forEach(function(b){ if(b.props.target) b.props.target = map[b.props.target] || ''; (b.props.options||[]).forEach(function(o){ if(o.goto) o.goto = map[o.goto] || ''; }); }); });
+  c.pages.forEach(function(p){ if(p.next) p.next = map[p.next] || ''; (p.scoreRoutes||[]).forEach(function(r){ r.goto = map[r.goto] || ''; }); p.blocks.forEach(function(b){ if(b.props.target) b.props.target = map[b.props.target] || ''; (b.props.options||[]).forEach(function(o){ if(o.goto) o.goto = map[o.goto] || ''; }); (b.props.routes||[]).forEach(function(r){ if(r.goto) r.goto = map[r.goto] || ''; }); }); });
   db.funnels.unshift(c); save(); render(); toast('Funnel dupliziert');
 }
 
 /* ---------- views: contacts ---------- */
 function filteredLeads(){
   var q = S.cf.q.toLowerCase();
-  return visibleLeads().filter(function(l){ return (S.cf.funnel === 'all' || l.funnelId === S.cf.funnel) && (S.cf.status === 'all' || l.status === S.cf.status) && (!q || [l.name,l.email,l.phone,l.funnelName].join(' ').toLowerCase().indexOf(q) >= 0); });
+  return scopedLeads().filter(function(l){ return (S.cf.funnel === 'all' || l.funnelId === S.cf.funnel) && (S.cf.status === 'all' || l.status === S.cf.status) && (!q || [l.name,l.email,l.phone,l.funnelName].join(' ').toLowerCase().indexOf(q) >= 0); });
 }
 function viewContacts(){
   var ls = filteredLeads(), nSel = Object.keys(S.csel).filter(function(k){ return S.csel[k]; }).length;
-  var VL = visibleLeads();
+  var VL = scopedLeads();
   var counts = {}; STATUSES.forEach(function(s){ counts[s[0]] = VL.filter(function(l){ return l.status === s[0]; }).length; });
   var won = VL.filter(function(l){ return l.status === 'gewonnen'; }).reduce(function(a,l){ return a + (l.total||0); }, 0);
   var pipe = VL.filter(function(l){ return l.status !== 'verloren' && l.status !== 'gewonnen'; }).reduce(function(a,l){ return a + (l.total||0); }, 0);
   var h = '<div class="page"><div class="ph"><div><h1>Kontakte</h1><p>Alle Leads aus deinen Funnels – mit Antworten, Preis und Status.</p></div><div class="sp"></div><button class="btn" data-a="csv">'+I('copy')+'CSV kopieren</button></div>';
   h += '<div class="kpis">'+kpi('Neue Leads', counts.neu, 'noch nicht bearbeitet', 'inbox')+kpi('In Bearbeitung', counts.kontaktiert + counts.angebot, 'kontaktiert oder Angebot', 'users')+kpi('Pipeline-Wert', FP.money(pipe), 'offene Anfragen', 'euro')+kpi('Gewonnen', FP.money(won), counts.gewonnen + ' Aufträge', 'target')+'</div>';
   h += '<div class="toolbar"><div class="seg"><button class="'+(S.cf.status==='all'?'on':'')+'" data-a="cstat" data-v="all">Alle <span style="color:var(--mut)">'+VL.length+'</span></button>'+STATUSES.map(function(s){ return '<button class="'+(S.cf.status===s[0]?'on':'')+'" data-a="cstat" data-v="'+s[0]+'">'+s[1]+' <span style="color:var(--mut)">'+counts[s[0]]+'</span></button>'; }).join('')+'</div><div style="flex:1"></div>'
-    + '<select class="inp" style="width:200px;height:36px" id="cfun"><option value="all">Alle Funnels</option>'+visibleFunnels().map(function(f){ return '<option value="'+f.id+'"'+(S.cf.funnel===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('')+'</select>'
+    + '<select class="inp" style="width:200px;height:36px" id="cfun"><option value="all">Alle Funnels</option>'+scopedFunnels().map(function(f){ return '<option value="'+f.id+'"'+(S.cf.funnel===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('')+'</select>'
     + '<label class="search" style="min-width:220px">'+I('search')+'<input id="cq" placeholder="Name, E-Mail, Telefon …" value="'+esc(S.cf.q)+'"></label></div>';
   if(nSel) h += '<div class="callout" style="align-items:center;margin-bottom:12px"><b>'+nSel+' ausgewählt</b><span style="flex:1"></span>Status setzen: '+STATUSES.map(function(s){ return '<button class="btn sm" data-a="bulk" data-v="'+s[0]+'">'+s[1]+'</button>'; }).join(' ')+''+(isAdmin()?'<button class="btn sm danger" data-a="bulkdel">'+I('trash',13)+'Löschen</button>':'')+'</div>';
   h += '<div class="card" style="overflow:auto">';
@@ -370,7 +374,7 @@ function leadsCsv(){
 
 /* ---------- views: analytics ---------- */
 function viewAnalytics(){
-  var VF = visibleFunnels();
+  var VF = scopedFunnels();
   if(!S.afid || VF.map(function(x){ return x.id; }).indexOf(S.afid) < 0) S.afid = (VF.filter(function(f){ return f.stats.views; })[0] || VF[0] || {}).id;
   var f = getF(S.afid);
   var h = '<div class="page"><div class="ph"><div><h1>Analytics</h1><p>Performance, Drop-off und Antwortverteilung pro Funnel.</p></div><div class="sp"></div><select class="inp" style="width:240px;height:36px" id="afun">'+VF.map(function(x){ return '<option value="'+x.id+'"'+(x.id===S.afid?' selected':'')+'>'+esc(x.name)+'</option>'; }).join('')+'</select></div>';
@@ -458,16 +462,16 @@ var FIELDS = {
   trust:[['items','strings','Badges']],
   faq:[['items','faq','Fragen & Antworten']],
   countdown:[['label','text','Text darüber'],['minutes','num','Dauer in Minuten']],
-  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['cols','seg','Bilder pro Reihe',[[2,'2'],[1,'1']],function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale'; }],['options','options','Antworten'],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise anzeigen'],['key','key','Feld-Schlüssel']],
-  input:[['label','text','Label'],['placeholder','text','Platzhalter'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
+  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['cols','seg','Bilder pro Reihe',[[2,'2'],[1,'1']],function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale'; }],['options','options','Antworten'],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
+  input:[['label','text','Label'],['placeholder','text','Platzhalter'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
-  rating:[['label','text','Frage'],['style','seg','Typ',[['stars','Sterne'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return p.style!=='nps'; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']]],['autoNext','toggle','Automatisch weiter'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
+  rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']]],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   calendar:[['label','text','Label'],['row2','row',[['days','num','Anzahl Tage'],['offset','num','Ab Tag (+)']]],['excludeDays','days','Ausgeschlossene Wochentage'],['slots','strings','Uhrzeiten'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen']]],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
-  summary:[['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }]],
+  summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }]],
   spacer:[['height','range','Höhe',[4,160,2]]],
   divider:[],
   html:[['code','code','HTML-Code','Wird 1:1 eingefügt (z. B. Embeds, Tracking, eigenes Styling).']]
@@ -605,6 +609,8 @@ function field(spec, p, scope){
     case 'faq': return w((v||[]).map(function(it, i){ return '<div class="oped open" style="padding:8px"><div style="display:flex;gap:6px;margin-bottom:6px"><input class="inp" data-faq="'+i+'" data-fk="q" value="'+esc(it.q)+'" placeholder="Frage"><button class="ibtn" data-a="faqDel" data-i="'+i+'">'+I('x')+'</button></div><textarea class="inp" data-faq="'+i+'" data-fk="a" rows="2" placeholder="Antwort">'+esc(it.a)+'</textarea></div>'; }).join('') + '<button class="btn sm" data-a="faqAdd">'+I('plus',13)+'Frage hinzufügen</button>');
     case 'days': var wd = [[1,'Mo'],[2,'Di'],[3,'Mi'],[4,'Do'],[5,'Fr'],[6,'Sa'],[0,'So']]; return w('<div class="segf">'+wd.map(function(d){ return '<button data-a="dayTgl" data-v="'+d[0]+'" class="'+((v||[]).indexOf(d[0])>=0?'on':'')+'">'+d[1]+'</button>'; }).join('')+'</div>');
     case 'options': return w(optionsEditor(p));
+    case 'emojis': var em = FP.emojiList(p); return w('<input class="inp emoji-in" '+a+' value="'+esc(v||'')+'" placeholder="'+esc(em.join(' '))+'"><div class="emo-pre">'+['😥 🙁 😐 🙂 😀','👎 👍','😡 😕 😐 😊 😍','🐒 🦁 🐘','⭐ ⭐⭐ ⭐⭐⭐'].map(function(x){ return '<button data-a="emoSet" data-v="'+esc(x)+'">'+esc(x)+'</button>'; }).join('')+'</div><div class="hint">Emojis mit Leerzeichen trennen – jedes steht für eine Stufe (links = schlechteste). Leer lassen für den Standard-Satz.</div>');
+    case 'routes': var mxr = FP.rateMax(p); return w((v||[]).map(function(r, i){ return '<div class="strl" style="align-items:center"><span class="hint" style="margin:0">von</span><input class="inp" type="number" min="1" max="'+mxr+'" style="width:52px" data-rr="'+i+'" data-rk="min" value="'+r.min+'"><span class="hint" style="margin:0">bis</span><input class="inp" type="number" min="1" max="'+mxr+'" style="width:52px" data-rr="'+i+'" data-rk="max" value="'+r.max+'"><select class="inp" data-rr="'+i+'" data-rk="goto" style="flex:1;min-width:0">'+pageOptions(r.goto,'Seite wählen …')+'</select><button class="ibtn" data-a="rrDel" data-i="'+i+'">'+I('x')+'</button></div>'; }).join('') + '<button class="btn sm" data-a="rrAdd">'+I('plus',13)+'Regel hinzufügen</button><div class="hint">Z. B. 1–3 → Seite „Problem“, 4–'+mxr+' → „Das freut uns“. Ohne passende Regel geht es zur nächsten Seite.</div>');
   }
   return '';
 }
@@ -613,6 +619,7 @@ function optionsEditor(p){
   return (p.options||[]).map(function(o, i){
     return '<div class="oped'+(openSet[o.id]?' open':'')+'"><div class="oh"><input class="em" data-o="icon" data-oi="'+i+'" value="'+esc(o.icon||'')+'" placeholder="😀" title="Emoji"><input class="ol" data-o="label" data-oi="'+i+'" value="'+esc(o.label)+'">'
       + (o.goto?'<span title="Springt zu Seite" style="color:var(--a)">'+I('branch',13)+'</span>':'')
+      + ((+o.price||+o.unitPrice)?'<span class="opr" title="'+(p.showPrices?'Preis wird angezeigt':'Preis nur intern')+'">'+(+o.price?'+'+FP.money(o.price,(F().settings||{}).currency):FP.money(o.unitPrice,(F().settings||{}).currency)+'/'+(o.unitLabel||'Einh.'))+(p.showPrices?'':' '+I('eye',11))+'</span>':'')
       + '<button class="ibtn" data-a="optToggle" data-oid="'+o.id+'" title="Details, Preis & Logik">'+I('settings')+'</button><button class="ibtn" data-a="optMove" data-i="'+i+'" data-d="-1" title="Nach oben">'+I('chevUp')+'</button><button class="ibtn" data-a="optDel" data-i="'+i+'" title="Entfernen">'+I('x')+'</button></div>'
       + '<div class="ob"><div class="fld"><label>Untertitel</label><input class="inp" data-o="sub" data-oi="'+i+'" value="'+esc(o.sub||'')+'"></div>'
       + '<div class="row2"><div class="fld"><label>Festpreis (+)</label><input class="inp" type="number" data-o="price" data-oi="'+i+'" data-num value="'+(o.price||'')+'" placeholder="0"></div><div class="fld"><label>Preis pro Einheit</label><input class="inp" type="number" data-o="unitPrice" data-oi="'+i+'" data-num value="'+(o.unitPrice||'')+'" placeholder="0"></div></div>'
@@ -709,7 +716,9 @@ function panelSettings(){
     + (f.clientId ? '<label class="tgl"><span>Für den Kunden freigeschaltet</span><input type="checkbox" data-fshare'+(f.shared?' checked':'')+'><span class="sw"></span></label><div class="hint">Freigeschaltet sieht der Kunde in seinem Login den Funnel, alle Kontakte und die Analytics. Bearbeiten kannst nur du.</div>' : '<div class="hint">Ordne den Funnel einem Kunden zu, um ihn für dessen Login freizuschalten.</div>') + '</div>';
   h += '<div class="psec"><h5>'+I('receipt',13)+'Preisberechnung</h5><div class="row2"><div class="fld"><label>Währung</label><select class="inp" data-s="currency">'+['EUR','CHF','USD','GBP'].map(function(c){ return '<option'+(s.currency===c?' selected':'')+'>'+c+'</option>'; }).join('')+'</select></div><div class="fld"><label>Grundpreis</label><input class="inp" type="number" data-s="basePrice" data-num value="'+(s.basePrice||'')+'" placeholder="0"></div></div>'
     + '<div class="fld"><label>Bezeichnung Grundpreis</label><input class="inp" data-s="baseLabel" value="'+esc(s.baseLabel||'Grundpreis')+'"></div>'
-    + '<div class="hint">Formel: Grundpreis + Festpreise + (Preise pro Einheit × Menge). Die Menge kommt aus einem Schieberegler mit „Als Menge für Preisberechnung“.</div></div>';
+    + '<div class="fld"><label>Preis-Anzeige für Besucher</label><div class="segf">'+[['exact','Exakt'],['range','Spanne'],['from','ab-Preis']].map(function(x){ return '<button data-a="seg" data-scope="s" data-k="priceMode" data-v="'+x[0]+'" data-t="string" class="'+((s.priceMode||'exact')===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div></div>'
+    + '<div class="row2">'+((s.priceMode||'exact')==='range'?'<div class="fld"><label>Spanne ± %</label><input class="inp" type="number" data-s="priceRange" data-num value="'+(s.priceRange!=null&&s.priceRange!==''?s.priceRange:10)+'"></div>':'')+'<div class="fld"><label>Runden auf (€)</label><input class="inp" type="number" data-s="priceRound" data-num value="'+(s.priceRound||'')+'" placeholder="z. B. 50"></div></div>'
+    + '<div class="hint">Formel: Grundpreis + Festpreise + (Preise pro Einheit × Menge). Die Menge kommt aus Schiebereglern oder Zahlenfeldern mit „Als Menge für Preisberechnung“. Intern und in der Anfrage wird immer der exakte Preis gespeichert.</div></div>';
   h += '<div class="psec"><h5>'+I('zap',13)+'Integrationen</h5><div class="fld"><label>Webhook-URL</label><input class="inp" data-s="webhook" value="'+esc(s.webhook||'')+'" placeholder="https://hook.eu1.make.com/…"><div class="hint">Leads werden beim Absenden als JSON gesendet (Make, Zapier, n8n, Supabase Edge Function).</div></div>'
     + '<div class="fld"><label>Weiterleitung nach Absenden (optional)</label><input class="inp" data-s="redirect" value="'+esc(s.redirect||'')+'" placeholder="https://deine-seite.de/danke"></div>'
     + '<div class="fld"><label>Meta Pixel ID (optional)</label><input class="inp" data-s="pixel" value="'+esc(s.pixel||'')+'" placeholder="123456789012345"><div class="hint">Feuert „PageView“ und „Lead“ im exportierten Funnel.</div></div></div>';
@@ -771,7 +780,7 @@ function delPage(i){
   var f = F(); if(f.pages.length < 2) return;
   confirmBox('Seite löschen?','„'+f.pages[i].name+'“ und alle Elemente darauf werden gelöscht.','Löschen',function(){
     snap(true); var id = f.pages[i].id; f.pages.splice(i,1);
-    f.pages.forEach(function(p){ if(p.next === id) p.next = ''; (p.scoreRoutes||[]).forEach(function(r){ if(r.goto === id) r.goto = ''; }); p.blocks.forEach(function(b){ if(b.props.target === id) b.props.target = ''; (b.props.options||[]).forEach(function(o){ if(o.goto === id) o.goto = ''; }); }); });
+    f.pages.forEach(function(p){ if(p.next === id) p.next = ''; (p.scoreRoutes||[]).forEach(function(r){ if(r.goto === id) r.goto = ''; }); p.blocks.forEach(function(b){ if(b.props.target === id) b.props.target = ''; (b.props.options||[]).forEach(function(o){ if(o.goto === id) o.goto = ''; }); (b.props.routes||[]).forEach(function(r){ if(r.goto === id) r.goto = ''; }); }); });
     S.pi = Math.max(0, Math.min(i, f.pages.length-1)); S.sel = null; touch(); renderLeft(); renderCanvas(); renderRight();
   }, true);
 }
@@ -884,7 +893,8 @@ function newFunnelModal(){
     setTimeout(function(){ ni.focus(); ni.select(); }, 30);
   }
   function mountPreview(){
-    var host = mb.querySelector('#wzhost'); if(!host) return;
+    var old = mb.querySelector('#wzhost'); if(!old) return;
+    var host = document.createElement('div'); host.className = 'fp-host'; host.id = 'wzhost'; old.replaceWith(host); /* frisches Element: keine doppelten Klick-Handler */
     var f = T.clone({pages:W.d.pages, theme:W.d.theme, settings:W.d.settings||{}});
     loadFontsFor(f); injectUploaded();
     FP.mount(host, f, {live:false});
@@ -934,6 +944,11 @@ function flowEdges(f){
       }
       if(b.type === 'button' && pr.action === 'page' && pr.target) out.push({to:idx(pr.target), label:'Button „'+(pr.label||'')+'“', kind:'btn'});
       if(b.type === 'button' && pr.action === 'submit' && pr.target) out.push({to:idx(pr.target), label:'Nach Absenden', kind:'btn'});
+      if(b.type === 'rating' && (pr.routes||[]).length){
+        var rmx = FP.rateMax(pr), cov = {};
+        pr.routes.forEach(function(r){ if(!r.goto) return; out.push({to:idx(r.goto), label:'Bewertung '+r.min+(+r.max!==+r.min?'–'+r.max:''), kind:'if'}); for(var q=+r.min;q<=+r.max;q++) cov[q] = 1; });
+        var all = true; for(var q2=1;q2<=rmx;q2++) if(!cov[q2]) all = false; if(all) coversAll = true;
+      }
     });
     (p.scoreRoutes||[]).forEach(function(r){ if(r.goto) out.push({to:idx(r.goto), label:'Punkte '+r.min+'–'+r.max, kind:'if'}); });
     if(!coversAll){
@@ -1055,6 +1070,20 @@ function realAdmin(){ return !!(S.user && S.user.role === 'admin'); }
 function myClientId(){ return S.as || (S.user && S.user.clientId) || null; }
 function clientById(id){ return (db.clients||[]).filter(function(c){ return c.id === id; })[0] || null; }
 function visibleFunnels(){ if(isAdmin()) return db.funnels; var c = myClientId(); return db.funnels.filter(function(f){ return c && f.clientId === c && f.shared; }); }
+/* Arbeitsbereich (Kunden-Umschalter): '' = alle, '-' = intern, sonst clientId */
+function scopeId(){ return isAdmin() ? (S.scope || '') : ''; }
+function inScope(f){ var s = scopeId(); return !s || (s === '-' ? !f.clientId : f.clientId === s); }
+function scopedFunnels(){ return visibleFunnels().filter(inScope); }
+function scopedLeads(){ var ids = scopedFunnels().map(function(f){ return f.id; }); return visibleLeads().filter(function(l){ return ids.indexOf(l.funnelId) >= 0; }); }
+function scopeLabel(){ var s = scopeId(); return !s ? 'Alle Kunden' : s === '-' ? 'Intern' : ((clientById(s)||{}).name || 'Kunde'); }
+function setScope(v){ S.scope = v || ''; S.fclient = ''; S.cf.funnel = 'all'; S.afid = null; try{ localStorage.setItem('tt.scope', S.scope); }catch(e){} render(); }
+function scopeMenu(btn){
+  var items = [{k:'all', ic:!scopeId()?'check':'grid', l:'Alle Kunden', fn:function(){ setScope(''); }}, {k:'int', ic:scopeId()==='-'?'check':'layers', l:'Intern (ohne Kunde)', fn:function(){ setScope('-'); }}];
+  if((db.clients||[]).length) items.push('-');
+  (db.clients||[]).forEach(function(c){ items.push({k:'c'+c.id, ic:scopeId()===c.id?'check':'folder', l:c.name, fn:function(){ setScope(c.id); }}); });
+  items.push('-', {k:'new', ic:'plus', l:'Neuer Kunde', fn:function(){ newClient(); }}, {k:'mng', ic:'settings', l:'Kunden verwalten', fn:function(){ S.view = 'customers'; render(); }});
+  dropdown(btn, items);
+}
 function visibleLeads(){ if(isAdmin()) return db.leads; var ids = visibleFunnels().map(function(f){ return f.id; }); return db.leads.filter(function(l){ return ids.indexOf(l.funnelId) >= 0; }); }
 function publicUrl(f){ var base = (CONFIG && CONFIG.publicUrl) || (location.origin + location.pathname.replace(/[^/]*$/, '')); return base.replace(/\/$/, '') + '/f/' + (f.slug || ''); }
 function ensureSlug(f){ if(!f.slug) f.slug = slug(f.name).slice(0, 40) + '-' + f.id.slice(0, 5); return f.slug; }
@@ -1302,6 +1331,7 @@ var ACT = {
   nav:function(el){ go(el.getAttribute('data-v')); },
   edit:function(el){ go('editor', el.getAttribute('data-id')); },
   newFunnel:function(){ newFunnelModal(); },
+  scope:function(el){ scopeMenu(el); },
   useTpl:function(el){ createFromTpl(el.getAttribute('data-id')); },
   tcat:function(el){ S.tcat = el.getAttribute('data-v'); render(); },
   fmenu:function(el){ funnelMenu(el, el.getAttribute('data-id')); },
@@ -1334,6 +1364,9 @@ var ACT = {
     {k:'p', l:'Ab hier testen', ic:'play', fn:function(){ openPreview(f, i); }},
     '-', {k:'x', l:'Löschen', ic:'trash', danger:true, fn:function(){ delPage(i); }}]); },
   addPage:addPage,
+  emoSet:function(el){ var b = selBlock(); if(!b) return; snap(true); b.props.emojis = el.getAttribute('data-v'); touch(); renderCanvas(true); renderRight(); },
+  rrAdd:function(){ var b = selBlock(); if(!b) return; snap(true); var mx = FP.rateMax(b.props), r = b.props.routes || []; b.props.routes = r.concat([r.length ? {min:Math.min(mx, (+r[r.length-1].max||0)+1), max:mx, goto:''} : {min:1, max:Math.max(1, Math.floor(mx*0.6)), goto:''}]); touch(); renderRight(); renderLeft(); renderCanvas(true); },
+  rrDel:function(el){ var b = selBlock(); if(!b) return; snap(true); b.props.routes.splice(+el.getAttribute('data-i'),1); touch(); renderRight(); renderLeft(); renderCanvas(true); },
   insVar:function(el){ varMenu(el); },
   flow:function(){ flowModal(); },
   pprev:function(){ if(S.pi > 0) selectPage(S.pi - 1); },
@@ -1426,6 +1459,7 @@ document.addEventListener('input', function(e){
   if(el.hasAttribute('data-o')){ var b = selBlock(), i = +el.getAttribute('data-oi'), ok = el.getAttribute('data-o'); snap(el.tagName === 'SELECT'); b.props.options[i][ok] = readVal(el); touch(); renderCanvas(true); if(ok === 'goto'){ renderLeft(); renderRight(); } return; }
   if(el.hasAttribute('data-arr')){ var b2 = selBlock(); snap(); b2.props[el.getAttribute('data-arr')][+el.getAttribute('data-ai')] = el.value; touch(); renderCanvas(true); return; }
   if(el.hasAttribute('data-faq')){ var b3 = selBlock(); snap(); b3.props.items[+el.getAttribute('data-faq')][el.getAttribute('data-fk')] = el.value; touch(); renderCanvas(true); return; }
+  if(el.hasAttribute('data-rr')){ var rb = selBlock(), rr = rb && rb.props.routes[+el.getAttribute('data-rr')], rk = el.getAttribute('data-rk'); if(!rr) return; snap(el.tagName === 'SELECT'); rr[rk] = rk === 'goto' ? el.value : +el.value; touch(); renderLeft(); renderCanvas(true); return; }
   if(el.hasAttribute('data-sr')){ var pg = curPage(), r = pg.scoreRoutes[+el.getAttribute('data-sr')], sk = el.getAttribute('data-sk'); snap(el.tagName === 'SELECT'); r[sk] = sk === 'goto' ? el.value : +el.value; touch(); renderLeft(); return; }
 });
 function syncColor(el, scope, k, v){ var w = el.closest('.colr'); if(!w) return; $$('input', w).forEach(function(x){ if(x !== el){ if(x.type === 'color') x.value = toHex(v); else x.value = v; } }); }

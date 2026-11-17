@@ -494,3 +494,21 @@ h1,h2,h3{letter-spacing:-.015em}
 .varrow:hover{background:var(--n50)}
 .varrow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .varrow code{font-size:var(--fs-11);color:var(--mut);flex:none}
+
+/* ---- Arbeitsbereich-Umschalter ---- */
+.scope{display:flex;align-items:center;gap:10px;width:100%;padding:7px 8px;margin:0 0 6px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);cursor:pointer;text-align:left;box-shadow:var(--sh);color:var(--ink2);transition:border-color .15s}
+.scope:hover{border-color:var(--n300)}
+.scope .sav{width:28px;height:28px;border-radius:var(--r-sm);background:var(--aS);color:var(--a);display:grid;place-items:center;flex:none;overflow:hidden}
+.scope .sav i{width:100%;height:100%;display:block}
+.scope .stx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.scope .stx small{font-size:var(--fs-11);color:var(--mut);font-weight:500}
+.scope .stx b{font-size:var(--fs-13);font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side .sec:first-of-type{padding-top:10px}
+
+.emoji-in{font-size:var(--fs-16);letter-spacing:.08em}
+.emo-pre{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.emo-pre button{border:1px solid var(--line);background:var(--card);border-radius:var(--r-sm);padding:3px 7px;font-size:var(--fs-13);cursor:pointer}
+.emo-pre button:hover{border-color:var(--n300)}
+
+.opr{display:inline-flex;align-items:center;gap:3px;font-size:var(--fs-11);font-weight:600;color:var(--okT);background:var(--okS);padding:1px 6px;border-radius:var(--r-pill);white-space:nowrap;flex:none}
+.opr svg{width:11px;height:11px;opacity:.6}

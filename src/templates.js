@@ -67,6 +67,8 @@ var LIB = [
   {id:'textarea', type:'input', n:'Freitext', ic:'align', g:'Fragen', over:{label:'Deine Nachricht', placeholder:'Erzähl uns mehr …', inputType:'textarea', key:'nachricht', required:false}},
   {id:'slider', type:'slider', n:'Schieberegler', ic:'sliders', g:'Fragen'},
   {id:'rating', type:'rating', n:'Sterne', ic:'star', g:'Fragen'},
+  {id:'smiley', type:'rating', n:'Smiley-Skala', ic:'star', g:'Fragen', over:{label:'Wie zufrieden bist du?', style:'emoji', max:5, key:'zufriedenheit', autoNext:true, align:'center', minLabel:'nicht so gut', maxLabel:'mega zufrieden'}},
+  {id:'smslider', type:'rating', n:'Smiley-Slider', ic:'sliders', g:'Fragen', over:{label:'Wie zufrieden bist du?', style:'slider', max:10, key:'zufriedenheit', align:'center', minLabel:'gar nicht', maxLabel:'total'}},
   {id:'nps', type:'rating', n:'NPS-Skala', ic:'gauge', g:'Fragen', over:{label:'Wie wahrscheinlich empfiehlst du uns weiter?', style:'nps', key:'nps', align:'left'}},
   {id:'calendar', type:'calendar', n:'Terminwahl', ic:'calendar', g:'Fragen'},
   {id:'upload', type:'upload', n:'Datei-Upload', ic:'upload', g:'Fragen'},
@@ -419,13 +421,100 @@ function tGehlen(){
       pGestell, pAussen, pZentral, pMasse, pKontakt, pDanke]};
 }
 
+/* Feedback-Funnel Kölner Zoo – Nachbau des Onepage-Funnels mit Smiley-Weiterleitung und drei Endseiten */
+function tZoo(){
+  var A = '/assets/koelner-zoo/', LIME = '#aac520';
+  var h = function(text, extra){ return B('heading', Object.assign({text:text, level:1, size:30, fw:700, align:'center', mb:10}, extra||{})); };
+  var badge = function(text){ return B('badge', {text:text, variant:'filled', align:'center', fw:700, scale:96, mb:28}); };
+  var hero = function(pos){ return B('image', {src:A+'tiere.jpg', radius:16, ratio:'7:3', mb:36}); };
+  var heart = B('heading', {text:'💚', level:1, size:30, fw:500, align:'center', mb:8});
+  var check = function(labels){ return labels.map(function(l){ return typeof l === 'string' ? O(l, '') : O(l[0], '', {sub:l[1]}); }); };
+  var btn = function(label, extra){ return B('button', Object.assign({label:label, full:false, shadow:false, icon:'none', align:'center', btnBg:LIME, mt:8}, extra||{})); };
+  var note = function(){ return B('input', {label:'', placeholder:'Magst du uns kurz mehr dazu sagen?', inputType:'textarea', key:'', required:false, mb:24}); };
+
+  var pGoogle = P('Finish Bewertung', [hero(), heart,
+    h('Würdest du uns eine positive Bewertung auf Google dalassen?', {size:24}),
+    B('text', {text:'Das würde uns als familiengeführtes Unternehmen sehr weiterhelfen!', align:'center', mb:28}),
+    btn('Jetzt auf Google bewerten', {action:'url', url:'https://www.google.com/search?q=K%C3%B6lner+Zoo+Rezensionen', full:true})], {allowBack:false, submitOnEnter:true, autoButton:false});
+  var pDankeNein = P('Finish NEIN', [hero(), heart,
+    h('Danke für dein ehrliches Feedback 🙌', {size:24}),
+    B('text', {text:'Auch anonymes Feedback hilft uns dabei, besser zu werden und Probleme schneller zu erkennen.', align:'center', mb:16}),
+    B('text', {text:'Als kleines Dankeschön, dass du Dir die Zeit für das ehrliche Feedback genommen hast, findest du **hier** einen Gutschein für deinen nächsten Besuch. Vielleicht können wir es ja dann wieder gut machen :)', align:'center'})], {allowBack:false, submitOnEnter:true, autoButton:false});
+  var pDankeJa = P('Finish', [hero(), heart,
+    h('Vielen Dank für dein ehrliches Feedback – wir kümmern uns sofort darum!', {size:24})], {allowBack:false, submitOnEnter:true, autoButton:false});
+  var pKontakt = P('Kontakt ja', [
+    B('image', {src:A+'kontakt.jpg', radius:16, ratio:'3:2', mb:32}),
+    h('Hinterlasse uns bitte kurz deine Kontaktdaten und wir melden uns bei dir.'),
+    B('text', {text:'🔒 Deine Daten werden **ausschließlich** zur Kontaktaufnahme bezüglich deines Feedbacks verwendet.', align:'center', mb:32}),
+    B('input', {label:'', placeholder:'Vorname', key:'vorname', required:true, half:true, mb:12}),
+    B('input', {label:'', placeholder:'Nachname (optional)', key:'nachname', required:false, half:true, mb:12}),
+    B('input', {label:'', placeholder:'Deine E-Mail Adresse', inputType:'email', key:'email', required:true, mb:20}),
+    B('checkbox', {text:'Ich stimme zu, dass der Kölner Zoo mich zu meinem Feedback per E-Mail schriftlich kontaktieren darf.', key:'einwilligung', required:true, mb:24}),
+    btn('Mein Feedback absenden', {action:'page', target:pDankeJa.id})]);
+  var pWunsch = P('Kontakt gewünscht', [badge('NUR NOCH 1 SCHRITT'),
+    h('Wir würden das gerne wieder gut machen.'),
+    B('text', {text:'Dürfen wir uns **per Email** persönlich bei dir melden und eine Lösung finden?', align:'center', mb:32}),
+    B('choice', {question:'', key:'kontaktwunsch', layout:'image', ratio:'4:3', required:true, options:[
+      O('Ja, gerne!', '', {img:A+'kontakt-ja.jpg', pos:'50% 15%', sub:'Du kannst auswählen, in welcher Form wir Dich kontaktieren dürfen.', goto:pKontakt.id}),
+      O('Nein, das passt schon...', '', {img:A+'kontakt-nein.jpg', pos:'50% 39%', goto:pDankeNein.id})]})]);
+  var pGut = P('Was hat gut gefallen', [
+    h('😊 Das freut uns sehr!\nWas hat dir besonders gut gefallen?', {mb:32}),
+    B('choice', {question:'', key:'lob', layout:'checklist', multi:true, autoNext:false, required:true, mb:16, options:check(['Tieranlagen','Sauberkeit','Gastronomie','Freundlichkeit der Mitarbeiter','Atmosphäre','Spielplätze','Organisation',['Sonstiges','Bitte gehe unten weiter darauf ein.']])}),
+    Object.assign(note(), {props:Object.assign(note().props, {key:'kommentar_lob'})}),
+    btn('Weiter geht’s')], {next:pGoogle.id});
+  var pProblem = P('Problem', [
+    h('😲\nSchade, dass nicht alles perfekt lief.', {mb:4}),
+    B('text', {text:'Was können wir verbessern?', align:'center', mb:32}),
+    B('choice', {question:'', key:'problemgrund', layout:'checklist', multi:true, autoNext:false, required:true, mb:16, options:check(['Wartezeiten','Sauberkeit','Gastronomie','Preise','Tierbereiche','Freundlichkeit','Orientierung im Zoo','Toiletten',['Sonstiges','Bitte gehe unten weiter darauf ein.']])}),
+    Object.assign(note(), {props:Object.assign(note().props, {key:'kommentar_problem'})}),
+    btn('Weiter geht’s')], {next:pWunsch.id});
+  var pStart = P('Grundstimmung', [badge('ES DAUERT NUR 2 MINUTEN'), hero(),
+    h('🦁\nWie hat Dir __Dein Besuch__ im Kölner Zoo gefallen?', {mb:8}),
+    B('text', {text:'Dein Feedback hilft uns dabei, den Zoo für alle Besucher noch schöner zu machen.', align:'center', size:13, mb:36}),
+    B('rating', {label:'', style:'emoji', max:5, emojis:'😥 🙁 😐 🙂 😀', key:'grundstimmung', autoNext:true, required:true, align:'left', minLabel:'nicht so gut', maxLabel:'mega zufrieden',
+      routes:[{min:1, max:3, goto:pProblem.id}, {min:4, max:5, goto:pGut.id}]})]);
+
+  var css = [
+    '.fp.prog-top .fp-top{padding-top:56px}',
+    '.fp.prog-top .fp-prog{margin:0 0 40px;height:6px;background:rgba(43,42,43,.1)}',
+    '.fp-body{padding-top:24px}',
+    '.fp-h1,.fp-h2,.fp-h3{line-height:1.3}',
+    '.fp-txt{font-size:16px;line-height:1.5;color:var(--tx)}',
+    '.fp-badge{border-radius:6px;padding:5px 12px;font-weight:inherit;letter-spacing:0;text-transform:uppercase}',
+    '.fp-ul .fp-ulsv{color:var(--p)}',
+    '.fp-emo{gap:12px}.fp-emo button{border-radius:6px;background:rgba(43,42,43,.05);height:50px;font-size:24px}',
+    '.fp-rlab{font-size:13.5px;color:var(--tx);margin-top:8px}',
+    '.fp-opts.checklist{gap:12px}',
+    '.fp-opts.checklist .fp-opt{min-height:40px;padding:0 12px;font-size:13px;border:1px solid rgba(43,42,43,.08);background:#f8f9f9}',
+    '.fp-opts.checklist .fp-opt .chk{width:20px;height:20px;border-radius:4px;border:0;background:rgba(43,42,43,.1)}',
+    '.fp-opts.checklist .fp-opt.sel{border-color:rgba(43,42,43,.35);background:#f8f9f9;font-weight:600}',
+    '.fp-opts.checklist .fp-opt.sel .chk{background:rgba(43,42,43,.3)}',
+    '.fp-opt .sub{font-size:11px;margin-top:0;color:#6f6e6f}',
+    '.fp-opts.image{gap:13px}.fp-opts.image .fp-opt{border:1px solid rgba(43,42,43,.08);font-size:13px;font-weight:400}.fp-opts.image .fp-opt .chk{display:none}.fp-opts.image .fp-opt .lbl{padding:8px 12px 9px}',
+    '.fp-in{padding:10px 12px;font-size:14px;border:1px solid rgba(43,42,43,.15)}',
+    'textarea.fp-in{min-height:100px}',
+    '.fp-iw .ii{display:none}.fp-iw .ii+.fp-in{padding-left:12px}',
+    '.fp-cb{font-size:14px;color:var(--tx)}',
+    '.fp-btn{font-size:15px;min-height:56px;padding:7px 28px}',
+    '.fp-btn.auto{width:auto}',
+    '.fp-lbl .rq{display:none}',
+    '@container (min-width:640px){.fp-body{max-width:599px}.fp .fp-top{max-width:1198px}.fp.prog-top .fp-top{padding-top:114px}.fp.prog-top .fp-prog{margin-bottom:34px}}'
+  ].join('\n');
+
+  return {name:'Feedback-Funnel Kölner Zoo', desc:'Smiley-Bewertung mit Weiterleitung: Zufriedene zu Google, Unzufriedene zu Kontakt oder Gutschein.', cats:['Feedback'],
+    theme:theme('clean', {primary:'#0d5b43', primaryText:'#ffffff', bg:'#ffffff', surface:'#f4f4f4', text:'#2b2a2b', muted:'#6f6e6f', font:'Inter Tight', headingFont:'Onest', radius:6, btnRadius:4,
+      headingWeight:700, headingLs:0, lineHeight:1.5, logoImg:A+'logo.png', logoH:35, progress:'bar', progressTop:true, backButton:false, animation:'slide', pad:24, btnPad:7, btnWeight:600, customCss:css}),
+    settings:{currency:'EUR', basePrice:0},
+    pages:[pStart, pProblem, pGut, pWunsch, pKontakt, pDankeJa, pDankeNein, pGoogle]};
+}
+
 function tBlank(){
   return {name:'Leerer Funnel', desc:'Starte mit einer leeren Seite.', cats:[], theme:theme('clean'), settings:{currency:'EUR'},
     pages:[P('Seite 1',[B('heading',{text:'Deine erste Seite'}), B('text',{}), B('button',{})]), P('Danke',[B('heading',{text:'Vielen Dank!', align:'center'})],{hideProgress:true})]};
 }
 
 var TEMPLATES = [
-  {id:'gehlen-tisch', make:tGehlen}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
+  {id:'gehlen-tisch', make:tGehlen}, {id:'koelner-zoo', make:tZoo}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
   {id:'montage', make:tMontage}, {id:'recruiting', make:tRecruiting}, {id:'quiz', make:tQuiz}, {id:'feedback', make:tFeedback}, {id:'abnahme', make:tAbnahme},
   {id:'freebie', make:tFreebie}, {id:'blank', make:tBlank}
 ];
