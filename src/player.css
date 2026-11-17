@@ -230,3 +230,6 @@ textarea.fp-in{min-height:110px;resize:vertical}
 
 .fp-btn.two{flex-direction:row}.fp-btn.two .tx{display:flex;flex-direction:column;align-items:center;gap:2px}.fp-btn.two .sb{font-size:.78em;font-weight:400;opacity:.85;text-transform:none;letter-spacing:normal}
 .fp-txt a,.fp-h1 a,.fp-h2 a,.fp-h3 a,.fp-cb a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+
+.fp-var{display:inline-block;padding:0 .35em;border-radius:.35em;background:color-mix(in srgb,var(--p) 14%,transparent);color:inherit;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--p) 35%,transparent);font-weight:inherit;line-height:1.25;white-space:nowrap}
+.fp-var.miss{background:rgba(239,68,68,.12);box-shadow:inset 0 0 0 1px rgba(239,68,68,.45)}

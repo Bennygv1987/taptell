@@ -187,8 +187,8 @@ function copyText(text, msg){
 function fmtNum(n){ return (n||0).toLocaleString('de-DE'); }
 function fmtRel(ts){ var d = (Date.now()-ts)/1000; if(d < 60) return 'gerade eben'; if(d < 3600) return 'vor '+Math.floor(d/60)+' Min.'; if(d < 86400) return 'vor '+Math.floor(d/3600)+' Std.'; if(d < 86400*7) return 'vor '+Math.floor(d/86400)+' Tag'+(d>=172800?'en':''); return new Date(ts).toLocaleDateString('de-DE'); }
 function fmtDT(ts){ return new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
-var AVC = ['#1c2e3d','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
-function avatar(name){ var n = name || '?', h = 0; for(var i=0;i<n.length;i++) h = (h*31 + n.charCodeAt(i))>>>0; return '<span class="avc" style="background:'+AVC[h%AVC.length]+'">'+esc(n.split(' ').map(function(s){return s[0]||'';}).join('').slice(0,2).toUpperCase())+'</span>'; }
+var AVC = [['#e3e9ef','#1c2e3d'],['#e2eef6','#1f5c86'],['#e4f1ec','#2a6b52'],['#f4ede2','#7a5424'],['#f3e6e6','#8a3a3a'],['#ebe8f3','#4f437f'],['#f1e7ee','#7d3d66'],['#e3eff0','#2c6467']];
+function avatar(name){ var n = name || '?', h = 0; for(var i=0;i<n.length;i++) h = (h*31 + n.charCodeAt(i))>>>0; return '<span class="avc" style="background:'+AVC[h%AVC.length][0]+';color:'+AVC[h%AVC.length][1]+'">'+esc(n.split(' ').map(function(s){return s[0]||'';}).join('').slice(0,2).toUpperCase())+'</span>'; }
 function conv(f){ var v = f.stats.views || 0; return v ? (f.stats.completes / v * 100) : 0; }
 function leadsOf(fid){ return db.leads.filter(function(l){ return l.funnelId === fid; }); }
 function readImage(file, maxW, cb){
@@ -269,7 +269,7 @@ function viewFunnels(){
       + '<div class="st" style="margin-top:4px">'+f.pages.length+' Seiten · bearbeitet '+fmtRel(f.updatedAt)+'</div>'
       + '<div class="cchip">'+(f.clientId && clientById(f.clientId) ? I('folder',12)+'<span>'+esc(clientById(f.clientId).name)+'</span>'+(f.shared?'<span class="pill live nos" style="margin-left:auto">'+I('eye',11)+' freigeschaltet</span>':'<span class="pill draft nos" style="margin-left:auto">nicht freigeschaltet</span>') : '<span style="color:var(--mut)">Intern · keinem Kunden zugeordnet</span>')+'</div></div></div>';
   });
-  h += '<button class="newcard" data-a="newFunnel"><div class="pl">'+I('plus',20)+'</div><b style="color:var(--ink)">Neuer Funnel</b><span style="font-size:12.5px">Aus Vorlage oder leer starten</span></button></div>';
+  h += '<button class="newcard" data-a="newFunnel"><div class="pl">'+I('plus',20)+'</div><b style="color:var(--ink)">Neuer Funnel</b><span style="font-size:var(--fs-13)">Aus Vorlage oder leer starten</span></button></div>';
   if(!fs.length && S.q) h += '<div class="empty" style="margin-top:16px">Keine Funnels gefunden.</div>';
   return h + '</div>';
 }
@@ -322,7 +322,7 @@ function viewContacts(){
     + '<label class="search" style="min-width:220px">'+I('search')+'<input id="cq" placeholder="Name, E-Mail, Telefon …" value="'+esc(S.cf.q)+'"></label></div>';
   if(nSel) h += '<div class="callout" style="align-items:center;margin-bottom:12px"><b>'+nSel+' ausgewählt</b><span style="flex:1"></span>Status setzen: '+STATUSES.map(function(s){ return '<button class="btn sm" data-a="bulk" data-v="'+s[0]+'">'+s[1]+'</button>'; }).join(' ')+''+(isAdmin()?'<button class="btn sm danger" data-a="bulkdel">'+I('trash',13)+'Löschen</button>':'')+'</div>';
   h += '<div class="card" style="overflow:auto">';
-  if(!ls.length) h += '<div class="emptyp" style="padding:60px"><div class="ic">'+I('inbox',20)+'</div>Noch keine Kontakte'+(db.leads.length?' für diesen Filter':'')+'.<br><span style="font-size:12px">Teste einen Funnel in der Vorschau – die Einträge landen hier.</span></div>';
+  if(!ls.length) h += '<div class="emptyp" style="padding:60px"><div class="ic">'+I('inbox',20)+'</div>Noch keine Kontakte'+(db.leads.length?' für diesen Filter':'')+'.<br><span style="font-size:var(--fs-12)">Teste einen Funnel in der Vorschau – die Einträge landen hier.</span></div>';
   else {
     h += '<table class="t"><thead><tr><th style="width:36px"><input type="checkbox" class="cbx" data-a="callsel"'+(nSel && nSel===ls.length?' checked':'')+'></th><th>Kontakt</th><th>Telefon</th><th>Funnel</th><th>Wert</th><th>Status</th><th>Eingang</th></tr></thead><tbody>';
     ls.forEach(function(l){
@@ -342,8 +342,8 @@ function openLead(id){
   var bg = document.createElement('div'); bg.className = 'drwbg'; bg.style.cssText = 'position:fixed;inset:0;z-index:155;background:rgba(15,17,23,.18)';
   var d = document.createElement('div'); d.className = 'drw';
   var rows = (l.fields||[]).map(function(x){ return '<div>'+esc(x.label)+'</div><div>'+(x.type==='signature' && x.image ? '<img src="'+x.image+'" alt="Unterschrift">' : esc(x.value) + (x.image && x.type==='upload' ? '<br><img src="'+x.image+'" alt="" style="margin-top:6px">' : ''))+'</div>'; }).join('');
-  var items = (l.items||[]).map(function(it){ return '<div>'+esc(it.label)+(it.detail?'<br><span style="font-size:11.5px">'+esc(it.detail)+'</span>':'')+'</div><div style="text-align:right;font-weight:550">'+FP.money(it.amount)+'</div>'; }).join('');
-  d.innerHTML = '<div class="dh">'+avatar(l.name||l.email)+'<div style="flex:1;min-width:0"><div style="font-weight:650;font-size:15px">'+esc(l.name||'Unbekannt')+'</div><div style="color:var(--mut);font-size:12.5px">'+esc(l.funnelName)+' · '+fmtDT(l.createdAt)+'</div></div><button class="btn ghost sm ic" data-x>'+I('x')+'</button></div>'
+  var items = (l.items||[]).map(function(it){ return '<div>'+esc(it.label)+(it.detail?'<br><span style="font-size:var(--fs-12)">'+esc(it.detail)+'</span>':'')+'</div><div style="text-align:right;font-weight:550">'+FP.money(it.amount)+'</div>'; }).join('');
+  d.innerHTML = '<div class="dh">'+avatar(l.name||l.email)+'<div style="flex:1;min-width:0"><div style="font-weight:650;font-size:var(--fs-16)">'+esc(l.name||'Unbekannt')+'</div><div style="color:var(--mut);font-size:var(--fs-13)">'+esc(l.funnelName)+' · '+fmtDT(l.createdAt)+'</div></div><button class="btn ghost sm ic" data-x>'+I('x')+'</button></div>'
     + '<div class="db"><div class="row2" style="margin-bottom:6px"><div class="fld"><label>Status</label><select class="inp" id="dst">'+STATUSES.map(function(s){ return '<option value="'+s[0]+'"'+(l.status===s[0]?' selected':'')+'>'+s[1]+'</option>'; }).join('')+'</select></div><div class="fld"><label>Wert</label><div class="inp" style="display:flex;align-items:center;font-weight:650">'+(l.total?FP.money(l.total):'–')+'</div></div></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap">'+(l.email?'<a class="btn sm" href="mailto:'+esc(l.email)+'">'+I('mail',14)+esc(l.email)+'</a>':'')+(l.phone?'<a class="btn sm" href="tel:'+esc(l.phone.replace(/\s/g,''))+'">'+I('tel',14)+esc(l.phone)+'</a>':'')+'</div>'
     + '<div class="dsec">Antworten</div>'+(rows?'<div class="kv">'+rows+'</div>':'<p style="color:var(--mut)">Keine Antworten gespeichert.</p>')
@@ -406,7 +406,7 @@ function viewAnalytics(){
     chs.forEach(function(b){
       var k = FP.keyOf(b), cnt = {}, tot = 0;
       ls.forEach(function(l){ var v = l.answers && l.answers[k]; if(v == null) return; [].concat(v).forEach(function(id){ cnt[id] = (cnt[id]||0) + 1; tot++; }); });
-      h += '<div><div style="font-weight:600;margin-bottom:12px;font-size:13px">'+esc(String(b.props.question||k).replace(/\*\*|==/g,''))+'</div><div class="dist">' + b.props.options.map(function(o){ var c = cnt[o.id]||0, pc = ls.length ? Math.round(c/ls.length*100) : 0; return '<div class="dr"><div class="top"><span>'+esc((o.icon?o.icon+' ':'')+o.label)+'</span><span style="color:var(--mut)">'+c+' · '+pc+' %</span></div><div class="tr"><i style="width:'+pc+'%"></i></div></div>'; }).join('') + '</div></div>';
+      h += '<div><div style="font-weight:600;margin-bottom:12px;font-size:var(--fs-13)">'+esc(String(b.props.question||k).replace(/\*\*|==/g,''))+'</div><div class="dist">' + b.props.options.map(function(o){ var c = cnt[o.id]||0, pc = ls.length ? Math.round(c/ls.length*100) : 0; return '<div class="dr"><div class="top"><span>'+esc((o.icon?o.icon+' ':'')+o.label)+'</span><span style="color:var(--mut)">'+c+' · '+pc+' %</span></div><div class="tr"><i style="width:'+pc+'%"></i></div></div>'; }).join('') + '</div></div>';
     });
     h += '</div></div>';
   }
@@ -428,7 +428,7 @@ function viewSettings(){
     + '<p class="hint" style="margin-top:-6px">Jeder exportierte Funnel sendet Leads als JSON per POST an diese URL – z. B. an Make, Zapier, n8n oder eine Supabase Edge Function.</p>'
     + '<div class="callout" style="margin-top:14px">'+I('info')+'<div>Leads aus dem Live-Funnel kommen über den Webhook in dein System. In diesem Dashboard landen Leads aus der Vorschau sowie importierte Daten.</div></div></div></div>';
   h += '<div class="card"><div class="ch">'+I('file')+'<h3>Daten exportieren</h3></div><div class="cb"><p class="hint" style="margin:0 0 12px">Komplettes Backup (Funnels, Kontakte, Brand-Kit) als JSON.</p><button class="btn" data-a="exportAll">'+I('copy')+'Backup kopieren</button></div></div>';
-  h += '<div class="card"><div class="ch">'+I('upload')+'<h3>Daten importieren</h3></div><div class="cb"><textarea class="inp" id="impj" placeholder="Backup- oder Funnel-JSON hier einfügen …" style="min-height:80px;font-family:ui-monospace,monospace;font-size:11.5px"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-a="importJ">Importieren</button><span style="flex:1"></span><button class="btn danger" data-a="resetAll">'+I('refresh',14)+'Zurücksetzen</button></div></div></div>';
+  h += '<div class="card"><div class="ch">'+I('upload')+'<h3>Daten importieren</h3></div><div class="cb"><textarea class="inp" id="impj" placeholder="Backup- oder Funnel-JSON hier einfügen …" style="min-height:80px;font-family:ui-monospace,monospace;font-size:var(--fs-12)"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-a="importJ">Importieren</button><span style="flex:1"></span><button class="btn danger" data-a="resetAll">'+I('refresh',14)+'Zurücksetzen</button></div></div></div>';
   return h + '</div></div>';
 }
 function colorField(scope, k, v){ return '<div class="colr"><input type="color" data-'+scope+'="'+k+'" value="'+esc(toHex(v||'#ffffff'))+'"><input type="text" data-'+scope+'="'+k+'" value="'+esc(v)+'"></div>'; }
@@ -565,16 +565,32 @@ function renderRight(){
   $('#rps').scrollTop = st;
 }
 function pageOptions(sel, emptyLabel){ var f = F(); return '<option value="">'+esc(emptyLabel||'– Standard –')+'</option>' + f.pages.map(function(p, i){ return '<option value="'+p.id+'"'+(p.id===sel?' selected':'')+'>'+(i+1)+'. '+esc(p.name)+'</option>'; }).join(''); }
+var VARK = ['text','label','question','desc','sub','quote','title','note','placeholder'];
+function varMenu(btn){
+  var fld = btn.closest('.fld'), inp = fld && fld.querySelector('input.inp,textarea.inp'); if(!inp) return;
+  var vars = FP.vars(F()), ic = {input:'cursor', choice:'choice', slider:'sliders', rating:'star', calendar:'calendar', calc:'euro'};
+  var items = vars.map(function(v){ return {k:v.key, ic:ic[v.type]||'tag', l:v.label+'  ·  {{'+v.key+'}}', fn:function(){ insertVar(inp, v.key); }}; });
+  if(!items.length) items = [{k:'none', ic:'info', l:'Noch keine Eingabefelder im Funnel', fn:function(){}}];
+  dropdown(btn, items);
+}
+function insertVar(inp, key){
+  var tok = '{{'+key+'}}', st = inp.selectionStart != null ? inp.selectionStart : inp.value.length, en = inp.selectionEnd != null ? inp.selectionEnd : st;
+  var before = inp.value.slice(0, st), after = inp.value.slice(en);
+  if(before && !/[\s(„"]$/.test(before)) tok = ' ' + tok;
+  inp.value = before + tok + after; inp.focus(); var pos = (before + tok).length; inp.setSelectionRange(pos, pos);
+  inp.dispatchEvent(new Event('input', {bubbles:true}));
+}
 function field(spec, p, scope){
   var k = spec[0], type = spec[1], label = spec[2], extra = spec[3], show = spec[4];
   if(show && !show(p)) return '';
   if(type === 'row') return '<div class="'+(label.length===3?'row3':'row2')+'">' + label.map(function(s){ return field(s, p, scope); }).join('') + '</div>';
   var v = p[k], a = 'data-'+scope+'="'+k+'"', hint = (typeof extra === 'string') ? '<div class="hint">'+esc(extra)+'</div>' : '';
   var w = function(inner, noLabel){ return '<div class="fld">'+(noLabel?'':'<label>'+esc(label)+'</label>')+inner+hint+'</div>'; };
+  var wv = function(inner){ return '<div class="fld"><div class="flh"><label>'+esc(label)+'</label><button class="varbtn" data-a="insVar" title="Eingabe des Besuchers einfügen, z. B. seinen Vornamen">'+I('user',12)+'Variable</button></div>'+inner+hint+'</div>'; };
   switch(type){
-    case 'text': return w('<input class="inp" '+a+' value="'+esc(v)+'">');
-    case 'textarea': return w('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>');
-    case 'code': return w('<textarea class="inp" '+a+' rows="6" style="font-family:ui-monospace,monospace;font-size:12px">'+esc(v)+'</textarea>');
+    case 'text': return VARK.indexOf(k) >= 0 && scope === 'p' ? wv('<input class="inp" '+a+' value="'+esc(v)+'">') : w('<input class="inp" '+a+' value="'+esc(v)+'">');
+    case 'textarea': return VARK.indexOf(k) >= 0 && scope === 'p' ? wv('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>') : w('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>');
+    case 'code': return w('<textarea class="inp" '+a+' rows="6" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)">'+esc(v)+'</textarea>');
     case 'num': return w('<input class="inp" type="number" '+a+' data-num value="'+(v==null?'':esc(v))+'">');
     case 'range': var un = extra[3] != null ? extra[3] : (k==='stars'||k==='max'?'':'px'); return w('<div class="rng"><input type="range" '+a+' data-num data-unit="'+un+'" min="'+extra[0]+'" max="'+extra[1]+'" step="'+extra[2]+'" value="'+(v==null||v===''?extra[0]:v)+'"><span>'+(v==null||v===''?extra[0]:v)+un+'</span></div>');
     case 'font': return w(fontSelect(scope, k, v || '', true));
@@ -583,7 +599,7 @@ function field(spec, p, scope){
     case 'color': return w('<div style="display:flex;gap:6px">'+colorField(scope, k, v||'')+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Zurücksetzen">'+I('x')+'</button>':'')+'</div>');
     case 'toggle': return '<label class="tgl"><span>'+esc(label)+'</span><input type="checkbox" '+a+' data-bool data-rp'+(v?' checked':'')+'><span class="sw"></span></label>'+(hint?'<div style="margin:-6px 0 12px">'+hint+'</div>':'');
     case 'image': return w('<div class="upl"><div class="pv" style="'+(v?'background-image:url(&quot;'+esc(v)+'&quot;)':'')+'">'+(v?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+(v?'Ersetzen':'Hochladen')+'<input type="file" accept="image/*" data-img="'+k+'" data-scope="'+scope+'"></label>'+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Entfernen">'+I('trash')+'</button>':'')+'</div>');
-    case 'key': return '<div class="fld"><label>'+esc(label)+'</label><input class="inp" '+a+' value="'+esc(v)+'" placeholder="automatisch" style="font-family:ui-monospace,monospace;font-size:12px"><div class="hint">Für Variablen ({{'+esc(v||'schluessel')+'}}), Webhook &amp; Export.</div></div>';
+    case 'key': return '<div class="fld"><label>'+esc(label)+'</label><input class="inp" '+a+' value="'+esc(v)+'" placeholder="automatisch" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)"><div class="hint">Für Variablen ({{'+esc(v||'schluessel')+'}}), Webhook &amp; Export.</div></div>';
     case 'page': return w('<select class="inp" '+a+'>'+pageOptions(v, 'Nächste Seite (Standard)')+'</select>');
     case 'strings': return w((v||[]).map(function(s, i){ return '<div class="strl"><input class="inp" data-arr="'+k+'" data-ai="'+i+'" value="'+esc(s)+'"><button class="ibtn" data-a="arrDel" data-k="'+k+'" data-i="'+i+'">'+I('x')+'</button></div>'; }).join('') + '<button class="btn sm" data-a="arrAdd" data-k="'+k+'">'+I('plus',13)+'Hinzufügen</button>');
     case 'faq': return w((v||[]).map(function(it, i){ return '<div class="oped open" style="padding:8px"><div style="display:flex;gap:6px;margin-bottom:6px"><input class="inp" data-faq="'+i+'" data-fk="q" value="'+esc(it.q)+'" placeholder="Frage"><button class="ibtn" data-a="faqDel" data-i="'+i+'">'+I('x')+'</button></div><textarea class="inp" data-faq="'+i+'" data-fk="a" rows="2" placeholder="Antwort">'+esc(it.a)+'</textarea></div>'; }).join('') + '<button class="btn sm" data-a="faqAdd">'+I('plus',13)+'Frage hinzufügen</button>');
@@ -679,7 +695,7 @@ function panelDesign(){
     + '<div class="fld"><label>Seitenübergang</label><select class="inp" data-t="animation">'+[['slide','Slide'],['fade','Fade'],['up','Von unten'],['zoom','Zoom'],['none','Keine']].map(function(o){ return '<option value="'+o[0]+'"'+(t.animation===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select></div>'
     + field(['bgImage','image','Hintergrundbild (alle Seiten)'], t, 't') + (t.bgImage?'<div class="fld"><label>Overlay</label>'+colorField('t','overlay',t.overlay)+'<div class="hint">z. B. rgba(0,0,0,0.4) für bessere Lesbarkeit</div></div>':'')
     + '<div class="fld"><label>Footer-Text</label><input class="inp" data-t="footer" value="'+esc(t.footer||'')+'" placeholder="Impressum · Datenschutz"></div></div>';
-  h += '<div class="psec"><h5>'+I('code',13)+'Eigenes CSS</h5><textarea class="inp" data-t="customCss" rows="5" style="font-family:ui-monospace,monospace;font-size:11.5px" placeholder=".fp-btn{letter-spacing:.02em}\n.fp-h1{font-size:32px}">'+esc(t.customCss||'')+'</textarea><div class="hint">Klassen: .fp-h1/.fp-h2 (Überschriften), .fp-txt, .fp-btn, .fp-opt, .fp-in, .fp-badge, .fp-prog</div></div>';
+  h += '<div class="psec"><h5>'+I('code',13)+'Eigenes CSS</h5><textarea class="inp" data-t="customCss" rows="5" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)" placeholder=".fp-btn{letter-spacing:.02em}\n.fp-h1{font-size:32px}">'+esc(t.customCss||'')+'</textarea><div class="hint">Klassen: .fp-h1/.fp-h2 (Überschriften), .fp-txt, .fp-btn, .fp-opt, .fp-in, .fp-badge, .fp-prog</div></div>';
   return h;
 }
 function panelSettings(){
@@ -697,7 +713,7 @@ function panelSettings(){
   h += '<div class="psec"><h5>'+I('zap',13)+'Integrationen</h5><div class="fld"><label>Webhook-URL</label><input class="inp" data-s="webhook" value="'+esc(s.webhook||'')+'" placeholder="https://hook.eu1.make.com/…"><div class="hint">Leads werden beim Absenden als JSON gesendet (Make, Zapier, n8n, Supabase Edge Function).</div></div>'
     + '<div class="fld"><label>Weiterleitung nach Absenden (optional)</label><input class="inp" data-s="redirect" value="'+esc(s.redirect||'')+'" placeholder="https://deine-seite.de/danke"></div>'
     + '<div class="fld"><label>Meta Pixel ID (optional)</label><input class="inp" data-s="pixel" value="'+esc(s.pixel||'')+'" placeholder="123456789012345"><div class="hint">Feuert „PageView“ und „Lead“ im exportierten Funnel.</div></div></div>';
-  h += '<div class="psec"><h5>Personalisierung</h5><p class="hint" style="margin:0 0 6px">Verfügbare Variablen für Texte und Überschriften (klicken zum Kopieren):</p><div class="varlist">' + keys.concat(['vorname','total','score']).filter(function(k, i, a){ return a.indexOf(k) === i; }).map(function(k){ return '<code data-a="copyVar" data-v="{{'+esc(k)+'}}">{{'+esc(k)+'}}</code>'; }).join('') + '</div></div>';
+  h += '<div class="psec"><h5>'+I('user',13)+'Personalisierung</h5><p class="hint" style="margin:0 0 10px">Wiederhole Eingaben des Besuchers in späteren Texten, z. B. „Danke, {{vorname}}!“. In jedem Textfeld fügst du sie über <b>Variable</b> ein. Mit <code>{{vorname|du}}</code> legst du fest, was erscheint, wenn das Feld leer bleibt.</p><div class="varrows">' + FP.vars(f).map(function(v){ return '<button class="varrow" data-a="copyVar" data-v="{{'+esc(v.key)+'}}" title="Kopieren"><span>'+esc(v.label)+'</span><code>{{'+esc(v.key)+'}}</code></button>'; }).join('') + '</div></div>';
   return h;
 }
 
@@ -1005,7 +1021,7 @@ function publishModal(f){
       el.addEventListener('toggle', function(e){ if(e.target.classList && e.target.classList.contains('advx')){ open = e.target.open; if(open && adv === 'qr') drawQR(el.querySelector('#qrurl').value); } }, true);
       el.addEventListener('click', function(e){
         var pt = e.target.closest('[data-pt]'); if(pt){ adv = pt.getAttribute('data-pt'); el.querySelector('#advb').innerHTML = advBody(); if(adv === 'qr') drawQR(el.querySelector('#qrurl').value); return; }
-        var ps = e.target.closest('[data-ps]'); if(ps){ f.status = ps.getAttribute('data-ps'); save(); if(S.view === 'editor'){ var pill = $('.etop .pill'); if(pill){ pill.className = 'pill '+(f.status==='live'?'live':'draft'); pill.textContent = f.status==='live'?'Live':'Entwurf'; } } toast(f.status==='live'?'Funnel ist live 🎉':'Funnel ist wieder ein Entwurf'); rerender(); return; }
+        var ps = e.target.closest('[data-ps]'); if(ps){ f.status = ps.getAttribute('data-ps'); save(); if(S.view === 'editor'){ var pill = $('.etop .pill'); if(pill){ pill.className = 'pill '+(f.status==='live'?'live':'draft'); pill.textContent = f.status==='live'?'Live':'Entwurf'; } } toast(f.status==='live'?'Funnel ist live':'Funnel ist wieder ein Entwurf'); rerender(); return; }
         var g = e.target.closest('[data-goto]'); if(g){ close(); if(S.view === 'editor' && S.fid === f.id){ selectPage(+g.getAttribute('data-goto')); } else { go('editor', f.id); S.pi = +g.getAttribute('data-goto'); renderEditor(); } return; }
         var gt = e.target.closest('[data-gotab]'); if(gt){ close(); if(!(S.view === 'editor' && S.fid === f.id)) go('editor', f.id); S.rtab = 'set'; renderRight(); return; }
         if(e.target.closest('[data-copyurl]')) copyText(publicUrl(f), 'Link kopiert');
@@ -1096,7 +1112,7 @@ function viewPortal(){
   var fs = visibleFunnels(), ls = visibleLeads(), c = clientById(myClientId()) || {};
   var views = 0, comp = 0; fs.forEach(function(f){ views += f.stats.views || 0; comp += f.stats.completes || 0; });
   var week = ls.filter(function(l){ return l.createdAt > Date.now() - 7*864e5; }).length;
-  var h = '<div class="page"><div class="ph"><div><h1>Hallo'+(S.user && S.user.name && !S.as ? ', '+esc(S.user.name.split(' ')[0]) : '')+' 👋</h1><p>Deine Funnels, Anfragen und Auswertungen für '+esc(c.name||'dein Unternehmen')+'.</p></div></div>';
+  var h = '<div class="page"><div class="ph"><div><h1>Hallo'+(S.user && S.user.name && !S.as ? ', '+esc(S.user.name.split(' ')[0]) : '')+'</h1><p>Deine Funnels, Anfragen und Auswertungen für '+esc(c.name||'dein Unternehmen')+'.</p></div></div>';
   h += '<div class="kpis">' + kpi('Aktive Funnels', fs.filter(function(f){ return f.status==='live'; }).length + ' / ' + fs.length, 'freigeschaltet', 'funnel') + kpi('Aufrufe', fmtNum(views), 'gesamt', 'eye') + kpi('Anfragen', fmtNum(ls.length), '<b>+'+week+'</b> in den letzten 7 Tagen', 'inbox') + kpi('Ø Conversion', (views ? comp/views*100 : 0).toFixed(1).replace('.',',') + ' %', 'Aufruf → Anfrage', 'percent') + '</div>';
   if(!fs.length) return h + '<div class="empty">Für dich wurden noch keine Funnels freigeschaltet.</div></div>';
   h += '<div class="grid">';
@@ -1133,7 +1149,7 @@ function clientModal(id, tab){
     var us = (db.users||[]).filter(function(u){ return u.clientId === c.id; });
     var t = '<div class="tabs2"><button class="'+(tab==='funnels'?'on':'')+'" data-ct="funnels">Funnels & Freigabe</button><button class="'+(tab==='users'?'on':'')+'" data-ct="users">Logins ('+us.length+')</button><button class="'+(tab==='data'?'on':'')+'" data-ct="data">Stammdaten</button></div>';
     if(tab === 'funnels'){
-      t += fs.length ? fs.map(function(f){ return '<div class="crow"><div style="flex:1;min-width:0"><b>'+esc(f.name)+'</b><div class="sub">'+f.pages.length+' Seiten · '+leadsOf(f.id).length+' Anfragen · '+(f.status==='live'?'Live':'Entwurf')+'</div></div><label class="tgl" style="margin:0;gap:10px"><span style="font-size:12.5px;color:var(--ink2)">'+(f.shared?'Freigeschaltet':'Gesperrt')+'</span><input type="checkbox" data-cshare="'+f.id+'"'+(f.shared?' checked':'')+'><span class="sw"></span></label><button class="ibtn" data-cedit="'+f.id+'" title="Bearbeiten">'+I('edit')+'</button><button class="ibtn" data-cunassign="'+f.id+'" title="Zuordnung entfernen">'+I('x')+'</button></div>'; }).join('') : '<p style="color:var(--mut);margin:0 0 12px">Diesem Kunden ist noch kein Funnel zugeordnet.</p>';
+      t += fs.length ? fs.map(function(f){ return '<div class="crow"><div style="flex:1;min-width:0"><b>'+esc(f.name)+'</b><div class="sub">'+f.pages.length+' Seiten · '+leadsOf(f.id).length+' Anfragen · '+(f.status==='live'?'Live':'Entwurf')+'</div></div><label class="tgl" style="margin:0;gap:10px"><span style="font-size:var(--fs-13);color:var(--ink2)">'+(f.shared?'Freigeschaltet':'Gesperrt')+'</span><input type="checkbox" data-cshare="'+f.id+'"'+(f.shared?' checked':'')+'><span class="sw"></span></label><button class="ibtn" data-cedit="'+f.id+'" title="Bearbeiten">'+I('edit')+'</button><button class="ibtn" data-cunassign="'+f.id+'" title="Zuordnung entfernen">'+I('x')+'</button></div>'; }).join('') : '<p style="color:var(--mut);margin:0 0 12px">Diesem Kunden ist noch kein Funnel zugeordnet.</p>';
       t += '<div style="display:flex;gap:8px;margin-top:14px"><select class="inp" id="cassign"><option value="">Funnel zuordnen …</option>'+free.map(function(f){ return '<option value="'+f.id+'">'+esc(f.name)+'</option>'; }).join('')+'</select><button class="btn" data-cassign>'+I('plus',14)+'Zuordnen</button></div><p class="hint">Nur freigeschaltete Funnels samt Anfragen und Analytics sind im Kundenlogin sichtbar. Bearbeiten kannst nur du als Admin.</p>';
     } else if(tab === 'users'){
       t += us.length ? us.map(function(u){ return '<div class="crow">'+avatar(u.name||u.email)+'<div style="flex:1;min-width:0"><b>'+esc(u.name||'–')+'</b><div class="sub">'+esc(u.email)+(REMOTE?'':' · Passwort: <code>'+esc(u.password)+'</code>')+'</div></div>'+(REMOTE?'<button class="btn sm" data-ureset="'+u.id+'">Passwort-Link senden</button>':'')+'<button class="ibtn" data-udel="'+u.id+'" title="Zugang löschen">'+I('trash')+'</button></div>'; }).join('') : '<p style="color:var(--mut);margin:0 0 12px">Noch keine Logins für diesen Kunden.</p>';
@@ -1318,6 +1334,7 @@ var ACT = {
     {k:'p', l:'Ab hier testen', ic:'play', fn:function(){ openPreview(f, i); }},
     '-', {k:'x', l:'Löschen', ic:'trash', danger:true, fn:function(){ delPage(i); }}]); },
   addPage:addPage,
+  insVar:function(el){ varMenu(el); },
   flow:function(){ flowModal(); },
   pprev:function(){ if(S.pi > 0) selectPage(S.pi - 1); },
   pnext:function(){ if(S.pi < F().pages.length - 1) selectPage(S.pi + 1); },

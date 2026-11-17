@@ -104,16 +104,49 @@ FP.readable = function(f, answers){
   return out;
 };
 
+/* Personalisierung: {{schluessel}} oder {{schluessel|Ersatztext}} */
+FP.VAR_RE = /\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g;
+FP.vars = function(f){
+  var out = [], seen = {}, add = function(k, l, t){ if(!k || seen[k]) return; seen[k] = 1; out.push({key:k, label:l, type:t}); };
+  (f.pages||[]).forEach(function(pg){ (pg.blocks||[]).forEach(function(b){
+    var p = b.props || {}; if(!p.key || ['choice','input','slider','rating','calendar'].indexOf(b.type) < 0) return;
+    add(p.key, String(p.label || p.question || pg.name || p.key).replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\{\{[^}]*\}\}/g,'…').trim(), b.type);
+  }); });
+  if(seen.name && !seen.vorname) add('vorname', 'Vorname (aus Name)', 'input');
+  add('total', 'Gesamtpreis', 'calc'); add('score', 'Punktzahl', 'calc');
+  return out;
+};
+FP.varValue = function(k, f, answers, map){
+  if(k === 'total') return FP.money(FP.computeTotal(f, answers).total, (f.settings||{}).currency);
+  if(k === 'score') return String(FP.computeTotal(f, answers).score);
+  if(k === 'vorname' && !map.vorname && map.name) return String(map.name).split(' ')[0];
+  return map[k] != null ? String(map[k]) : '';
+};
 FP.interp = function(text, f, answers){
-  if(!text || text.indexOf('{{') < 0) return text;
-  var r = FP.readable(f, answers), map = {};
-  r.forEach(function(x){ map[x.key] = x.value; });
-  return text.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, function(m, k){
-    if(k === 'total') return FP.money(FP.computeTotal(f, answers).total, (f.settings||{}).currency);
-    if(k === 'score') return String(FP.computeTotal(f, answers).score);
-    if(k === 'vorname' && !map.vorname && map.name) return String(map.name).split(' ')[0];
-    return map[k] != null ? map[k] : '';
+  if(!text || String(text).indexOf('{{') < 0) return text;
+  var map = {}, empty = false;
+  FP.readable(f, answers || {}).forEach(function(x){ map[x.key] = x.value; });
+  var out = String(text).replace(FP.VAR_RE, function(m, k, fb){
+    var v = FP.varValue(k, f, answers || {}, map);
+    if(v === '' && fb != null) v = fb.trim();
+    if(v === '') empty = true;
+    return v;
   });
+  /* leere Variablen ohne Ersatztext: Satzzeichen aufräumen („Danke, !“ → „Danke!“) */
+  if(empty && /^\s*\{\{/.test(text)) out = out.replace(/^[ ,]+/, '').replace(/^\S/, function(c){ return c.toUpperCase(); });
+  if(empty) out = out.replace(/[ \t]+([,.!?:;])/g, '$1').replace(/,([!?.])/g, '$1').replace(/[ \t]{2,}/g, ' ').replace(/^[ ,]+/, '');
+  return out;
+};
+/* Im Editor: Variablen als sichtbare Marken statt leerem Text */
+FP.interpEdit = function(text, f){
+  if(!text || String(text).indexOf('{{') < 0) return {text:text, tokens:[]};
+  var vars = FP.vars(f), tokens = [];
+  var out = String(text).replace(FP.VAR_RE, function(m, k, fb){
+    var v = vars.filter(function(x){ return x.key === k; })[0];
+    tokens.push({label:v ? v.label : k, missing:!v, fb:fb});
+    return '\u0001' + (tokens.length - 1) + '\u0002';
+  });
+  return {text:out, tokens:tokens};
 };
 
 function ytId(u){ var m = String(u||'').match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/); return m ? m[1] : null; }
@@ -123,7 +156,11 @@ function initials(n){ return String(n||'?').split(' ').map(function(s){return s[
 
 FP.renderBlock = function(b, ctx){
   var p = b.props || {}, a = ctx.answers || {}, k = keyOf(b), err = ctx.errors && ctx.errors[b.id], v = a[k], cur = (ctx.f.settings||{}).currency, h = '';
-  var T = function(s){ return md(FP.interp(s, ctx.f, a)); };
+  var T = function(s){
+    if(!ctx.edit) return md(FP.interp(s, ctx.f, a));
+    var r = FP.interpEdit(s, ctx.f);
+    return md(r.text).replace(/\u0001(\d+)\u0002/g, function(m, i){ var t = r.tokens[+i]; return '<span class="fp-var'+(t.missing?' miss':'')+'" title="'+(t.missing?'Unbekannte Variable':'Wird durch die Eingabe ersetzt')+(t.fb?' · sonst „'+esc(t.fb)+'“':'')+'">'+esc(t.label)+'</span>'; });
+  };
   var rq = p.required ? '<span class="rq">*</span>' : '';
   var label = function(t){ return t ? '<label class="fp-lbl">'+T(t)+rq+'</label>' : ''; };
   switch(b.type){
@@ -184,8 +221,8 @@ FP.renderBlock = function(b, ctx){
     case 'input':
       var it = p.inputType || 'text', icon = it==='email'?IC.mail:it==='tel'?IC.phone:p.icon==='user'?IC.user:'';
       var val = v == null ? '' : esc(v);
-      var field = it === 'textarea' ? '<textarea class="fp-in" data-key="'+esc(k)+'" data-bid="'+b.id+'" placeholder="'+esc(p.placeholder)+'">'+val+'</textarea>'
-        : '<div class="fp-iw">'+(icon?'<span class="ii">'+icon+'</span>':'')+'<input class="fp-in" type="'+(it==='tel'?'tel':it==='email'?'email':it==='number'?'number':it==='date'?'date':'text')+'" data-key="'+esc(k)+'" data-bid="'+b.id+'" placeholder="'+esc(p.placeholder)+'" value="'+val+'" autocomplete="'+(it==='email'?'email':it==='tel'?'tel':/name/i.test(k)?'name':'on')+'"></div>';
+      var field = it === 'textarea' ? '<textarea class="fp-in" data-key="'+esc(k)+'" data-bid="'+b.id+'" placeholder="'+esc(ctx.edit?p.placeholder:FP.interp(p.placeholder, ctx.f, a))+'">'+val+'</textarea>'
+        : '<div class="fp-iw">'+(icon?'<span class="ii">'+icon+'</span>':'')+'<input class="fp-in" type="'+(it==='tel'?'tel':it==='email'?'email':it==='number'?'number':it==='date'?'date':'text')+'" data-key="'+esc(k)+'" data-bid="'+b.id+'" placeholder="'+esc(ctx.edit?p.placeholder:FP.interp(p.placeholder, ctx.f, a))+'" value="'+val+'" autocomplete="'+(it==='email'?'email':it==='tel'?'tel':/name/i.test(k)?'name':'on')+'"></div>';
       h = '<div class="fp-field">'+label(p.label)+field+'</div>';
       break;
     case 'slider':
