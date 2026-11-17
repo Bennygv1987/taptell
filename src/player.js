@@ -539,6 +539,7 @@ FP.mount = function(root, f, opts){
     if(e.target.closest('a[href]')) return;
     var el = e.target.closest('[data-act]'); if(!el || !root.contains(el)) return;
     var act = el.getAttribute('data-act'), b = blockById(el.getAttribute('data-bid'));
+    if(!b && act !== 'next' && act !== 'back') return; /* Element gehört nicht (mehr) zu diesem Funnel */
     if(act !== 'sigclr') e.preventDefault();
     if(act === 'next') go();
     else if(act === 'back') back();
@@ -574,7 +575,7 @@ FP.mount = function(root, f, opts){
   });
   root.addEventListener('input', function(e){
     var el = e.target, k = el.getAttribute && el.getAttribute('data-key'); if(!k) return;
-    var b = blockById(el.getAttribute('data-bid'));
+    var b = blockById(el.getAttribute('data-bid')); if(!b) return;
     if(el.type === 'range' && b && b.type === 'rating'){
       var rv0 = +el.value, rmx = FP.rateMax(b.props); setAns(b, rv0);
       el.style.setProperty('--fill', (rmx > 1 ? (rv0 - 1) / (rmx - 1) * 100 : 0) + '%');

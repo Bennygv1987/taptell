@@ -155,7 +155,7 @@ function dropdown(anchor, items){
   d.innerHTML = items.map(function(it){ return it === '-' ? '<hr>' : '<button class="'+(it.danger?'danger':'')+'" data-ddi="'+it.k+'">'+I(it.ic)+esc(it.l)+'</button>'; }).join('');
   document.body.appendChild(d);
   var r = anchor.getBoundingClientRect(), w = d.offsetWidth, h = d.offsetHeight;
-  var left = Math.min(window.innerWidth - w - 8, r.right - w), top = r.bottom + 6; if(top + h > window.innerHeight - 8) top = r.top - h - 6;
+  var left = Math.min(window.innerWidth - w - 8, r.right - w), top = r.bottom + 6; if(top + h > window.innerHeight - 8){ top = r.top - h - 6; d.classList.add('up'); }
   d.style.left = Math.max(8,left) + 'px'; d.style.top = top + 'px';
   d.addEventListener('click', function(e){ var b = e.target.closest('[data-ddi]'); if(!b) return; var it = items.filter(function(x){ return x.k === b.getAttribute('data-ddi'); })[0]; closeDD(); if(it && it.fn) it.fn(); });
 }
