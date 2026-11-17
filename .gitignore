@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 src/deploy/
 src/funnel-studio.html
-.claude/
+.claude/*
+!.claude/skills/
