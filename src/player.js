@@ -417,11 +417,42 @@ FP.mount = function(root, f, opts){
   function blockById(id){ var r=null; pages.forEach(function(p){ p.blocks.forEach(function(b){ if(b.id===id) r=b; }); }); return r; }
   function scroller(){ return opts.scrollEl || root.closest && root.closest('[data-fp-scroll]') || document.scrollingElement; }
 
-  function render(){
+  /* stay = gleiche Seite neu zeichnen (ohne Einblend-Animation, Scrollposition bleibt) */
+  function render(stay){
     var page = pages[st.i];
     page.blocks.forEach(function(b){ if(b.type === 'slider' && st.answers[keyOf(b)] == null) st.answers[keyOf(b)] = +(b.props.def != null ? b.props.def : b.props.min); });
-    root.innerHTML = FP.renderPage(f, st.i, {answers:st.answers, errors:st.errors, dir:st.dir, live:opts.live, back: st.hist.length>0 && !st.done && page.allowBack!==false && (f.theme||{}).backButton!==false, startedAt:st.startedAt});
+    var sc = stay ? scroller() : null, top = sc ? sc.scrollTop : 0;
+    root.innerHTML = FP.renderPage(f, st.i, {answers:st.answers, errors:st.errors, dir:st.dir, live:opts.live, noAnim:!!stay, back: st.hist.length>0 && !st.done && page.allowBack!==false && (f.theme||{}).backButton!==false, startedAt:st.startedAt});
+    if(sc) sc.scrollTop = top;
     initSignatures(); initCountdown();
+  }
+  /* Auswahl direkt im DOM markieren – kein Neuaufbau, kein Flackern */
+  function clearErr(b){ var w = root.querySelector('.fp-b[data-bid="'+b.id+'"]'); if(w && w.classList.contains('fp-err')){ w.classList.remove('fp-err'); var m = w.querySelector('.fp-errmsg'); if(m) m.remove(); } }
+  function markSelection(b){
+    var v = st.answers[keyOf(b)], sel = [].concat(v == null ? [] : v);
+    if(b.type === 'choice'){
+      root.querySelectorAll('[data-act="opt"][data-bid="'+b.id+'"]').forEach(function(el){ el.classList.toggle('sel', sel.indexOf(el.getAttribute('data-oid')) >= 0); });
+    } else if(b.type === 'rating'){
+      root.querySelectorAll('[data-act="rate"][data-bid="'+b.id+'"]').forEach(function(el){
+        var n = +el.getAttribute('data-v');
+        if(el.classList.contains('fp-star')) el.classList.toggle('on', v >= n);
+        else { el.classList.toggle('on', v === n); if(b.props.style === 'emoji') el.classList.toggle('dim', v != null && v !== n); }
+      });
+    } else if(b.type === 'checkbox'){
+      var cb = root.querySelector('[data-act="cb"][data-bid="'+b.id+'"]'); if(cb) cb.classList.toggle('on', !!v);
+    }
+    clearErr(b); refreshSums(); refreshVars();
+  }
+  /* Texte mit {{variablen}} auf derselben Seite live nachziehen */
+  function refreshVars(){
+    var page = pages[st.i]; if(!page) return;
+    page.blocks.forEach(function(b){
+      var p = b.props || {}, uses = ['text','label','question','desc','sub','title','note','quote'].some(function(k){ return typeof p[k] === 'string' && p[k].indexOf('{{') >= 0; });
+      if(!uses || ['choice','rating','checkbox','input'].indexOf(b.type) >= 0) return;
+      var w = root.querySelector('.fp-b[data-bid="'+b.id+'"]'); if(!w) return;
+      var tmp = document.createElement('div'); tmp.innerHTML = FP.renderBlock(b, {f:f, answers:st.answers, errors:st.errors, live:opts.live, noAnim:true});
+      var n = tmp.firstElementChild; if(n && n.innerHTML !== w.innerHTML) w.innerHTML = n.innerHTML;
+    });
   }
 
   function validate(){
@@ -466,7 +497,7 @@ FP.mount = function(root, f, opts){
   }
 
   function go(target, skipValidate){
-    if(!skipValidate && !validate()){ render(); var e = root.querySelector('.fp-err'); if(e && e.scrollIntoView) e.scrollIntoView({block:'center',behavior:'smooth'}); return false; }
+    if(!skipValidate && !validate()){ render(true); var e = root.querySelector('.fp-err'); if(e && e.scrollIntoView) e.scrollIntoView({block:'center',behavior:'smooth'}); return false; }
     st.errors = {};
     if(!st.started){ st.started = true; emit('start'); }
     var tid = resolveTarget(target), ni = tid ? pages.map(function(p){return p.id;}).indexOf(tid) : st.i + 1;
@@ -514,7 +545,7 @@ FP.mount = function(root, f, opts){
     else if(act === 'btn'){
       var p = b.props, a = p.action || 'next';
       if(a === 'url'){ if(opts.onUrl) opts.onUrl(p.url); else window.location.href = p.url; }
-      else if(a === 'submit'){ if(!validate()){ render(); return; } submit(); go(p.target || null, true); }
+      else if(a === 'submit'){ if(!validate()){ render(true); var e2 = root.querySelector('.fp-err'); if(e2 && e2.scrollIntoView) e2.scrollIntoView({block:'center',behavior:'smooth'}); return; } submit(); go(p.target || null, true); }
       else if(a === 'page') go(p.target);
       else go();
     }
@@ -523,17 +554,17 @@ FP.mount = function(root, f, opts){
       if(b.props.multi){
         var arr = [].concat(st.answers[k] || []), ix = arr.indexOf(oid);
         if(ix >= 0) arr.splice(ix,1); else { if(b.props.maxSelect && arr.length >= +b.props.maxSelect) arr.shift(); arr.push(oid); }
-        setAns(b, arr); render();
+        setAns(b, arr); markSelection(b);
       } else {
-        setAns(b, oid); render();
+        setAns(b, oid); markSelection(b);
         if(b.props.autoNext){ clearTimeout(timer); timer = setTimeout(function(){ go(); }, 260); }
       }
     }
-    else if(act === 'rate'){ setAns(b, +el.getAttribute('data-v')); render(); if(b.props.autoNext){ clearTimeout(timer); timer = setTimeout(function(){ go(); }, 300);} }
-    else if(act === 'cb'){ setAns(b, !st.answers[keyOf(b)]); render(); }
-    else if(act === 'day'){ var cv = st.answers[keyOf(b)] || {}; setAns(b, {date:el.getAttribute('data-v'), time: cv.time}); render(); }
-    else if(act === 'slot'){ var cv2 = st.answers[keyOf(b)] || {}; if(!cv2.date) return; setAns(b, {date:cv2.date, time:el.getAttribute('data-v')}); render(); }
-    else if(act === 'sigclr'){ e.preventDefault(); delete st.answers[keyOf(b)]; render(); }
+    else if(act === 'rate'){ setAns(b, +el.getAttribute('data-v')); markSelection(b); if(b.props.autoNext){ clearTimeout(timer); timer = setTimeout(function(){ go(); }, 300);} }
+    else if(act === 'cb'){ setAns(b, !st.answers[keyOf(b)]); markSelection(b); }
+    else if(act === 'day'){ var cv = st.answers[keyOf(b)] || {}; setAns(b, {date:el.getAttribute('data-v'), time: cv.time}); render(true); }
+    else if(act === 'slot'){ var cv2 = st.answers[keyOf(b)] || {}; if(!cv2.date) return; setAns(b, {date:cv2.date, time:el.getAttribute('data-v')}); render(true); }
+    else if(act === 'sigclr'){ e.preventDefault(); delete st.answers[keyOf(b)]; render(true); }
   });
 
   root.addEventListener('change', function(e){
@@ -574,11 +605,11 @@ FP.mount = function(root, f, opts){
         var img = new Image(); img.onload = function(){
           var c = document.createElement('canvas'), sc = Math.min(1, 1000/Math.max(img.width,img.height)); c.width = img.width*sc; c.height = img.height*sc;
           c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-          setAns(b, {name:file.name, size:file.size, type:file.type, data:c.toDataURL('image/jpeg',.78)}); render();
+          setAns(b, {name:file.name, size:file.size, type:file.type, data:c.toDataURL('image/jpeg',.78)}); render(true);
         }; img.src = rd.result;
       };
       rd.readAsDataURL(file);
-    } else { setAns(b, {name:file.name, size:file.size, type:file.type}); render(); }
+    } else { setAns(b, {name:file.name, size:file.size, type:file.type}); render(true); }
   });
 
   root.addEventListener('keydown', function(e){
