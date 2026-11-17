@@ -282,17 +282,6 @@ function templateGallery(){
     + shown.map(function(x){ var f = {pages:x.d.pages, theme:x.d.theme, settings:x.d.settings||{}}; return '<div class="tcard" role="button" tabindex="0" data-a="useTpl" data-id="'+x.id+'"><div class="thumb">'+mini(f)+'</div><div class="tm"><b>'+esc(x.d.name)+'</b><span>'+esc(x.d.desc)+'</span><div class="tags">'+x.d.cats.map(function(c){ return '<span class="tag'+(c==='Konfigurator'?' a':'')+'">'+c+'</span>'; }).join('')+'<span class="tag">'+x.d.pages.length+' Seiten</span></div></div></div>'; }).join('')
     + '</div>';
 }
-function newFunnelModal(){
-  modal({title:'Neuen Funnel erstellen', sub:'Wähle eine Vorlage – Inhalte, Design und Logik kannst du danach frei anpassen.', size:'wide', body:'<div id="tplwrap">'+templateGallery()+'</div>',
-    onOpen:function(el, close){ el.addEventListener('click', function(e){ var c = e.target.closest('[data-a="tcat"]'); if(c){ e.stopPropagation(); S.tcat = c.getAttribute('data-v'); el.querySelector('#tplwrap').innerHTML = templateGallery(); } var u = e.target.closest('[data-a="useTpl"]'); if(u){ e.stopPropagation(); close(); createFromTpl(u.getAttribute('data-id')); } }, true); }});
-}
-function createFromTpl(id){
-  var f = T.newFunnel(id);
-  if(db.defaults && db.defaults.webhook && !f.settings.webhook) f.settings.webhook = db.defaults.webhook;
-  db.funnels.unshift(f); save(true);
-  toast('Funnel „'+f.name+'“ erstellt');
-  go('editor', f.id);
-}
 function funnelMenu(btn, id){
   var f = getF(id);
   dropdown(btn, [
@@ -462,14 +451,14 @@ var FIELDS = {
   heading:[['text','textarea','Text','**fett** · ==Akzentfarbe== · __handgezeichnet unterstrichen__ · [[Marker]] · Variablen: {{name}}'],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['size','num','Schriftgröße (px, optional)']],
   text:[['text','textarea','Text','**fett** · ==Akzent== · __unterstrichen__ · [[Marker]] · {{name}}, {{total}}'],['size','num','Schriftgröße (px, optional)']],
   badge:[['text','text','Text'],['variant','seg','Stil',[['','Soft'],['filled','Gefüllt'],['outline','Rahmen'],['grey','Grau']]],['upper','toggle','Großbuchstaben']],
-  image:[['src','image','Bild'],['height','range','Höhe',[80,420,10]],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text']],
+  image:[['src','image','Bild'],['ratio','select','Seitenverhältnis',[['','Feste Höhe'],['2:1','2:1'],['16:9','16:9'],['4:3','4:3'],['1:1','1:1'],['auto','Original']]],['height','range','Höhe',[80,420,10],function(p){ return !p.ratio; }],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text']],
   video:[['url','text','YouTube- oder Vimeo-Link','Wird im veröffentlichten Funnel eingebettet.'],['radius','range','Ecken',[0,40,1]]],
   list:[['items','strings','Punkte'],['icon','seg','Symbol',[['check','Haken'],['number','Zahlen']]]],
   testimonial:[['quote','textarea','Zitat'],['name','text','Name'],['role','text','Untertitel'],['stars','range','Sterne',[0,5,1]],['img','image','Foto']],
   trust:[['items','strings','Badges']],
   faq:[['items','faq','Fragen & Antworten']],
   countdown:[['label','text','Text darüber'],['minutes','num','Dauer in Minuten']],
-  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['cols','seg','Bilder pro Reihe',[[2,'2'],[1,'1']],function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale'; }],['options','options','Antworten'],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise anzeigen'],['key','key','Feld-Schlüssel']],
+  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['cols','seg','Bilder pro Reihe',[[2,'2'],[1,'1']],function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale'; }],['options','options','Antworten'],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise anzeigen'],['key','key','Feld-Schlüssel']],
   input:[['label','text','Label'],['placeholder','text','Platzhalter'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','seg','Typ',[['stars','Sterne'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return p.style!=='nps'; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']]],['autoNext','toggle','Automatisch weiter'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
@@ -477,7 +466,7 @@ var FIELDS = {
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  button:[['label','text','Beschriftung'],['sub','text','Text darunter (optional)'],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen']]],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
+  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen']]],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
   summary:[['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }]],
   spacer:[['height','range','Höhe',[4,160,2]]],
   divider:[],
@@ -518,8 +507,10 @@ function renderLeft(){
     Object.keys(groups).forEach(function(g){ h += '<div class="libg"><h4>'+g+'</h4><div class="lib">' + groups[g].map(function(l){ return '<div class="li" draggable="true" data-lib="'+l.id+'" data-a="addLib" title="Klicken oder ziehen"><span class="lic">'+I(l.ic)+'</span>'+esc(l.n)+'</div>'; }).join('') + '</div></div>'; });
     h += '<p class="hint" style="text-align:center">Ziehe Elemente auf das Handy oder klicke, um sie unter dem markierten Element einzufügen.</p>';
   } else {
-    h += '<div class="plist">' + f.pages.map(function(p, i){ var link = p.next ? f.pages.filter(function(x){ return x.id===p.next; })[0] : null, routes = (p.scoreRoutes||[]).length, br = p.blocks.some(function(b){ return (b.props.options||[]).some(function(o){ return o.goto; }) || (b.type==='button' && b.props.action==='page'); });
-      return '<div class="pitem'+(i===S.pi?' on':'')+'" draggable="true" data-pidx="'+i+'" data-a="page" data-i="'+i+'"><span class="n">'+(i+1)+'</span><span class="t">'+esc(p.name)+'</span>'+((link||routes||br)?'<span class="go" title="Hat Logik/Sprünge">'+I('branch',12)+'</span>':'')+'<span class="c">'+p.blocks.length+'</span><button class="ibtn" data-a="pmenu" data-i="'+i+'">'+I('more')+'</button></div>'; }).join('') + '</div>'
+    var EE = flowEdges(f), RR = flowReach(f);
+    h += '<div class="plist">' + f.pages.map(function(p, i){
+      var es = EE[i], sub = !es.length ? '<span class="pe end">Ende</span>' : es.length === 1 && es[0].kind === 'next' && es[0].to === i+1 ? '' : es.map(function(e){ var t = f.pages[e.to]; return '<span class="pe '+e.kind+(t?'':' bad')+'" title="'+esc(e.label)+'">'+I('right',10)+(t?(e.to+1)+' '+esc(t.name):'fehlt')+'</span>'; }).join('');
+      return '<div class="pitem t'+(i===S.pi?' on':'')+(RR[i]?'':' un')+'" draggable="true" data-pidx="'+i+'" data-a="page" data-i="'+i+'"><div class="pth">'+mini(f, i)+'</div><div class="pm"><div class="pt"><span class="n">'+(i+1)+'</span><span class="t">'+esc(p.name)+'</span><button class="ibtn" data-a="pmenu" data-i="'+i+'">'+I('more')+'</button></div><div class="ps">'+(RR[i]?'':'<span class="pe bad">nicht erreichbar</span>')+sub+'</div><span class="c">'+p.blocks.length+' Elemente</span></div></div>'; }).join('') + '</div>'
       + '<button class="btn sm" style="width:100%;margin-top:10px;justify-content:center" data-a="addPage">'+I('plus',14)+'Seite hinzufügen</button>'
       + '<p class="hint" style="margin-top:14px">Seiten per Drag &amp; Drop sortieren. Elemente auf eine Seite ziehen, um sie dorthin zu verschieben.</p>';
   }
@@ -528,10 +519,15 @@ function renderLeft(){
 function renderCanvas(keepScroll){
   var f = F(), cv = $('#canvas'); if(!cv) return;
   var oldScr = $('#scr'), st = oldScr ? oldScr.scrollTop : 0;
-  var chips = f.pages.map(function(p, i){ return '<div class="pchip'+(i===S.pi?' on':'')+'" draggable="true" data-pidx="'+i+'" data-a="page" data-i="'+i+'"><span class="n">'+(i+1)+'</span><span class="t">'+esc(p.name)+'</span></div>'; }).join('');
+  var n = f.pages.length, E = flowEdges(f)[S.pi] || [], branches = E.filter(function(e){ return e.kind !== 'next'; }).length;
+  var nav = '<div class="pnav"><button class="ibtn" data-a="pprev" title="Vorherige Seite"'+(S.pi?'':' disabled')+'>'+I('left',15)+'</button>'
+    + '<button class="pcur" data-a="pjump" title="Seite wählen"><span class="n">'+(S.pi+1)+'</span><span class="t">'+esc(curPage().name)+'</span><span class="of">von '+n+'</span>'+I('chevDown',13)+'</button>'
+    + '<button class="ibtn" data-a="pnext" title="Nächste Seite"'+(S.pi<n-1?'':' disabled')+'>'+I('right',15)+'</button><span class="vr"></span>'
+    + '<button class="btn ghost sm" data-a="flow" title="Ablauf und Verzweigungen anzeigen">'+I('branch',14)+'Ablauf'+(branches?'<span class="pill nos" style="padding:0 6px;margin-left:2px">'+branches+'</span>':'')+'</button>'
+    + '<button class="btn ghost sm ic" data-a="addPage" title="Seite hinzufügen">'+I('plus',15)+'</button></div>';
   var t = f.theme;
   var html = FP.renderPage(f, S.pi, {edit:true, answers:{}});
-  cv.innerHTML = '<div class="pstrip">'+chips+'<button class="pchip add" data-a="addPage" title="Seite hinzufügen">'+I('plus',14)+'</button></div>'
+  cv.innerHTML = nav
     + '<div class="phone '+(S.device==='desk'?'desk':'')+'"><div class="notch"></div><div class="scr" id="scr" style="background:'+esc(t.bg)+'"><div class="sbar" style="color:'+esc(t.text)+';background:'+esc(curPage().bg||t.bg)+'"><span>9:41</span><i></i></div><div class="fp-host">'+html+'</div></div></div>'
     + '<div class="canvas-hint"><span><kbd>Entf</kbd> löschen</span><span><kbd>⌘D</kbd> duplizieren</span><span><kbd>⌘Z</kbd> rückgängig</span><span><kbd>↑</kbd><kbd>↓</kbd> verschieben</span></div>';
   var scr = $('#scr');
@@ -606,6 +602,7 @@ function optionsEditor(p){
       + '<div class="row2"><div class="fld"><label>Festpreis (+)</label><input class="inp" type="number" data-o="price" data-oi="'+i+'" data-num value="'+(o.price||'')+'" placeholder="0"></div><div class="fld"><label>Preis pro Einheit</label><input class="inp" type="number" data-o="unitPrice" data-oi="'+i+'" data-num value="'+(o.unitPrice||'')+'" placeholder="0"></div></div>'
       + '<div class="row2"><div class="fld"><label>Einheit (Anzeige)</label><input class="inp" data-o="unitLabel" data-oi="'+i+'" value="'+esc(o.unitLabel||'')+'" placeholder="m²"></div><div class="fld"><label>Punkte (Quiz)</label><input class="inp" type="number" data-o="score" data-oi="'+i+'" data-num value="'+(o.score||'')+'" placeholder="0"></div></div>'
       + '<div class="fld"><label>Bei Auswahl springen zu</label><select class="inp" data-o="goto" data-oi="'+i+'">'+pageOptions(o.goto,'Keine Verzweigung')+'</select></div>'
+      + (p.layout==='image'&&o.img?'<div class="fld"><label>Bildausschnitt</label><select class="inp" data-o="pos" data-oi="'+i+'">'+[['','Mitte'],['top','Oben'],['bottom','Unten'],['left','Links'],['right','Rechts']].map(function(x){ return '<option value="'+x[0]+'"'+((o.pos||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></div>':'')
       + (p.layout==='image'?'<div class="fld"><label>Bild</label><div class="upl"><div class="pv" style="'+(o.img?'background-image:url(&quot;'+esc(o.img)+'&quot;)':'')+'">'+(o.img?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-optimg="'+i+'"></label>'+(o.img?'<button class="ibtn" data-a="optImgDel" data-i="'+i+'">'+I('trash')+'</button>':'')+'</div></div>':'')
       + '</div></div>';
   }).join('') + '<button class="btn sm" data-a="optAdd">'+I('plus',13)+'Antwort hinzufügen</button>';
@@ -633,6 +630,7 @@ function panelPage(){
   var f = F(), pg = curPage();
   var h = '<div class="psec"><h5>Seite '+(S.pi+1)+' von '+f.pages.length+'</h5>'
     + '<div class="fld"><label>Name</label><input class="inp" data-pp="name" value="'+esc(pg.name)+'"></div>'
+    + '<label class="tgl"><span>Breites Layout auf Desktop</span><input type="checkbox" data-pp="wide" data-bool'+(pg.wide?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Inhalt vertikal zentrieren</span><input type="checkbox" data-pp="vcenter" data-bool'+(pg.vcenter?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Fortschrittsbalken ausblenden</span><input type="checkbox" data-pp="hideProgress" data-bool'+(pg.hideProgress?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Lead beim Öffnen speichern</span><input type="checkbox" data-pp="submitOnEnter" data-bool'+(pg.submitOnEnter?' checked':'')+'><span class="sw"></span></label>'
@@ -672,6 +670,7 @@ function panelDesign(){
     + seg('optStyle','Antwortkarten',[['filled','Gefüllt'],['outline','Rahmen'],['shadow','Schatten']]) + '</div>';
   h += '<div class="psec"><h5>Header & Navigation</h5><div class="fld"><label>Logo-Text</label><input class="inp" data-t="logoText" value="'+esc(t.logoText)+'" placeholder="Firmenname"></div>' + field(['logoImg','image','Logo (Bild, ersetzt Text)'], t, 't')
     + seg('logoAlign','Logo-Position',[['center','Mitte'],['left','Links']])
+    + (t.logoImg ? rng('logoH','Logo-Höhe',[20,80,1,'px',28]) : '')
     + seg('progress','Fortschritt',[['bar','Balken'],['steps','Schritte'],['none','Aus']])
     + tgl('progressTop','Fortschrittsbalken ganz oben (über dem Logo)')
     + tgl('backButton','Zurück-Button anzeigen')
@@ -686,7 +685,9 @@ function panelDesign(){
 function panelSettings(){
   var f = F(), s = f.settings;
   var keys = []; FP.allBlocks(f).forEach(function(b){ if(['choice','input','slider','rating','calendar','checkbox','upload','signature'].indexOf(b.type) >= 0 && b.props.key) keys.push(b.props.key); });
+  ensureSlug(f);
   var h = '<div class="psec"><h5>Allgemein</h5><div class="fld"><label>Funnel-Name</label><input class="inp" data-fn value="'+esc(f.name)+'"></div>'
+    + '<div class="fld"><label>Link-Adresse</label><div class="slugf"><span>/f/</span><input data-fslug value="'+esc(f.slug)+'" spellcheck="false"></div><div class="hint" id="fslugh">'+esc(publicUrl(f))+'</div></div>'
     + '<div class="fld"><label>Status</label><div class="segf"><button data-a="fstatus" data-v="draft" class="'+(f.status!=='live'?'on':'')+'">Entwurf</button><button data-a="fstatus" data-v="live" class="'+(f.status==='live'?'on':'')+'">Live</button></div></div></div>';
   h += '<div class="psec"><h5>'+I('folder',13)+'Kunde & Freigabe</h5><div class="fld"><label>Kunde</label><select class="inp" data-fclient>'+'<option value="">– Intern (kein Kunde) –</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(f.clientId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select></div>'
     + (f.clientId ? '<label class="tgl"><span>Für den Kunden freigeschaltet</span><input type="checkbox" data-fshare'+(f.shared?' checked':'')+'><span class="sw"></span></label><div class="hint">Freigeschaltet sieht der Kunde in seinem Login den Funnel, alle Kontakte und die Analytics. Bearbeiten kannst nur du.</div>' : '<div class="hint">Ordne den Funnel einem Kunden zu, um ihn für dessen Login freizuschalten.</div>') + '</div>';
@@ -820,35 +821,200 @@ function exportHtml(f){
   return '<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<title>' + esc(f.name) + '</title>\n<meta name="theme-color" content="' + esc(f.theme.bg) + '">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' + fontLinks + '\n'
     + '<style>html,body{margin:0;min-height:100%;background:' + esc(f.theme.bg) + '}#funnel{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding-top:env(safe-area-inset-top)}#funnel>.fp{flex:1}\n' + css + '</style>\n' + pixel + '\n</head>\n<body>\n<div id="funnel"></div>\n<script>\n' + js + '\n<\/script>\n<script>\n' + init + '\n<\/script>\n</body>\n</html>';
 }
-function publishModal(f){
-  var tab = REMOTE ? 'link' : 'html';
-  var body = function(){
-    var html = exportHtml(f);
-    var kb = Math.round(html.length/1024);
-    var t = '<div class="tabs2">'+(REMOTE?'<button class="'+(tab==='link'?'on':'')+'" data-pt="link">Öffentlicher Link</button>':'')+'<button class="'+(tab==='qr'?'on':'')+'" data-pt="qr">QR-Code</button><button class="'+(tab==='html'?'on':'')+'" data-pt="html">Eigene Domain (HTML)</button><button class="'+(tab==='embed'?'on':'')+'" data-pt="embed">Einbetten</button><button class="'+(tab==='hook'?'on':'')+'" data-pt="hook">Webhook-Daten</button><button class="'+(tab==='json'?'on':'')+'" data-pt="json">JSON</button></div>';
-    if(tab === 'link'){ var url = publicUrl(f); t += (f.status!=='live'?'<div class="callout" style="background:var(--warnS);border-color:#f6dfae;color:#8a5a00">'+I('info')+'<div>Der Funnel ist noch ein Entwurf. Schalte ihn oben auf <b>Live</b>, damit der Link funktioniert.</div></div>':'')+'<div class="fld"><label>Link zum Funnel</label><div style="display:flex;gap:8px"><input class="inp" readonly id="pubcode" value="'+esc(url)+'"><a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener">'+I('ext',14)+'Öffnen</a></div><div class="hint">Leads und Statistiken landen automatisch in diesem Dashboard'+(f.clientId?' und im Portal des Kunden':'')+'.</div></div><div class="fld"><label>Einbetten (iFrame)</label><textarea class="code" readonly style="min-height:70px;height:70px">&lt;iframe src="'+esc(url)+'" style="width:100%;height:100vh;border:0"&gt;&lt;/iframe&gt;</textarea></div>'; }
-    else if(tab === 'qr'){ var qu = REMOTE ? publicUrl(f) : (f.settings.hostedUrl || ''); t += '<div class="qrwrap"><div id="qrbox" class="qrbox">'+(qu?'':'<span>Link eingeben</span>')+'</div><div style="flex:1"><div class="fld"><label>Ziel-URL</label><input class="inp" id="qrurl" value="'+esc(qu)+'" placeholder="https://funnels.deine-domain.de/f/…"'+(REMOTE?' readonly':'')+'><div class="hint">'+(REMOTE?'Der QR-Code führt direkt zum Live-Funnel.':'Im Demo-Modus: die Adresse, unter der du die exportierte HTML-Datei hostest.')+'</div></div><p class="hint">Ideal für Montage-Rechnungen, Flyer, Aufkleber am Produkt oder NFC/QR-Aufsteller. Tipp: Hänge <code>?utm_source=flyer</code> an, um Quellen in den Analytics zu unterscheiden.</p><div id="qrdl"></div></div></div><input type="hidden" id="pubcode" value="'+esc(qu)+'">'; setTimeout(function(){ drawQR(qu); }, 0); }
-    else if(tab === 'html') t += '<div class="callout">'+I('info')+'<div>Komplett eigenständige Datei ('+kb+' KB) inkl. Design, Logik und Preisberechnung – ohne Abhängigkeiten. Als <b>index.html</b> auf Netlify, Vercel, Cloudflare Pages, Lovable oder deinen Webspace legen. '+(f.settings.webhook?'Leads gehen an deinen Webhook.':'<b>Tipp:</b> Hinterlege unter „Funnel → Integrationen“ eine Webhook-URL, damit Leads ankommen.')+'</div></div><textarea class="code" readonly id="pubcode" style="height:260px">'+esc(html)+'</textarea>';
-    else if(tab === 'embed') t += '<p style="margin:0 0 10px;color:var(--ink2)">Lade die HTML-Datei auf deine Domain hoch und binde sie per iFrame in bestehende Websites ein:</p><textarea class="code" readonly id="pubcode" style="height:120px">&lt;iframe src="https://deine-domain.de/'+esc(slug(f.name))+'/" style="width:100%;height:100vh;border:0" allow="fullscreen"&gt;&lt;/iframe&gt;</textarea><p class="hint">Für Popups oder Buttons kannst du die URL auch direkt verlinken.</p>';
-    else if(tab === 'hook'){
-      var sample = {type:'lead', funnelId:f.id, funnel:f.name, ts:new Date().toISOString(), url:'https://deine-domain.de/'+slug(f.name)+'/?utm_source=facebook', utm:{utm_source:'facebook'}, lead:{name:'Max Mustermann', email:'max@beispiel.de', phone:'+49 170 1234567', total:4250, score:0, answers:{'…':'…'}, fields:[{key:'material', label:'Welches Material wünschst du dir?', value:'WPC-Dielen'}], items:[{label:'WPC-Dielen', amount:2225, detail:'89 €/m² × 25 m²'}], durationSec:74}};
-      t += '<p style="margin:0 0 10px;color:var(--ink2)">So sieht der JSON-Body aus, den dein Webhook beim Absenden erhält (POST, <code>text/plain</code> → kein CORS-Preflight nötig):</p><textarea class="code" readonly id="pubcode" style="height:260px">'+esc(JSON.stringify(sample, null, 2))+'</textarea>';
+/* ---- Funnel anlegen: Assistent (Vorlage → Details) ---- */
+function uniqueName(n){ var names = db.funnels.map(function(f){ return f.name; }); if(names.indexOf(n) < 0) return n; for(var i = 2; ; i++){ var c = n + ' (' + i + ')'; if(names.indexOf(c) < 0) return c; } }
+function slugTaken(s, exceptId){ return db.funnels.some(function(f){ return f.slug === s && f.id !== exceptId; }); }
+function uniqueSlug(base, exceptId){ base = slug(base).slice(0, 48) || 'funnel'; var s = base, i = 2; while(slugTaken(s, exceptId)) s = base + '-' + (i++); return s; }
+function linkBase(){ return publicUrl({slug:''}).replace(/\/$/, '') + '/'; }
+function loadFontsFor(f){ FP.usedFonts(f).forEach(function(n){ var u = FP.fontLink(n); if(!u || document.querySelector('link[data-ff="'+n+'"]')) return; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; l.setAttribute('data-ff', n); document.head.appendChild(l); }); }
+function newFunnelModal(){
+  var W = {step:1, tpl:null, d:null, name:'', slug:'', slugEdited:false, clientId:'', shared:false, q:''};
+  var tplList = T.TEMPLATES.map(function(t){ return {id:t.id, d:t.make()}; });
+  var m = modal({title:'Neuen Funnel erstellen', size:'wide wiz', body:'', foot:'<span></span>'});
+  var el = m.el, mb = el.querySelector('.mb'), mf = el.querySelector('.mf'), mh = el.querySelector('.mh > div');
+  var steps = function(){ return '<div class="wsteps">'+[['1','Vorlage wählen'],['2','Details & Vorschau']].map(function(s, i){ return '<span class="ws'+(W.step===i+1?' on':'')+(W.step>i+1?' done':'')+'"><b>'+(W.step>i+1?I('check',12):s[0])+'</b>'+s[1]+'</span>'; }).join('<i></i>')+'</div>'; };
+  function grid(){
+    var q = W.q.toLowerCase();
+    var shown = tplList.filter(function(x){ return (S.tcat === 'Alle' || x.d.cats.indexOf(S.tcat) >= 0 || x.id === 'blank') && (!q || (x.d.name+' '+x.d.desc).toLowerCase().indexOf(q) >= 0); });
+    return shown.length ? '<div class="tgrid">' + shown.map(function(x){ var f = {pages:x.d.pages, theme:x.d.theme, settings:x.d.settings||{}}; return '<div class="tcard" role="button" tabindex="0" data-w="pick" data-id="'+x.id+'"><div class="thumb">'+mini(f)+'</div><div class="tm"><b>'+esc(x.d.name)+'</b><span>'+esc(x.d.desc)+'</span><div class="tags">'+x.d.cats.map(function(c){ return '<span class="tag'+(c==='Konfigurator'?' a':'')+'">'+c+'</span>'; }).join('')+'<span class="tag">'+x.d.pages.length+' Seiten</span></div></div></div>'; }).join('') + '</div>'
+      : '<div class="wempty">Keine Vorlage gefunden. <button class="btn sm" data-w="pick" data-id="blank">Leer starten</button></div>';
+  }
+  function render(){
+    mh.innerHTML = '<h2>Neuen Funnel erstellen</h2>' + steps();
+    if(W.step === 1){
+      mb.innerHTML = '<div class="wbar"><label class="search" style="min-width:0;flex:1;max-width:320px;height:36px">'+I('search')+'<input id="wq" placeholder="Vorlage suchen …" value="'+esc(W.q)+'"></label><div class="tfil" style="margin:0">'+T.CATS.map(function(c){ return '<button class="chip'+(S.tcat===c?' on':'')+'" data-w="cat" data-v="'+c+'">'+c+'</button>'; }).join('')+'</div></div><div id="wgrid">'+grid()+'</div>';
+      mf.innerHTML = '<span class="hint" style="margin:0 auto 0 0">Inhalte, Design und Logik kannst du danach frei anpassen.</span><button class="btn" data-close>Abbrechen</button>';
+      var qi = mb.querySelector('#wq'); qi.oninput = function(){ W.q = qi.value; mb.querySelector('#wgrid').innerHTML = grid(); }; setTimeout(function(){ qi.focus(); }, 30);
+      return;
     }
-    else t += '<p style="margin:0 0 10px;color:var(--ink2)">Funnel-Definition – zum Sichern, Versionieren oder Importieren in einen anderen Workspace:</p><textarea class="code" readonly id="pubcode" style="height:260px">'+esc(JSON.stringify({id:f.id,name:f.name,theme:f.theme,settings:f.settings,pages:f.pages}, null, 2))+'</textarea>';
+    var d = W.d, f = {pages:d.pages, theme:d.theme, settings:d.settings||{}};
+    var taken = slugTaken(W.slug), bad = !W.slug;
+    mb.innerHTML = '<div class="wz2"><div class="wzprev"><div class="wzph"><span>'+I('play',13)+'Vorschau – klick dich durch</span><button class="btn ghost sm" data-w="restart">'+I('refresh',13)+'Neu starten</button></div><div class="phone wzphone"><div class="notch"></div><div class="scr" data-fp-scroll style="background:'+esc(d.theme.bg)+'"><div class="sbar" style="color:'+esc(d.theme.text)+'"><span>9:41</span><i></i></div><div class="fp-host" id="wzhost"></div></div></div></div>'
+      + '<div class="wzform"><div class="wztpl"><span class="tag a">Vorlage</span><b>'+esc(d.name)+'</b><p>'+esc(d.desc)+'</p><div class="wzpages">'+d.pages.map(function(p, i){ return '<span>'+(i+1)+' · '+esc(p.name)+'</span>'; }).join('')+'</div></div>'
+      + '<div class="fld"><label>Name des Funnels</label><input class="inp" id="wname" value="'+esc(W.name)+'" placeholder="z. B. Tischkonfigurator Frühjahr"><div class="hint">Nur intern sichtbar – im Dashboard und im Kundenportal.</div></div>'
+      + '<div class="fld"><label>Kunde</label><select class="inp" id="wclient"><option value="">– Intern (kein Kunde) –</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(W.clientId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select>'
+      + (W.clientId ? '<label class="tgl" style="margin-top:8px"><span>Direkt im Kundenportal freischalten</span><input type="checkbox" id="wshare"'+(W.shared?' checked':'')+'><span class="sw"></span></label>' : '<div class="hint">Optional. Zugeordnete Funnels kann der Kunde in seinem Login sehen, sobald du sie freischaltest.</div>') + '</div>'
+      + '<div class="fld"><label>Link-Adresse</label><div class="slugf'+(taken||bad?' err':'')+'"><span>'+esc(linkBase())+'</span><input id="wslug" value="'+esc(W.slug)+'" spellcheck="false"></div><div class="hint'+(taken||bad?' errt':'')+'">'+(bad?'Bitte gib eine Adresse ein.':taken?'Diese Adresse ist schon vergeben.':'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.')+'</div></div></div></div>';
+    mf.innerHTML = '<button class="btn" data-w="back" style="margin-right:auto">'+I('left',14)+'Andere Vorlage</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="create"'+(taken||bad||!W.name.trim()?' disabled':'')+'>Funnel erstellen'+I('right',14)+'</button>';
+    mountPreview();
+    var ni = mb.querySelector('#wname'), si = mb.querySelector('#wslug'), ci = mb.querySelector('#wclient'), sh = mb.querySelector('#wshare');
+    var refreshState = function(){ var t = slugTaken(W.slug), b = !W.slug; si.parentNode.classList.toggle('err', t || b); var h = si.parentNode.nextElementSibling; h.classList.toggle('errt', t || b); h.textContent = b ? 'Bitte gib eine Adresse ein.' : t ? 'Diese Adresse ist schon vergeben.' : 'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.'; mf.querySelector('[data-w="create"]').disabled = t || b || !W.name.trim(); };
+    ni.oninput = function(){ W.name = ni.value; if(!W.slugEdited){ W.slug = uniqueSlug(W.name); si.value = W.slug; } refreshState(); };
+    ni.onkeydown = function(e){ if(e.key === 'Enter') create(); };
+    si.oninput = function(){ W.slugEdited = true; var v = slug(si.value); W.slug = v; refreshState(); };
+    si.onblur = function(){ si.value = W.slug; };
+    ci.onchange = function(){ W.clientId = ci.value; if(!W.clientId) W.shared = false; render(); };
+    if(sh) sh.onchange = function(){ W.shared = sh.checked; };
+    setTimeout(function(){ ni.focus(); ni.select(); }, 30);
+  }
+  function mountPreview(){
+    var host = mb.querySelector('#wzhost'); if(!host) return;
+    var f = T.clone({pages:W.d.pages, theme:W.d.theme, settings:W.d.settings||{}});
+    loadFontsFor(f); injectUploaded();
+    FP.mount(host, f, {live:false});
+  }
+  function pick(id){ W.tpl = id; W.d = tplList.filter(function(x){ return x.id === id; })[0].d; W.name = uniqueName(W.d.name); W.slug = uniqueSlug(W.name); W.slugEdited = false; W.step = 2; render(); mb.scrollTop = 0; }
+  function create(){
+    if(!W.name.trim() || !W.slug || slugTaken(W.slug)) return;
+    var f = T.newFunnel(W.tpl, {name:W.name.trim(), slug:W.slug, clientId:W.clientId || null, shared:!!(W.clientId && W.shared)});
+    if(db.defaults && db.defaults.webhook && !f.settings.webhook) f.settings.webhook = db.defaults.webhook;
+    db.funnels.unshift(f); save(true);
+    m.close();
+    toast('Funnel „'+f.name+'“ erstellt');
+    go('editor', f.id);
+  }
+  el.addEventListener('click', function(e){
+    var w = e.target.closest('[data-w]'); if(!w) return;
+    var a = w.getAttribute('data-w');
+    if(a === 'cat'){ S.tcat = w.getAttribute('data-v'); $$('[data-w="cat"]', el).forEach(function(b){ b.classList.toggle('on', b === w); }); mb.querySelector('#wgrid').innerHTML = grid(); }
+    else if(a === 'pick') pick(w.getAttribute('data-id'));
+    else if(a === 'back'){ W.step = 1; render(); }
+    else if(a === 'restart') mountPreview();
+    else if(a === 'create') create();
+  });
+  el.addEventListener('keydown', function(e){ if(e.key === 'Enter' && W.step === 1){ var c = e.target.closest('[data-w="pick"]'); if(c) pick(c.getAttribute('data-id')); } });
+  render();
+}
+function createFromTpl(id){
+  var f = T.newFunnel(id, {name:uniqueName(T.TEMPLATES.filter(function(t){ return t.id === id; })[0].make().name)});
+  f.slug = uniqueSlug(f.name);
+  if(db.defaults && db.defaults.webhook && !f.settings.webhook) f.settings.webhook = db.defaults.webhook;
+  db.funnels.unshift(f); save(true);
+  toast('Funnel „'+f.name+'“ erstellt');
+  go('editor', f.id);
+}
+
+/* ---- Ablauf: Kanten, Erreichbarkeit, Übersicht ---- */
+function flowEdges(f){
+  var ids = f.pages.map(function(p){ return p.id; }), n = f.pages.length;
+  return f.pages.map(function(p, i){
+    var out = [], idx = function(id){ return ids.indexOf(id); }, coversAll = false;
+    p.blocks.forEach(function(b){
+      var pr = b.props || {};
+      if(b.type === 'choice' && !pr.multi){
+        var opts = pr.options || [], routed = opts.filter(function(o){ return o.goto; });
+        routed.forEach(function(o){ out.push({to:idx(o.goto), label:'Wenn „'+o.label+'“', kind:'if'}); });
+        if(routed.length && routed.length === opts.length) coversAll = true;
+      }
+      if(b.type === 'button' && pr.action === 'page' && pr.target) out.push({to:idx(pr.target), label:'Button „'+(pr.label||'')+'“', kind:'btn'});
+      if(b.type === 'button' && pr.action === 'submit' && pr.target) out.push({to:idx(pr.target), label:'Nach Absenden', kind:'btn'});
+    });
+    (p.scoreRoutes||[]).forEach(function(r){ if(r.goto) out.push({to:idx(r.goto), label:'Punkte '+r.min+'–'+r.max, kind:'if'}); });
+    if(!coversAll){
+      if(p.next) out.push({to:idx(p.next), label:out.length ? 'Sonst' : 'Danach', kind:'next'});
+      else if(i < n - 1) out.push({to:i + 1, label:out.length ? 'Sonst' : 'Weiter', kind:'next'});
+    }
+    return out;
+  });
+}
+function flowReach(f){
+  var E = flowEdges(f), seen = {0:true}, q = [0];
+  while(q.length){ var i = q.shift(); (E[i]||[]).forEach(function(e){ if(e.to >= 0 && !seen[e.to]){ seen[e.to] = true; q.push(e.to); } }); }
+  return seen;
+}
+function flowModal(){
+  var f = F(), E = flowEdges(f), reach = flowReach(f);
+  var body = '<div class="flow">' + f.pages.map(function(p, i){
+    var es = E[i], end = !es.length, un = !reach[i];
+    return '<div class="fnode'+(i===S.pi?' on':'')+(un?' un':'')+'" data-fl="'+i+'"><div class="fh"><span class="n">'+(i+1)+'</span><b>'+esc(p.name)+'</b><span class="c">'+p.blocks.length+' Elemente</span>'+(un?'<span class="fw">'+I('info',12)+'Nicht erreichbar</span>':'')+'</div>'
+      + '<div class="fe">' + (end ? '<span class="fx end">'+I('check',12)+'Ende des Funnels</span>' : es.map(function(e){ var t = f.pages[e.to]; return '<span class="fx '+e.kind+(t?'':' bad')+'"><em>'+esc(e.label)+'</em>'+I('right',12)+(t?(e.to+1)+' · '+esc(t.name):'Seite fehlt')+'</span>'; }).join('')) + '</div></div>';
+  }).join('') + '</div>';
+  var uncount = f.pages.filter(function(p, i){ return !reach[i]; }).length;
+  modal({title:'Ablauf', sub:f.pages.length+' Seiten'+(uncount?' · '+uncount+' nicht erreichbar':'')+' – klicke auf eine Seite, um sie zu bearbeiten.', size:'mid', body:body,
+    onOpen:function(el, close){ el.addEventListener('click', function(e){ var n = e.target.closest('[data-fl]'); if(n){ close(); S.ltab = 'pages'; selectPage(+n.getAttribute('data-fl')); renderLeft(); } }); }});
+}
+function pageJump(anchor){
+  var f = F();
+  dropdown(anchor, f.pages.map(function(p, i){ return {k:'p'+i, ic:i===S.pi?'check':'file', l:(i+1)+' · '+p.name, fn:function(){ selectPage(i); }}; }).concat(['-', {k:'add', ic:'plus', l:'Seite hinzufügen', fn:addPage}, {k:'flow', ic:'branch', l:'Ablauf anzeigen', fn:flowModal}]));
+}
+
+/* ---- Veröffentlichen: Checkliste → Live → Teilen ---- */
+function funnelChecks(f){
+  var all = FP.allBlocks(f), ids = f.pages.map(function(p){ return p.id; }), out = [];
+  var pname = function(i){ return (i+1)+' · '+f.pages[i].name; };
+  var broken = [];
+  flowEdges(f).forEach(function(es, i){ es.forEach(function(e){ if(e.to < 0 && broken.indexOf(i) < 0) broken.push(i); }); });
+  if(broken.length) out.push({lvl:'err', t:'Sprungziel fehlt', d:'Eine Weiterleitung zeigt auf eine gelöschte Seite: '+broken.map(pname).join(', ')+'.', page:broken[0]});
+  var reach = flowReach(f), un = f.pages.map(function(p, i){ return i; }).filter(function(i){ return !reach[i]; });
+  if(un.length) out.push({lvl:'warn', t:'Nicht erreichbare Seiten', d:un.map(pname).join(', ')+' – keine Antwort oder Weiterleitung führt dorthin.', page:un[0]});
+  var contact = all.some(function(b){ return b.type === 'input' && (b.props.inputType === 'email' || b.props.inputType === 'tel'); });
+  out.push(contact ? {lvl:'ok', t:'Kontaktdaten werden abgefragt'} : {lvl:'warn', t:'Kein E-Mail- oder Telefonfeld', d:'Ohne Kontaktfeld kannst du auf Anfragen nicht antworten.'});
+  var consent = all.some(function(b){ return b.type === 'checkbox'; });
+  if(contact) out.push(consent ? {lvl:'ok', t:'Datenschutz-Einwilligung vorhanden'} : {lvl:'warn', t:'Keine Datenschutz-Checkbox', d:'Für Kontaktformulare in der EU empfohlen (DSGVO).'});
+  var noImg = [];
+  f.pages.forEach(function(p, i){ p.blocks.forEach(function(b){ if((b.type === 'image' && !b.props.src) || (b.type === 'choice' && b.props.layout === 'image' && (b.props.options||[]).some(function(o){ return !o.img; }))) if(noImg.indexOf(i) < 0) noImg.push(i); }); });
+  if(noImg.length) out.push({lvl:'warn', t:'Bilder fehlen', d:'Platzhalter ohne Bild auf: '+noImg.map(pname).join(', ')+'.', page:noImg[0]});
+  if(REMOTE) out.push({lvl:'ok', t:'Anfragen landen im Dashboard'+(f.settings.webhook?' und am Webhook':'')});
+  else out.push(f.settings.webhook ? {lvl:'ok', t:'Webhook für Anfragen hinterlegt'} : {lvl:'warn', t:'Demo-Modus: kein Ziel für Anfragen', d:'Ohne Supabase oder Webhook gehen Anfragen aus dem HTML-Export verloren. Hinterlege einen Webhook unter Funnel → Integrationen.', tab:'set'});
+  var c = f.clientId && clientById(f.clientId);
+  out.push(c ? (f.shared ? {lvl:'ok', t:'Für '+c.name+' freigeschaltet'} : {lvl:'info', t:c.name+' sieht den Funnel noch nicht', d:'Schalte ihn unter Funnel → Kunde & Freigabe frei, wenn der Kunde ihn sehen soll.', tab:'set'}) : {lvl:'info', t:'Keinem Kunden zugeordnet', d:'Interner Funnel.', tab:'set'});
+  return out;
+}
+function publishModal(f){
+  var adv = REMOTE ? 'qr' : 'html', open = false;
+  var advBody = function(){
+    var html = exportHtml(f), kb = Math.round(html.length/1024);
+    var t = '<div class="tabs2"><button class="'+(adv==='qr'?'on':'')+'" data-pt="qr">QR-Code</button><button class="'+(adv==='html'?'on':'')+'" data-pt="html">Eigene Domain (HTML)</button><button class="'+(adv==='embed'?'on':'')+'" data-pt="embed">Einbetten</button><button class="'+(adv==='hook'?'on':'')+'" data-pt="hook">Webhook-Daten</button><button class="'+(adv==='json'?'on':'')+'" data-pt="json">JSON</button></div>';
+    if(adv === 'qr'){ var qu = REMOTE ? publicUrl(f) : (f.settings.hostedUrl || ''); t += '<div class="qrwrap"><div id="qrbox" class="qrbox">'+(qu?'':'<span>Link eingeben</span>')+'</div><div style="flex:1"><div class="fld"><label>Ziel-URL</label><input class="inp" id="qrurl" value="'+esc(qu)+'" placeholder="https://funnels.deine-domain.de/f/…"'+(REMOTE?' readonly':'')+'><div class="hint">'+(REMOTE?'Der QR-Code führt direkt zum Live-Funnel.':'Im Demo-Modus: die Adresse, unter der du die exportierte HTML-Datei hostest.')+'</div></div><p class="hint">Ideal für Flyer, Rechnungen, Aufsteller oder NFC-Tags. Tipp: Hänge <code>?utm_source=flyer</code> an, um Quellen zu unterscheiden.</p><div id="qrdl"></div></div></div>'; }
+    else if(adv === 'html') t += '<div class="callout">'+I('info')+'<div>Eigenständige Datei ('+kb+' KB) mit Design, Logik und Preisberechnung. Als <b>index.html</b> auf Netlify, Vercel, Cloudflare Pages oder deinen Webspace legen. '+(f.settings.webhook?'Anfragen gehen an deinen Webhook.':'<b>Tipp:</b> Hinterlege unter „Funnel → Integrationen“ einen Webhook, damit Anfragen ankommen.')+'</div></div><textarea class="code" readonly id="pubcode" style="height:200px">'+esc(html)+'</textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn sm" data-pcopy>'+I('copy',13)+'HTML kopieren</button></div>';
+    else if(adv === 'embed'){ var eu = REMOTE ? publicUrl(f) : 'https://deine-domain.de/'+slug(f.name)+'/'; t += '<p style="margin:0 0 10px;color:var(--ink2)">Per iFrame in eine bestehende Website einbinden:</p><textarea class="code" readonly id="pubcode" style="height:90px">&lt;iframe src="'+esc(eu)+'" style="width:100%;height:100vh;border:0" allow="fullscreen"&gt;&lt;/iframe&gt;</textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn sm" data-pcopy>'+I('copy',13)+'Code kopieren</button></div>'; }
+    else if(adv === 'hook'){
+      var sample = {type:'lead', funnelId:f.id, funnel:f.name, ts:new Date().toISOString(), url:'https://deine-domain.de/'+slug(f.name)+'/?utm_source=facebook', utm:{utm_source:'facebook'}, lead:{name:'Max Mustermann', email:'max@beispiel.de', phone:'+49 170 1234567', total:4250, score:0, answers:{'…':'…'}, fields:[{key:'material', label:'Welches Material wünschst du dir?', value:'WPC-Dielen'}], items:[{label:'WPC-Dielen', amount:2225, detail:'89 €/m² × 25 m²'}], durationSec:74}};
+      t += '<p style="margin:0 0 10px;color:var(--ink2)">JSON-Body, den dein Webhook beim Absenden erhält (POST, <code>text/plain</code>):</p><textarea class="code" readonly id="pubcode" style="height:200px">'+esc(JSON.stringify(sample, null, 2))+'</textarea>';
+    }
+    else t += '<p style="margin:0 0 10px;color:var(--ink2)">Funnel-Definition zum Sichern oder Importieren:</p><textarea class="code" readonly id="pubcode" style="height:200px">'+esc(JSON.stringify({id:f.id,name:f.name,theme:f.theme,settings:f.settings,pages:f.pages}, null, 2))+'</textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn sm" data-pcopy>'+I('copy',13)+'JSON kopieren</button></div>';
     return t;
   };
-  modal({title:'Veröffentlichen', sub:'„'+f.name+'“ live schalten und auf deiner Domain ausspielen.', size:'mid',
-    body:'<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:16px"><div style="flex:1"><b>Status</b><div class="hint" style="margin:0">Live-Funnels werden im Dashboard als aktiv geführt.</div></div><div class="segf" style="width:200px"><button data-ps="draft" class="'+(f.status!=='live'?'on':'')+'">Entwurf</button><button data-ps="live" class="'+(f.status==='live'?'on':'')+'">Live</button></div></div><div id="pubb">'+body()+'</div>',
-    foot:'<button class="btn" data-close>Schließen</button><button class="btn pri" data-pcopy>'+I('copy',14)+'Kopieren</button>',
-    onOpen:function(el){
+  var body = function(){
+    var checks = funnelChecks(f), errs = checks.filter(function(c){ return c.lvl === 'err'; }).length, warns = checks.filter(function(c){ return c.lvl === 'warn'; }).length, live = f.status === 'live';
+    var ic = {ok:'check', warn:'info', err:'x', info:'info'};
+    var h = '<div class="pubstep"><div class="psh"><span class="pn'+(errs?' bad':warns?' warn':' ok')+'">1</span><div><b>Prüfen</b><span>'+(errs?errs+' Problem'+(errs>1?'e':'')+' muss behoben werden':warns?warns+' Hinweis'+(warns>1?'e':'')+' – Live schalten ist trotzdem möglich':'Alles bereit')+'</span></div></div>'
+      + '<div class="checks">' + checks.map(function(c){ return '<div class="pchk '+c.lvl+'"><span class="ci">'+I(ic[c.lvl],12)+'</span><div class="ct"><b>'+esc(c.t)+'</b>'+(c.d?'<span>'+esc(c.d)+'</span>':'')+'</div>'+(c.page!=null?'<button class="btn ghost sm" data-goto="'+c.page+'">Zur Seite</button>':c.tab?'<button class="btn ghost sm" data-gotab="'+c.tab+'">Öffnen</button>':'')+'</div>'; }).join('') + '</div></div>';
+    h += '<div class="pubstep"><div class="psh"><span class="pn'+(live?' ok':'')+'">2</span><div><b>Live schalten</b><span>'+(live?'Der Funnel ist live'+(REMOTE?' und unter seinem Link erreichbar.':'.'):'Erst im Live-Modus ist der Funnel erreichbar und zählt Aufrufe und Anfragen.')+'</span></div></div>'
+      + '<div class="golive '+(live?'on':'')+'">'+(live
+        ? '<span class="dot"></span><div style="flex:1"><b>Live</b><span>Seit dem Live-Schalten werden Aufrufe und Anfragen gezählt.</span></div><button class="btn sm" data-ps="draft">Offline nehmen</button>'
+        : '<div style="flex:1"><b>Entwurf</b><span>'+(errs?'Behebe zuerst die markierten Probleme.':'Bereit zum Veröffentlichen.')+'</span></div><button class="btn pri" data-ps="live"'+(errs?' disabled':'')+'>'+I('rocket',14)+'Jetzt live schalten</button>')+'</div></div>';
+    h += '<div class="pubstep"><div class="psh"><span class="pn'+(live?' ok':'')+'">3</span><div><b>Teilen</b><span>'+(REMOTE?'Link, QR-Code oder Einbettung.':'Im Demo-Modus als HTML-Datei auf deiner Domain hosten.')+'</span></div></div>';
+    if(REMOTE){ var url = publicUrl(f); h += '<div class="share"><div class="slugf ro"><span>'+esc(url)+'</span></div><button class="btn sm" data-copyurl>'+I('copy',13)+'Kopieren</button><a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener">'+I('ext',13)+'Öffnen</a></div>'+(live?'':'<div class="hint" style="margin-top:6px">Der Link funktioniert, sobald der Funnel live ist.</div>'); }
+    h += '<details class="advx"'+(open?' open':'')+'><summary>'+I('code',13)+'Erweitert: '+(REMOTE?'QR-Code, ':'QR-Code, ')+'HTML-Export, Einbetten, Webhook, JSON</summary><div id="advb">'+advBody()+'</div></details></div>';
+    return h;
+  };
+  var m = modal({title:'Veröffentlichen', sub:'„'+f.name+'“ prüfen, live schalten und teilen.', size:'mid', body:'<div id="pubb">'+body()+'</div>', foot:'<button class="btn" data-close>Fertig</button>',
+    onOpen:function(el, close){
+      var rerender = function(){ el.querySelector('#pubb').innerHTML = body(); if(open && adv === 'qr') drawQR(el.querySelector('#qrurl') && el.querySelector('#qrurl').value); };
+      el.addEventListener('toggle', function(e){ if(e.target.classList && e.target.classList.contains('advx')){ open = e.target.open; if(open && adv === 'qr') drawQR(el.querySelector('#qrurl').value); } }, true);
       el.addEventListener('click', function(e){
-        var pt = e.target.closest('[data-pt]'); if(pt){ tab = pt.getAttribute('data-pt'); el.querySelector('#pubb').innerHTML = body(); }
-        var ps = e.target.closest('[data-ps]'); if(ps){ f.status = ps.getAttribute('data-ps'); save(); $$('[data-ps]', el).forEach(function(b){ b.classList.toggle('on', b === ps); }); if(S.view === 'editor'){ var pill = $('.etop .pill'); if(pill){ pill.className = 'pill '+(f.status==='live'?'live':'draft'); pill.textContent = f.status==='live'?'Live':'Entwurf'; } } toast(f.status==='live'?'Funnel ist live':'Funnel ist Entwurf'); }
-        if(e.target.id === 'qrurl'){ }
-        if(e.target.closest('[data-pcopy]')) copyText(el.querySelector('#pubcode').value, tab==='html'?'HTML kopiert – als index.html speichern':'Kopiert');
+        var pt = e.target.closest('[data-pt]'); if(pt){ adv = pt.getAttribute('data-pt'); el.querySelector('#advb').innerHTML = advBody(); if(adv === 'qr') drawQR(el.querySelector('#qrurl').value); return; }
+        var ps = e.target.closest('[data-ps]'); if(ps){ f.status = ps.getAttribute('data-ps'); save(); if(S.view === 'editor'){ var pill = $('.etop .pill'); if(pill){ pill.className = 'pill '+(f.status==='live'?'live':'draft'); pill.textContent = f.status==='live'?'Live':'Entwurf'; } } toast(f.status==='live'?'Funnel ist live 🎉':'Funnel ist wieder ein Entwurf'); rerender(); return; }
+        var g = e.target.closest('[data-goto]'); if(g){ close(); if(S.view === 'editor' && S.fid === f.id){ selectPage(+g.getAttribute('data-goto')); } else { go('editor', f.id); S.pi = +g.getAttribute('data-goto'); renderEditor(); } return; }
+        var gt = e.target.closest('[data-gotab]'); if(gt){ close(); if(!(S.view === 'editor' && S.fid === f.id)) go('editor', f.id); S.rtab = 'set'; renderRight(); return; }
+        if(e.target.closest('[data-copyurl]')) copyText(publicUrl(f), 'Link kopiert');
+        if(e.target.closest('[data-pcopy]')) copyText(el.querySelector('#pubcode').value, adv==='html'?'HTML kopiert – als index.html speichern':'Kopiert');
       });
     }});
+  return m;
 }
+
 var qrLoading = null;
 function drawQR(url){
   var box = $('#qrbox'); if(!box) return;
@@ -1152,6 +1318,10 @@ var ACT = {
     {k:'p', l:'Ab hier testen', ic:'play', fn:function(){ openPreview(f, i); }},
     '-', {k:'x', l:'Löschen', ic:'trash', danger:true, fn:function(){ delPage(i); }}]); },
   addPage:addPage,
+  flow:function(){ flowModal(); },
+  pprev:function(){ if(S.pi > 0) selectPage(S.pi - 1); },
+  pnext:function(){ if(S.pi < F().pages.length - 1) selectPage(S.pi + 1); },
+  pjump:function(el){ pageJump(el); },
   pdup:function(el){ dupPage(+el.getAttribute('data-i')); },
   pdel:function(el){ delPage(+el.getAttribute('data-i')); },
   bup:function(){ moveBlock(-1); }, bdown:function(){ moveBlock(1); }, bdup:dupBlock, bdel:delBlock,
@@ -1207,7 +1377,7 @@ document.addEventListener('click', function(e){
   if(blk && !e.target.closest('#btool')){ selectBlock(blk.getAttribute('data-bid')); return; }
   var el = e.target.closest('[data-a]');
   if(el && ACT[el.getAttribute('data-a')] && !(el.closest('.modal') && ['useTpl','tcat'].indexOf(el.getAttribute('data-a'))>=0)){ if(el.tagName === 'A') return; ACT[el.getAttribute('data-a')](el, e); return; }
-  if(e.target.closest('#canvas') && !e.target.closest('.phone .fp-b') && !e.target.closest('.pstrip') && !e.target.closest('#btool') && S.sel){ S.sel = null; if(S.rtab === 'el') S.rtab = 'page'; $$('#scr .fp-b.sel').forEach(function(x){ x.classList.remove('sel'); }); var tb = $('#btool'); if(tb) tb.remove(); renderRight(); }
+  if(e.target.closest('#canvas') && !e.target.closest('.phone .fp-b') && !e.target.closest('.pnav') && !e.target.closest('#btool') && S.sel){ S.sel = null; if(S.rtab === 'el') S.rtab = 'page'; $$('#scr .fp-b.sel').forEach(function(x){ x.classList.remove('sel'); }); var tb = $('#btool'); if(tb) tb.remove(); renderRight(); }
 });
 
 function readVal(el){ if(el.hasAttribute('data-bool')){ var c = el.checked; return el.hasAttribute('data-inv') ? (c ? undefined : false) : c; } if(el.hasAttribute('data-num')) return el.value === '' ? '' : +el.value; return el.value; }
@@ -1217,6 +1387,7 @@ document.addEventListener('input', function(e){
   if(el.id === 'cq'){ S.cf.q = el.value; var p2 = el.selectionStart; render(); var n2 = $('#cq'); n2.focus(); n2.setSelectionRange(p2,p2); return; }
   if(el.id === 'qrurl'){ var pf = F() || null; clearTimeout(window.__qrT); window.__qrT = setTimeout(function(){ drawQR(el.value.trim()); var pc = $('#pubcode'); if(pc) pc.value = el.value.trim(); }, 300); if(pf){ pf.settings.hostedUrl = el.value.trim(); save(); } return; }
   if(el.id === 'libq'){ S.libq = el.value; var p3 = el.selectionStart; renderLeft(); var n3 = $('#libq'); n3.focus(); n3.setSelectionRange(p3,p3); return; }
+  if(el.hasAttribute('data-fslug')){ var sf = F(), sv = slug(el.value), hint = $('#fslugh'), bad = !sv || slugTaken(sv, sf.id); el.parentNode.classList.toggle('err', bad); if(hint){ hint.classList.toggle('errt', bad); hint.textContent = !sv ? 'Bitte gib eine Adresse ein.' : bad ? 'Diese Adresse ist schon vergeben.' : publicUrl({slug:sv}); } if(!bad){ sf.slug = sv; touch(); } return; }
   if(el.id === 'fname' || el.hasAttribute('data-fn')){ var f = F(); snap(); f.name = el.value || 'Unbenannt'; touch(); if(el.id === 'fname') el.size = Math.max(8, el.value.length); else { var fn = $('#fname'); if(fn) fn.value = f.name; } return; }
   if(el.hasAttribute('data-brand')){ var k0 = el.getAttribute('data-brand'), v0 = readVal(el); db.brand[k0] = v0; syncColor(el, 'brand', k0, v0); rangeLabel(el); save(); return; }
   if(el.hasAttribute('data-def')){ db.defaults[el.getAttribute('data-def')] = el.value; save(); return; }

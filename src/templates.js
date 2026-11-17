@@ -278,13 +278,154 @@ function tMontage(){
     settings:{currency:'EUR'}, pages:[start, pos, neg, back, contact, thanks]};
 }
 
+/* Massivholztisch-Konfigurator – 1:1-Nachbau des Onepage-Funnels von Holz Gehlen */
+function tGehlen(){
+  var A = '/assets/gehlen/';
+  var img = function(n, extra){ return Object.assign({src:A+n, radius:16, ratio:'2:1', mb:40}, extra||{}); };
+  var q = function(text, extra){ return B('heading',Object.assign({text:text, level:1, size:32, fw:500, align:'center', mb:80}, extra||{})); };
+  var card = function(label, file, extra){ return O(label, '', Object.assign({img:A+file}, extra||{})); };
+  var pill = function(text, extra){ return B('badge',Object.assign({text:text, variant:'filled', align:'center', scale:80, fw:400, mb:24}, extra||{})); };
+
+  var pAussen = P('Aussengestell',[
+    B('image',img('bild-gestell.jpg')),
+    q('Welches Aussengestell gefällt Dir?', {fw:700, mb:56}),
+    B('choice',{question:'', key:'aussengestell', layout:'image', ratio:'4:3', colsD:4, options:[
+      card('Octo','aussengestell-octo.jpg',{sub:'Markant & stabil'}), card('X-Gestell','aussengestell-x-gestell.jpg',{sub:'Klassisch & kraftvoll', pos:'left top'}),
+      card('U-Gestell','aussengestell-u-gestell.jpg',{sub:'Schlicht & modern'}), card('A-Gestell','aussengestell-a-gestell.jpg',{sub:'Offen & leicht'}),
+      card('Trapez','aussengestell-trapez.jpg',{sub:'Elegant & geradlinig'}), card('Straight','gestell-aussengestell.jpg',{sub:'Schlicht & Zeitlos'})]})]);
+  var pZentral = P('Zentralgestell',[
+    B('image',img('bild-gestell.jpg')),
+    q('Welches Zentralgestell gefällt Dir?', {fw:700, mb:56}),
+    B('choice',{question:'', key:'zentralgestell', layout:'image', ratio:'1:1', colsD:4, options:[
+      card('Spider','zentralgestell-spider.jpg',{sub:'Modern & markant'}), card('Mikado','zentralgestell-mikado.jpg',{sub:'Dynamisch & elegant', pos:'left top'}),
+      card('Spider Six','zentralgestell-spider-six.jpg',{sub:'Kraftvoll & präsent'}), card('Thor','zentralgestell-thor.jpg',{sub:'Massiv & markant'}),
+      card('V-Design','zentralgestell-v-design.jpg',{sub:'Leicht & modern'})]})]);
+  var pMasse = P('Personen & Maße',[
+    pill('NUR NOCH 1 SCHRITT. VERSPROCHEN'),
+    B('image',img('bild-masse.jpg')),
+    q('Wieviele Personen sollen am Tisch Platz finden?', {fw:700, mb:24}),
+    B('choice',{question:'', key:'personen', layout:'checklist', autoNext:false, required:true, mb:36, options:[
+      O('bis zu 4 Personen',''), O('6 Personen',''), O('8 Personen',''), O('10+ Personen',''), O('noch nicht sicher','')]}),
+    pill('OPTIONAL', {variant:'grey', scale:96, mb:20}),
+    B('heading',{text:'Falls du schon ein Wunschmaß hast, kannst du es hier ergänzen.', level:3, size:17.5, fw:700, align:'center', mb:20}),
+    B('input',{label:'Länge', placeholder:'320mm', inputType:'number', key:'laenge', required:false, align:'center', mb:24}),
+    B('input',{label:'Breite', placeholder:'130mm', inputType:'number', key:'breite', required:false, align:'center', mb:40}),
+    B('button',{label:'Letzter Schritt', full:false, shadow:false, icon:'none', align:'center', mb:24})]);
+  var pDanke = P('Finish',[
+    B('image',{src:A+'bild-finish.png', radius:0, ratio:'auto', mb:24}),
+    B('heading',{text:'💚', level:1, size:32, fw:500, align:'center', mb:12}),
+    B('heading',{text:'Vielen Dank. Wir bereiten Dein Angebot vor und schicken es Dir zu!', level:2, size:22, fw:500, align:'center'})],{allowBack:false});
+  var pKontakt = P('Kontakt',[
+    pill('LETZTER SCHRITT', {scale:96}),
+    q('An wen dürfen wir unser unverbindliches Angebot schicken?', {fw:700, mb:4}),
+    B('text',{text:'🔒 Wir senden Dir niemals Spam zu. Versprochen!', align:'center', size:16, color:'#2b2a2b', mb:72}),
+    B('input',{label:'Dein Vorname', placeholder:'Vorname', key:'vorname', required:false, half:true, mb:20}),
+    B('input',{label:'Dein Nachname', placeholder:'Nachname', key:'nachname', required:false, half:true, mb:20}),
+    B('input',{label:'Deine Email-Adresse', placeholder:'beispiel@gmx.de', inputType:'email', key:'email', required:true, mb:20}),
+    pill('OPTIONAL', {variant:'grey', scale:96, mb:20}),
+    B('input',{label:'Falls wir eine Rückfrage haben (optional)', placeholder:'Deine Telefonnummer', inputType:'tel', key:'telefon', required:false, align:'center', mb:28}),
+    B('checkbox',{text:'Ich stimme den [Datenschutzbestimmungen zu](https://www.holz-gehlen.de/datenschutzerklaerung)', key:'datenschutz', required:true, mb:36}),
+    B('button',{label:'Angebot anfordern', sub:'KOSTENLOS & UNVERBINDLICH', subIn:true, action:'next', variant:'gradient', btnBg:'#42423f', radiusOn:true, radius:8, icon:'check', iconLeft:true, mb:48}),
+    B('testimonial',{quote:'', name:'Kai Gehlen', role:'Verkaufsleiter', stars:5, img:A+'kai-gehlen.png'})]);
+
+  var pGestell = P('Gestell',[
+    B('image',img('bild-gestell.jpg')),
+    q('Welche Gestellart bevorzugst Du?', {fw:700, mb:56}),
+    B('choice',{question:'', key:'gestell', layout:'image', ratio:'1:1', colsD:4, options:[
+      card('Zentralgestell','gestell-zentralgestell.jpg',{pos:'center bottom', goto:pZentral.id}),
+      card('Aussengestell','gestell-aussengestell.jpg',{pos:'right center', goto:pAussen.id})]})]);
+  pAussen.next = pMasse.id;
+
+  var css = [
+    '.fp.prog-top .fp-top{padding-top:56px}',
+    '.fp.prog-top .fp-prog{margin:0 0 43px;height:6px;background:rgba(43,42,43,.1)}',
+    '.fp-body{padding-top:30px}',
+    '.fp-h1,.fp-h2,.fp-h3{line-height:1.3}',
+    '.fp-txt{font-size:20px;line-height:1.5;color:var(--tx)}',
+    '.fp-txt strong{color:var(--p)}',
+    '.fp-badge{border-radius:6px;padding:5px 12px;font-weight:inherit;letter-spacing:0}',
+    '.fp-lbl .rq{display:none}',
+    '.fp-badge.grey{background:#f2f2f2;color:var(--tx)}',
+    '.fp-opts{gap:13px}',
+    '.fp-opt{border:1px solid rgba(43,42,43,.08);font-size:13px;font-weight:400;line-height:1.45}',
+    '.fp-opt:hover{border-color:rgba(43,42,43,.2);box-shadow:0 4px 14px -6px rgba(0,0,0,.18)}',
+    '.fp-opt.sel{border-color:rgba(43,42,43,.35);background:var(--sf)}',
+    '.fp-opts.image .fp-opt .lbl{padding:8px 12px 9px}',
+    '.fp-opts.image .fp-opt .im{background-color:#fff}',
+    '.fp-opts.image .fp-opt .chk{display:none}',
+    '.fp-opt .sub{font-size:11px;margin-top:0;color:#6f6e6f}',
+    '.fp-opts.checklist{gap:12px}',
+    '.fp-opts.checklist .fp-opt{min-height:40px;padding:0 12px;font-size:13px;border:1px solid rgba(43,42,43,.08);background:var(--sf)}',
+    '.fp-opts.checklist .fp-opt .chk{width:20px;height:20px;border-radius:50%;border:0;background:rgba(43,42,43,.1)}',
+    '.fp-opts.checklist .fp-opt.sel{font-weight:600}',
+    '.fp-opts.checklist .fp-opt.sel{border-color:rgba(43,42,43,.35);background:var(--sf)}',
+    '.fp-opts.checklist .fp-opt.sel .chk{background:rgba(43,42,43,.3)}',
+    '.fp-lbl{font-size:13px;font-weight:600;margin-bottom:8px}',
+    '.fp-in{padding:10px 12px;font-size:13px;border:1px solid rgba(43,42,43,.15)}',
+    '.fp-in[type=number]{padding:13px 14px;font-size:14px;-moz-appearance:textfield}',
+    '.fp-in::-webkit-outer-spin-button,.fp-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}',
+    '.fp-in:focus{box-shadow:0 0 0 3px rgba(170,197,32,.25)}',
+    '.fp-iw .ii svg{display:none}',
+    '.fp-iw:not(:has(input[type=tel])) .ii{display:none}',
+    '.fp-iw:not(:has(input[type=tel])) .ii+.fp-in{padding-left:12px}',
+    '.fp-iw:has(input[type=tel]) .ii::before{content:"🇩🇪";font-size:20px}',
+    '.fp-cb{font-size:15px;color:var(--tx);align-items:center}',
+    '.fp-cb .box{width:22px;height:22px;border-radius:4px;border:1.5px solid rgba(43,42,43,.25)}',
+    '.fp-btn{font-size:15px;min-height:56px;padding:7px 28px}',
+    '.fp-btn.auto{width:auto}',
+    '.fp-btn.two:not(.gradient){box-shadow:0 0 0 3px rgba(170,197,32,.3)}',
+    '.fp-btn.two:not(.gradient) .sb{font-size:12px}',
+    '.fp-btn.gradient{font-size:18px;padding:12px 24px;justify-content:center;gap:28px;min-height:97px}',
+    '.fp-btn.gradient .tx{align-items:flex-start;text-align:left}',
+    '.fp-btn.gradient .sb{font-size:14.4px;opacity:.9}',
+    '.fp-btn.gradient svg{width:34px;height:34px;padding:7px;border-radius:5px;background:#5fb15a;stroke:#fff;stroke-width:3}',
+    '.fp-testi{background:none;padding:0;display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;column-gap:40px;row-gap:2px}',
+    '.fp-testi .st{grid-column:2;margin:0;color:#f5a623;font-size:16px}',
+    '.fp-testi .au{display:contents}',
+    '.fp-testi .av{grid-column:1;grid-row:1/span 2;width:72px;height:72px}',
+    '.fp-testi .au>div:last-child{grid-column:2}',
+    '.fp-testi .nm{font-size:16px;font-weight:700}',
+    '.fp-testi .ro{font-size:13px;color:var(--tx)}',
+    '@container (min-width:640px){.fp-body{max-width:599px}.fp .fp-top,.fp.wide .fp-body{max-width:1198px}.fp.prog-top .fp-top{padding-top:114px}.fp.prog-top .fp-prog{margin-bottom:34px}.fp-logo img{max-height:51px!important;max-width:none!important}}'
+  ].join('\n');
+
+  return {name:'Massivholztisch-Konfigurator', desc:'Tischform, Kante, Ölung & Gestell wählen – mit Verzweigung und Angebotsanfrage (Holz Gehlen).', cats:['Konfigurator','Leads'],
+    theme:theme('clean',{primary:'#aac520', primaryText:'#ffffff', bg:'#ffffff', surface:'#f4f4f4', text:'#2b2a2b', muted:'#6f6e6f', font:'Inter Tight', headingFont:'Onest', radius:6, btnRadius:4,
+      headingWeight:500, headingLs:0, lineHeight:1.5, logoImg:A+'logo.png', logoH:46, progress:'bar', progressTop:true, backButton:false, animation:'slide', pad:24, btnPad:7, btnWeight:600, customCss:css}),
+    settings:{currency:'EUR', basePrice:0},
+    pages:[
+      P('Start',[
+        pill('IN 1 MINUTE ZUM WUNSCHTISCH-ANGEBOT', {scale:96, fw:700, mb:39}),
+        B('image',img('bild-start.jpg',{mb:41})),
+        B('heading',{text:'Konfiguriere jetzt deinen individuellen Massivholztisch', level:1, size:32, fw:700, align:'center', mb:12}),
+        B('text',{text:'...und erhalte ein **kostenloses & unverbindliches** Angebot von uns!', align:'center', mb:40}),
+        B('button',{label:'Konfigurator starten', sub:'Es dauert nur 1 Minute', subIn:true, icon:'none', shadow:false})],{wide:true}),
+      P('Form',[
+        q('Welche Form soll dein Massivholztisch haben?'),
+        B('choice',{question:'', key:'tischform', layout:'image', ratio:'1:1', colsD:4, options:[
+          card('Eckig','form-eckig.jpg',{pos:'41% 57%'}), card('rund','form-rund.jpg'), card('oval','form-oval.jpg'), card('organisch','form-organisch.jpg')]})]),
+      P('Kante',[
+        q('Welche Kante passt zu Deinem Tisch?'),
+        B('choice',{question:'', key:'kante', layout:'image', ratio:'1:1', colsD:4, options:[
+          card('Naturbaumkante','auswahl-kante-naturbaumkante.jpg',{sub:'natürlich und lebendig'}), card('gerade Kante','auswahl-kante-gerade-kante.png',{sub:'klar und modern', pos:'37% 61%'}),
+          card('Schweitzer Kante','auswahl-kante-schweitzer-kante.jpg',{sub:'Fein und elegant', pos:'41% 75%'}), card('noch offen','auswahl-kante-noch-offen.jpg',{sub:'Wir beraten Dich gerne'})]})]),
+      P('Ölung',[
+        q('Hast Du Dich schon für eine Ölung entschieden?', {size:28}),
+        B('choice',{question:'', key:'oelung', layout:'image', ratio:'16:9', colsD:4, options:[
+          card('Light Oak','oelung-light-oak.jpg'), card('Beton','oelung-beton.jpg',{pos:'37% 61%'}), card('Gekalte','oelung-gekalte.jpg',{pos:'41% 75%'}),
+          card('Rustikal','oelung-rustikal.jpg'), card('Vintage Grey','oelung-vintage-grey.jpg'), card('Natura Roh','oelung-natura-roh.jpg'),
+          card('Disel Grey','oelung-disel-grey.jpg'), card('Smoked','oelung-smoked.jpg'), card('Wenge','oelung-wenge.jpg'),
+          card('Weiss','oelung-weiss.jpg'), card('Natura Natur','oelung-natura-natur.jpg'), card('Ich bin noch unsicher','auswahl-kante-noch-offen.jpg',{sub:'Wir beraten Dich gerne!'})]})]),
+      pGestell, pAussen, pZentral, pMasse, pKontakt, pDanke]};
+}
+
 function tBlank(){
   return {name:'Leerer Funnel', desc:'Starte mit einer leeren Seite.', cats:[], theme:theme('clean'), settings:{currency:'EUR'},
     pages:[P('Seite 1',[B('heading',{text:'Deine erste Seite'}), B('text',{}), B('button',{})]), P('Danke',[B('heading',{text:'Vielen Dank!', align:'center'})],{hideProgress:true})]};
 }
 
 var TEMPLATES = [
-  {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
+  {id:'gehlen-tisch', make:tGehlen}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
   {id:'montage', make:tMontage}, {id:'recruiting', make:tRecruiting}, {id:'quiz', make:tQuiz}, {id:'feedback', make:tFeedback}, {id:'abnahme', make:tAbnahme},
   {id:'freebie', make:tFreebie}, {id:'blank', make:tBlank}
 ];

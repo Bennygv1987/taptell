@@ -3,7 +3,7 @@
 var FP = {};
 var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 var UL = '<svg class="fp-ulsv" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8.5C20 4 38 3 56 4.6S84 8 98 4" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>';
-var md = function(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\n/g,'<br>'); };
+var md = function(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>'); };
 FP.esc = esc; FP.md = md;
 
 var IC = {
@@ -138,7 +138,7 @@ FP.renderBlock = function(b, ctx){
       h = '<span class="fp-badge '+(p.variant||'')+(p.upper?' up':'')+'">'+T(p.text)+'</span>';
       break;
     case 'image':
-      var ih = p.height ? 'height:'+p.height+'px;' : '';
+      var ih = p.ratio ? 'aspect-ratio:'+esc(String(p.ratio).replace(':','/'))+';height:auto;' : p.height ? 'height:'+p.height+'px;' : '';
       h = p.src ? '<img class="fp-img" src="'+esc(p.src)+'" alt="'+esc(p.alt)+'" style="border-radius:'+(p.radius!=null?p.radius:14)+'px;'+ih+(p.fit==='contain'?'object-fit:contain;':'')+'">'
         : '<div class="fp-ph" style="border-radius:'+(p.radius!=null?p.radius:14)+'px;height:'+(p.height||180)+'px">'+IC.img+'Bild hochladen</div>';
       break;
@@ -152,9 +152,11 @@ FP.renderBlock = function(b, ctx){
       if(bv === 'filled') bv = '';
       var ic = p.icon != null && p.icon !== '' ? p.icon : (p.arrow === false ? 'none' : 'arrow'), icH = ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
       var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse':'');
-      var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '');
-      var lbl = '<span>'+T(p.label||'Weiter')+'</span>';
-      h = '<button class="'+cls+'" style="'+bst+'" data-act="btn" data-bid="'+b.id+'">'+(p.iconLeft?icH+lbl:lbl+icH)+'</button>' + (p.sub ? '<span class="fp-sub">'+T(p.sub)+'</span>' : '');
+      var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '') + (p.radiusOn ? '--br:'+(+p.radius||0)+'px;' : '');
+      var subIn = p.sub && p.subIn;
+      var lbl = subIn ? '<span class="tx"><span class="ln">'+T(p.label||'Weiter')+'</span><span class="sb">'+T(p.sub)+'</span></span>' : '<span>'+T(p.label||'Weiter')+'</span>';
+      if(subIn) cls += ' two';
+      h = '<button class="'+cls+'" style="'+bst+'" data-act="btn" data-bid="'+b.id+'">'+(p.iconLeft?icH+lbl:lbl+icH)+'</button>' + (p.sub && !subIn ? '<span class="fp-sub">'+T(p.sub)+'</span>' : '');
       break;
     case 'choice':
       var sel = [].concat(v == null ? [] : v), lay = p.layout || 'list';
@@ -164,13 +166,14 @@ FP.renderBlock = function(b, ctx){
         if(p.minLabel || p.maxLabel) h += '<div class="fp-rlab"><span>'+esc(p.minLabel)+'</span><span>'+esc(p.maxLabel)+'</span></div>';
         break;
       }
-      h += '<div class="fp-opts '+lay+((lay==='image'&&p.cols===1)?' one':'')+((lay==='grid'&&p.cols===3)?' grid3':'')+'">';
+      var ratio = lay==='image' && p.ratio ? String(p.ratio).replace(':','/') : '';
+      h += '<div class="fp-opts '+lay+((lay==='image'&&p.cols===1)?' one':'')+((lay==='grid'&&p.cols===3)?' grid3':'')+((lay==='image'||lay==='grid')&&+p.colsD>1?' cd'+(+p.colsD):'')+'"'+(ratio?' style="--ir:'+esc(ratio)+'"':'')+'>';
       (p.options||[]).forEach(function(o){
         var on = sel.indexOf(o.id) >= 0;
         var price = p.showPrices && (+o.price || +o.unitPrice) ? '<span class="pr">'+(+o.price ? '+ '+FP.money(o.price,cur) : FP.money(o.unitPrice,cur)+(o.unitLabel?' / '+esc(o.unitLabel):''))+'</span>' : '';
         var chk = '<span class="chk'+(p.multi?' sq':'')+'">'+IC.check+'</span>';
         if(lay === 'image'){
-          var bg = o.img ? 'background-image:url(&quot;'+o.img+'&quot;)' : 'background:linear-gradient(135deg,color-mix(in srgb,var(--p) 18%,var(--sf)),var(--sf))';
+          var bg = o.img ? 'background-image:url(&quot;'+o.img+'&quot;)'+(o.pos?';background-position:'+esc(o.pos):'') :'background:linear-gradient(135deg,color-mix(in srgb,var(--p) 18%,var(--sf)),var(--sf))';
           h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'"><span class="im" style="'+bg+'">'+(o.img?'':esc(o.icon||''))+'</span><span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
         } else {
           h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'">'+(o.icon?'<span class="ico">'+esc(o.icon)+'</span>':'')+'<span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
@@ -221,7 +224,7 @@ FP.renderBlock = function(b, ctx){
       if(p.icon==='emoji') h = h.replace(/<span class="li"><\/span>/g,'');
       break;
     case 'testimonial':
-      h = '<div class="fp-testi">'+(p.stars?'<div class="st">'+'★★★★★'.slice(0,p.stars)+'</div>':'')+'<p>'+T(p.quote)+'</p><div class="au"><div class="av" style="'+(p.img?'background-image:url(&quot;'+p.img+'&quot;)':'')+'">'+(p.img?'':esc(initials(p.name)))+'</div><div><div class="nm">'+esc(p.name)+'</div><div class="ro">'+esc(p.role)+'</div></div></div></div>';
+      h = '<div class="fp-testi">'+(p.stars?'<div class="st">'+'★★★★★'.slice(0,p.stars)+'</div>':'')+(p.quote?'<p>'+T(p.quote)+'</p>':'')+'<div class="au"><div class="av" style="'+(p.img?'background-image:url(&quot;'+p.img+'&quot;)':'')+'">'+(p.img?'':esc(initials(p.name)))+'</div><div><div class="nm">'+esc(p.name)+'</div><div class="ro">'+esc(p.role)+'</div></div></div></div>';
       break;
     case 'faq':
       h = '<div class="fp-faq">' + (p.items||[]).map(function(it){ return '<details><summary>'+esc(it.q)+'</summary><p>'+md(it.a)+'</p></details>'; }).join('') + '</div>';
@@ -299,12 +302,12 @@ FP.renderShell = function(f, idx, inner, opts){
     if(t.progress === 'steps'){ prog = '<div class="fp-steps">'; for(var i=0;i<n;i++) prog += '<i class="'+(i<=idx?'on':'')+'"></i>'; prog += '</div>'; }
     else prog = '<div class="fp-prog"><i style="width:'+Math.max(pct,4)+'%"></i></div>';
   }
-  var logo = t.logoImg ? '<div class="fp-logo"><img src="'+t.logoImg+'" alt=""></div>' : t.logoText ? '<div class="fp-logo">'+esc(t.logoText)+'</div>' : '';
+  var logo = t.logoImg ? '<div class="fp-logo"><img src="'+t.logoImg+'" alt=""'+(+t.logoH?' style="max-height:'+(+t.logoH)+'px;max-width:'+(+t.logoH*5)+'px"':'')+'></div>' : t.logoText ? '<div class="fp-logo">'+esc(t.logoText)+'</div>' : '';
   var head = (logo || opts.back) ? '<div class="fp-head'+(t.logoAlign==='left'?' left':'')+(opts.back?' hb':'')+'">'+(opts.back?'<button class="fp-back" data-act="back" aria-label="Zurück">'+IC.back+'</button>':'')+logo+'</div>' : '';
   var ov = bgImg ? '<div class="fp-ov" style="background:'+(t.overlay||'rgba(0,0,0,.35)')+'"></div>' : '';
   var top = (head || prog) ? '<div class="fp-top">'+(t.progressTop?prog+head:head+prog)+'</div>' : '<div style="height:10px"></div>';
   var foot = t.footer ? '<div class="fp-foot">'+md(t.footer)+'</div>' : '';
-  var cls = 'fp'+(opts.edit?' is-edit':'')+(t.inputStyle&&t.inputStyle!=='outline'?' in-'+t.inputStyle:'')+(t.optStyle&&t.optStyle!=='filled'?' opt-'+t.optStyle:'')+(t.progressTop?' prog-top':'');
+  var cls = 'fp'+(opts.edit?' is-edit':'')+(page.wide?' wide':'')+(t.inputStyle&&t.inputStyle!=='outline'?' in-'+t.inputStyle:'')+(t.optStyle&&t.optStyle!=='filled'?' opt-'+t.optStyle:'')+(t.progressTop?' prog-top':'');
   var css = t.customCss ? '<style>'+String(t.customCss).replace(/<\/style/gi,'')+'</style>' : '';
   return '<div class="'+cls+'" style="'+style+'">'+css+ov+top+'<div class="fp-body">'+inner+'</div>'+foot+'</div>';
 };
@@ -422,6 +425,7 @@ FP.mount = function(root, f, opts){
   }
 
   root.addEventListener('click', function(e){
+    if(e.target.closest('a[href]')) return;
     var el = e.target.closest('[data-act]'); if(!el || !root.contains(el)) return;
     var act = el.getAttribute('data-act'), b = blockById(el.getAttribute('data-bid'));
     if(act !== 'sigclr') e.preventDefault();

@@ -66,4 +66,6 @@ html,body{{margin:0;min-height:100%}}#funnel{{min-height:100vh;min-height:100dvh
 </body>
 </html>
 """)
+# fertige Dateien zusätzlich ins Projekt-Root kopieren (dort liegt die deploybare App)
+for n in ('index.html', 'f.html'): shutil.copyfile(dep/n, d.parent/n)
 print('built', (d/'funnel-studio.html').stat().st_size//1024, 'KB')
