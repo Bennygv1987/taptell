@@ -912,7 +912,11 @@ function exportHtml(f){
 }
 /* ---- Funnel anlegen: Assistent (Vorlage → Details) ---- */
 function uniqueName(n){ var names = db.funnels.map(function(f){ return f.name; }); if(names.indexOf(n) < 0) return n; for(var i = 2; ; i++){ var c = n + ' (' + i + ')'; if(names.indexOf(c) < 0) return c; } }
-function slugTaken(s, exceptId){ return db.funnels.some(function(f){ return f.slug === s && f.id !== exceptId; }); }
+/* Reservierte Adressen: kollidieren mit Seiten von TapTell selbst. Dieselbe Liste landet per build.py in vercel.json. */
+var RESERVED_SLUGS = ['index','f','src','assets','landing','design','docs','supabase','app','api','admin','auth','login','logout','signup','register','account','settings','dashboard','embed','config','www','impressum','datenschutz','agb','kontakt','preise','hilfe','support','status','static','public'];
+function slugReserved(s){ return RESERVED_SLUGS.indexOf(s) >= 0; }
+function slugTaken(s, exceptId){ return slugReserved(s) || db.funnels.some(function(f){ return f.slug === s && f.id !== exceptId; }); }
+function slugError(s, exceptId){ return !s ? 'Bitte gib eine Adresse ein.' : slugReserved(s) ? 'Diese Adresse ist für TapTell reserviert.' : slugTaken(s, exceptId) ? 'Diese Adresse ist schon vergeben.' : ''; }
 function uniqueSlug(base, exceptId){ base = slug(base).slice(0, 48) || 'funnel'; var s = base, i = 2; while(slugTaken(s, exceptId)) s = base + '-' + (i++); return s; }
 function linkBase(){ return publicUrl({slug:''}).replace(/\/$/, '') + '/'; }
 function loadFontsFor(f){ FP.usedFonts(f).forEach(function(n){ var u = FP.fontLink(n); if(!u || document.querySelector('link[data-ff="'+n+'"]')) return; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; l.setAttribute('data-ff', n); document.head.appendChild(l); }); }
@@ -937,17 +941,17 @@ function newFunnelModal(){
       return;
     }
     var d = W.d, f = {pages:d.pages, theme:d.theme, settings:d.settings||{}};
-    var taken = slugTaken(W.slug), bad = !W.slug;
+    var serr = slugError(W.slug);
     mb.innerHTML = '<div class="wz2"><div class="wzprev"><div class="wzph"><span>'+I('play',13)+'Vorschau – klick dich durch</span><button class="btn ghost sm" data-w="restart">'+I('refresh',13)+'Neu starten</button></div><div class="phone wzphone"><div class="notch"></div><div class="scr" data-fp-scroll style="background:'+esc(d.theme.bg)+'"><div class="sbar" style="color:'+esc(d.theme.text)+'"><span>9:41</span><i></i></div><div class="fp-host" id="wzhost"></div></div></div></div>'
       + '<div class="wzform"><div class="wztpl"><span class="tag a">Vorlage</span><b>'+esc(d.name)+'</b><p>'+esc(d.desc)+'</p><div class="wzpages">'+d.pages.map(function(p, i){ return '<span>'+(i+1)+' · '+esc(p.name)+'</span>'; }).join('')+'</div></div>'
       + '<div class="fld"><label>Name des Funnels</label><input class="inp" id="wname" value="'+esc(W.name)+'" placeholder="z. B. Tischkonfigurator Frühjahr"><div class="hint">Nur intern sichtbar – im Dashboard und im Kundenportal.</div></div>'
       + '<div class="fld"><label>Kunde</label><select class="inp" id="wclient"><option value="">– Intern (kein Kunde) –</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(W.clientId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select>'
       + (W.clientId ? '<label class="tgl" style="margin-top:8px"><span>Direkt im Kundenportal freischalten</span><input type="checkbox" id="wshare"'+(W.shared?' checked':'')+'><span class="sw"></span></label>' : '<div class="hint">Optional. Zugeordnete Funnels kann der Kunde in seinem Login sehen, sobald du sie freischaltest.</div>') + '</div>'
-      + '<div class="fld"><label>Link-Adresse</label><div class="slugf'+(taken||bad?' err':'')+'"><span>'+esc(linkBase())+'</span><input id="wslug" value="'+esc(W.slug)+'" spellcheck="false"></div><div class="hint'+(taken||bad?' errt':'')+'">'+(bad?'Bitte gib eine Adresse ein.':taken?'Diese Adresse ist schon vergeben.':'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.')+'</div></div></div></div>';
-    mf.innerHTML = '<button class="btn" data-w="back" style="margin-right:auto">'+I('left',14)+'Andere Vorlage</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="create"'+(taken||bad||!W.name.trim()?' disabled':'')+'>Funnel erstellen'+I('right',14)+'</button>';
+      + '<div class="fld"><label>Link-Adresse</label><div class="slugf'+(serr?' err':'')+'"><span>'+esc(linkBase())+'</span><input id="wslug" value="'+esc(W.slug)+'" spellcheck="false"></div><div class="hint'+(serr?' errt':'')+'">'+(serr || 'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.')+'</div></div></div></div>';
+    mf.innerHTML = '<button class="btn" data-w="back" style="margin-right:auto">'+I('left',14)+'Andere Vorlage</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="create"'+(serr||!W.name.trim()?' disabled':'')+'>Funnel erstellen'+I('right',14)+'</button>';
     mountPreview();
     var ni = mb.querySelector('#wname'), si = mb.querySelector('#wslug'), ci = mb.querySelector('#wclient'), sh = mb.querySelector('#wshare');
-    var refreshState = function(){ var t = slugTaken(W.slug), b = !W.slug; si.parentNode.classList.toggle('err', t || b); var h = si.parentNode.nextElementSibling; h.classList.toggle('errt', t || b); h.textContent = b ? 'Bitte gib eine Adresse ein.' : t ? 'Diese Adresse ist schon vergeben.' : 'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.'; mf.querySelector('[data-w="create"]').disabled = t || b || !W.name.trim(); };
+    var refreshState = function(){ var e = slugError(W.slug); si.parentNode.classList.toggle('err', !!e); var h = si.parentNode.nextElementSibling; h.classList.toggle('errt', !!e); h.textContent = e || 'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.'; mf.querySelector('[data-w="create"]').disabled = !!e || !W.name.trim(); };
     ni.oninput = function(){ W.name = ni.value; if(!W.slugEdited){ W.slug = uniqueSlug(W.name); si.value = W.slug; } refreshState(); };
     ni.onkeydown = function(e){ if(e.key === 'Enter') create(); };
     si.oninput = function(){ W.slugEdited = true; var v = slug(si.value); W.slug = v; refreshState(); };
@@ -1637,7 +1641,9 @@ function viewAs(cid){ S.as = cid; S.view = 'funnels'; S.cf = {funnel:'all', stat
 
 /* ---------- remote (Supabase) ---------- */
 function emptyDb(){ return {version:2, funnels:[], leads:[], clients:[], users:[], lists:[], brand:T.theme('clean'), defaults:{webhook:''}, fonts:{google:[], uploaded:[]}}; }
-function loadScript(src){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+/* supabase-js fest gepinnt: ein neues Release ändert nichts ungeprüft. Beim Aktualisieren URL und Hash gemeinsam tauschen (auch in src/build.py). */
+var SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js', SUPABASE_JS_SRI = 'sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O';
+function loadScript(src, sri){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; if(sri){ s.integrity = sri; s.crossOrigin = 'anonymous'; } s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 var SNAP = {funnels:{}, leads:{}, clients:{}, settings:''}, syncing = false, syncAgain = false;
 function funnelToRow(f){ ensureSlug(f); return {id:f.id, name:f.name, slug:f.slug, status:f.status, client_id:f.clientId || null, shared:!!f.shared, theme:f.theme, settings:f.settings, pages:f.pages, created_at:new Date(f.createdAt||Date.now()).toISOString(), updated_at:new Date(f.updatedAt||Date.now()).toISOString()}; }
 function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, status:r.status, clientId:r.client_id, shared:r.shared, theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
@@ -1708,7 +1714,7 @@ async function syncRemote(){
 }
 async function bootRemote(){
   $('#app').innerHTML = '<div class="login"><div style="color:var(--mut)">Lädt …</div></div>';
-  try{ await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); }catch(e){ $('#app').innerHTML = '<div class="login"><div class="lcard">Supabase konnte nicht geladen werden.</div></div>'; return; }
+  try{ await loadScript(SUPABASE_JS, SUPABASE_JS_SRI); }catch(e){ $('#app').innerHTML = '<div class="login"><div class="lcard">Supabase konnte nicht geladen werden.</div></div>'; return; }
   sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
   var invite = /type=(invite|recovery|signup)/.test(location.hash + location.search);
   sb.auth.onAuthStateChange(function(ev){ if(ev === 'PASSWORD_RECOVERY'){ S.needPw = true; render(); } });
@@ -1849,7 +1855,7 @@ document.addEventListener('input', function(e){
   if(el.id === 'qrurl'){ var pf = F() || null; clearTimeout(window.__qrT); window.__qrT = setTimeout(function(){ drawQR(el.value.trim()); var pc = $('#pubcode'); if(pc) pc.value = el.value.trim(); }, 300); if(pf){ pf.settings.hostedUrl = el.value.trim(); save(); } return; }
   if(el.id === 'libq'){ S.libq = el.value; var p3 = el.selectionStart; renderLeft(); var n3 = $('#libq'); n3.focus(); n3.setSelectionRange(p3,p3); return; }
   if(el.hasAttribute('data-ll')){ var lo = lists()[+el.getAttribute('data-ll')], lk = el.getAttribute('data-lk'); if(!lo) return; lo[lk] = lk === 'emails' ? splitMails(el.value) : el.value; save(); return; }
-  if(el.hasAttribute('data-fslug')){ var sf = F(), sv = slug(el.value), hint = $('#fslugh'), bad = !sv || slugTaken(sv, sf.id); el.parentNode.classList.toggle('err', bad); if(hint){ hint.classList.toggle('errt', bad); hint.textContent = !sv ? 'Bitte gib eine Adresse ein.' : bad ? 'Diese Adresse ist schon vergeben.' : publicUrl({slug:sv}); } if(!bad){ sf.slug = sv; touch(); } return; }
+  if(el.hasAttribute('data-fslug')){ var sf = F(), sv = slug(el.value), hint = $('#fslugh'), serr = slugError(sv, sf.id), bad = !!serr; el.parentNode.classList.toggle('err', bad); if(hint){ hint.classList.toggle('errt', bad); hint.textContent = serr || publicUrl({slug:sv}); } if(!bad){ sf.slug = sv; touch(); } return; }
   if(el.id === 'fname' || el.hasAttribute('data-fn')){ var f = F(); snap(); f.name = el.value || 'Unbenannt'; touch(); if(el.id === 'fname') el.size = Math.max(8, el.value.length); else { var fn = $('#fname'); if(fn) fn.value = f.name; } return; }
   if(el.hasAttribute('data-brand')){ var k0 = el.getAttribute('data-brand'), v0 = readVal(el); db.brand[k0] = v0; syncColor(el, 'brand', k0, v0); rangeLabel(el); save(); return; }
   if(el.hasAttribute('data-def')){ db.defaults[el.getAttribute('data-def')] = el.value; save(); return; }

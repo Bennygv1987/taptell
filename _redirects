@@ -1,1 +1,8 @@
-/f/*   /f.html   200
+# Netlify (Alternative zu vercel.json – gleiche Logik)
+https://www.taptell.de/*  https://taptell.de/:splat  301!
+https://taptell.de/       /landing/index.html        200
+https://app.taptell.de/   /app.html                  200
+/app                      /app.html                  200
+/f/*                      /f.html                    200
+/                         /f.html                    200
+/:slug                    /f.html                    200

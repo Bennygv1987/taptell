@@ -5,3 +5,6 @@ src/deploy/
 src/funnel-studio.html
 .claude/*
 !.claude/skills/
+
+# lokale Kopie des Dashboards (das deploybare Dashboard ist app.html)
+/index.html

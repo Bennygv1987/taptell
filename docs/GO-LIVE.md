@@ -9,23 +9,23 @@ Legende: 👤 = machst du selbst (Accounts, Zahlungen, Secrets, DNS) · 🤖 = k
 
 ## 0. Architektur in einem Satz
 
-TapTell ist eine **statische Web-App** (Dashboard `index.html`, Funnel-Laufzeit `f.html`, `embed.js`, `config.js`, Landingpage `landing/`) plus **Supabase** (Datenbank, Logins, Edge Functions). Ein eigener Server wie **Render ist nicht nötig**: Es gibt keinen Node-/Python-Server. Alles Dynamische läuft über Supabase (RPCs, Row Level Security, Edge Functions). Ein zusätzlicher Server wäre nur Kosten und Wartung ohne Nutzen.
+TapTell ist eine **statische Web-App** (Dashboard `app.html`, Funnel-Laufzeit `f.html`, `embed.js`, `config.js`, Landingpage `landing/`) plus **Supabase** (Datenbank, Logins, Edge Functions). Ein eigener Server wie **Render ist nicht nötig**: Es gibt keinen Node-/Python-Server. Alles Dynamische läuft über Supabase (RPCs, Row Level Security, Edge Functions). Ein zusätzlicher Server wäre nur Kosten und Wartung ohne Nutzen.
 
 ---
 
 ## 1. Hosting (Vercel empfohlen)
 
-`vercel.json` ist vorbereitet: kurze Links `/:slug` und `/f/:slug` → `f.html`, CORS für `embed.js` und `config.js`. Netlify (`_redirects`) und Cloudflare Pages gingen auch, aber nur für Vercel ist alles fertig, auch die automatische Domain-Anlage in `domain-manage`.
+`vercel.json` ist vorbereitet: `/` je nach Domain (`taptell.de` → Landingpage, `app.taptell.de` und `*.vercel.app` → Dashboard, eigene Kunden-Domains → Funnel), `/app` → Dashboard, kurze Links `/:slug` und `/f/:slug` → `f.html`, `www.taptell.de` → `taptell.de`, CORS für `embed.js` und `config.js`. Netlify (`_redirects`) und Cloudflare Pages gingen auch, aber nur für Vercel ist alles fertig, auch die automatische Domain-Anlage in `domain-manage`.
 
 | # | Schritt | Wer |
 |---|---|---|
 | 1.1 | Vercel-Account, Projekt aus dem GitHub-Repo `Bennygv1987/taptell` importieren (Framework: „Other“, kein Build-Befehl, Ausgabe = Repo-Wurzel) | 👤 |
 | 1.2 | **Domain-Aufteilung festlegen:** `taptell.de` = Landingpage + kurze Funnel-Links (`taptell.de/gehlen`), `app.taptell.de` = Dashboard | 👤 entscheidet |
-| 1.3 | `vercel.json` ergänzen: Auf `taptell.de` muss `/` die Landingpage zeigen (heute liefert `/` das Dashboard). Lösung: Rewrite mit `has: host = taptell.de` von `/` auf `/landing/index.html`. Die relativen Pfade `../src/…` der Landingpage funktionieren dort weiter | 🤖 |
-| 1.4 | Reservierte Pfade prüfen: Der Slug-Rewrite schließt `index, f, src, assets, landing, design, supabase` aus. **Kein Funnel darf so heißen**, außerdem nicht `app`, `api`, `login` (beim Anlegen sperren) | 🤖 |
+| 1.3 | ✅ Erledigt: `/` zeigt auf `taptell.de` die Landingpage. Weil auf Vercel eine vorhandene Datei Vorrang vor Rewrites hat, wird das Dashboard als `app.html` deployt. `index.html` gibt es nur noch lokal (gitignored, in `.vercelignore`). Nach dem ersten Deploy auf einer Preview prüfen, dass die Host-Regeln greifen | 🤖 |
+| 1.4 | ✅ Erledigt: Reservierte Adressen (`RESERVED_SLUGS` in `src/app.js`, u. a. `app`, `api`, `login`, `embed`, `config`, `impressum`, `datenschutz`) lassen sich im Dashboard nicht vergeben. `build.py` überträgt dieselbe Liste in den Slug-Rewrite von `vercel.json`. Offen: dieselbe Sperre zusätzlich in der Datenbank (Check-Constraint), falls Funnels je per API angelegt werden | 🤖 |
 | 1.5 | `config.js` für Produktion füllen: `supabaseUrl: 'https://jxmxbqbustezeyqnxeei.supabase.co'`, `supabaseAnonKey` (öffentlicher anon/publishable key), `publicUrl: 'https://taptell.de'`. Den anon-Key darfst du mir geben, er ist öffentlich. **Nie den service_role-Key** | 👤 Key · 🤖 eintragen |
-| 1.6 | Nicht öffentlich nötig: `design/`, `.claude/skills/`, `supabase/*.sql` werden mit ausgeliefert. Kein Geheimnis darin, aber sauberer ist ein Ausschluss per `.vercelignore` | 🤖 |
-| 1.7 | supabase-js wird in `f.html` als `@supabase/supabase-js@2` (wandernde Version) vom CDN geladen → auf eine feste Version pinnen, damit ein Update keinen Live-Funnel bricht | 🤖 |
+| 1.6 | ✅ Erledigt: `.vercelignore` schließt Quellen, Build-Skript, `design/`, `docs/`, `supabase/`, `.claude/` und die lokale `index.html` aus | 🤖 |
+| 1.7 | ✅ Erledigt: supabase-js fest auf `2.119.0` mit Integritäts-Hash (SRI), in `f.html` und im Dashboard. Zum Aktualisieren URL und Hash in `src/app.js` tauschen, `build.py` übernimmt sie für `f.html` | 🤖 |
 
 > ⚠️ **taptell.de zeigt heute auf Onepage.** Dort laufen Funnels mit gedruckten QR-Codes (bekannt: `/gehlen`, `/koelner-zoo`, `/gehlen-konfigurator-2`). Die DNS von taptell.de erst umstellen, wenn **jeder** Onepage-Slug in TapTell mit **identischem Slug** live ist (siehe Abschnitt 4). Bis dahin testet TapTell unter der Vercel-Adresse oder `app.taptell.de`.
 
@@ -150,11 +150,8 @@ Die DNS von taptell.de auf Onepage zurückstellen (alte Werte vorher notieren!).
 | Punkt | Auswirkung | Lösung |
 |---|---|---|
 | `config.js` leer | App läuft im **Demo-Modus** (Daten nur im Browser) | Abschnitt 1.5 |
-| `/` liefert das Dashboard statt der Landingpage | taptell.de würde das Login zeigen | Abschnitt 1.3 |
-| supabase-js ungepinnt (`@2`) | Ein CDN-Update könnte Live-Funnels brechen | Abschnitt 1.7 |
 | Browser-Webhook `text/plain` | Empfänger nimmt es evtl. nicht an, Werbeblocker | Server-Webhook (4.1.5) |
 | `lead-notify` mit Editor-HTML, Onepage-Format und `values` **nicht deployed und nicht typgeprüft** (Deno fehlte lokal) | Fehler erst beim Deploy sichtbar | Beim Deploy `deno check` laufen lassen, Testmail und Test-Webhook senden |
-| Reservierte Slugs nicht gesperrt | Funnel „app“ oder „landing“ wäre unerreichbar | Abschnitt 1.4 |
 | Bilder als Data-URL | große Funnel-Datensätze | Storage-Bucket (2.5), nach dem Start |
 | Demo-Daten im Browser (localStorage) | Test-Kunden/Listen aus dem Demo-Modus werden nicht übernommen | im Echtbetrieb neu anlegen |
 | `supabase/kunden-v2.sql` nicht eingespielt | Kunden-Stammdaten könnten nicht gespeichert werden | Abschnitt 2.1 |
@@ -166,7 +163,7 @@ Die DNS von taptell.de auf Onepage zurückstellen (alte Werte vorher notieren!).
 1. 👤 Vercel, Resend und DNS-Zugang bereitstellen, anon-Key nennen
 2. 👤/🤖 SQL einspielen (schema → automation → kunden-v2), Admin-Rolle setzen
 3. 👤 Secrets setzen · 🤖 Edge Functions deployen (nach Freigabe)
-4. 🤖 `config.js`, `vercel.json` (Landing auf `/`), Slug-Sperre, supabase-js pinnen, `.vercelignore` → Commit nach Freigabe
+4. 🤖 `config.js` eintragen (Landing auf `/`, Slug-Sperre, supabase-js gepinnt, `.vercelignore`: ✅ erledigt)
 5. 🤖 Holz Gehlen + Funnel `gehlen` anlegen, Server-Webhook, Test-Leads (nach Freigabe)
 6. 👤 Feldzuordnung und Folgefragen in taptell.info korrigieren
 7. 👤 Rechtstexte, AVV, Kontaktadresse

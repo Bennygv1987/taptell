@@ -3,6 +3,10 @@ d = pathlib.Path(__file__).parent
 r = lambda n: (d/n).read_text()
 logo = 'data:image/png;base64,' + base64.b64encode((d/'logo-t.png').read_bytes()).decode()
 logow = 'data:image/png;base64,' + base64.b64encode((d/'logo-w.png').read_bytes()).decode()
+import re as _re
+# supabase-js fest gepinnt – dieselben Werte wie in app.js (SUPABASE_JS / SUPABASE_JS_SRI)
+_m = _re.search(r"var SUPABASE_JS = '([^']+)', SUPABASE_JS_SRI = '([^']+)'", r('app.js'))
+SUPABASE_JS, SUPABASE_JS_SRI = _m.group(1), _m.group(2)
 app = r('app.js').replace('%%TT_LOGO%%', logo).replace('%%TT_LOGO_W%%', logow)
 def page(config_tag):
     return f"""<!DOCTYPE html>
@@ -54,7 +58,7 @@ html,body{{margin:0;min-height:100%}}html{{-webkit-text-size-adjust:100%;overscr
 {r('player.css')}
 </style>
 <script src="/config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="{SUPABASE_JS}" integrity="{SUPABASE_JS_SRI}" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="funnel"><div class="tt-msg">Lädt …</div></div>
@@ -67,12 +71,24 @@ html,body{{margin:0;min-height:100%}}html{{-webkit-text-size-adjust:100%;overscr
 </body>
 </html>
 """)
-# fertige Dateien zusätzlich ins Projekt-Root kopieren (dort liegt die deploybare App)
+# fertige Dateien ins Projekt-Root kopieren (dort liegt die deploybare App)
+# app.html = Dashboard für das Hosting. index.html = dasselbe nur für die lokale Entwicklung
+# (gitignored und in .vercelignore): Auf Vercel hat eine vorhandene index.html Vorrang vor den Rewrites,
+# dann könnte taptell.de unter / nie die Landingpage zeigen.
+shutil.copyfile(dep/'index.html', d.parent/'app.html')
 for n in ('index.html', 'f.html'): shutil.copyfile(dep/n, d.parent/n)
+
+# ---- vercel.json: reservierte Adressen aus app.js (RESERVED_SLUGS) in den Kurzlink-Rewrite übernehmen ----
+import json as _json
+_res = _re.findall(r"'([a-z0-9-]+)'", _re.search(r"var RESERVED_SLUGS = \[([^\]]+)\]", r('app.js')).group(1))
+_vp = d.parent/'vercel.json'; _old = _vp.read_text()
+_src = '/:slug((?!(?:' + '|'.join(_res) + ')$)[a-z0-9][a-z0-9-]*)'
+_new = _re.sub(r'"/:slug\((?:[^"\\]|\\.)*"', lambda m: _json.dumps(_src), _old, count=1)
+_json.loads(_new)  # bleibt gültiges JSON
+if _new != _old: _vp.write_text(_new); print('vercel.json: reservierte Adressen aktualisiert')
 print('built', (d/'funnel-studio.html').stat().st_size//1024, 'KB')
 
 # ---- embed.js: Einbetten auf Kunden-Websites (Player + CSS + Laufzeit in einer Datei) ----
-import json as _json
 (d.parent/'embed.js').write_text('/* TapTell Embed – automatisch erzeugt aus src/embed.runtime.js, src/player.js, src/player.css */\n'
   + 'window.__TT_PLAYER_CSS=' + _json.dumps(r('player.css')) + ';\n'
   + r('player.js') + '\n' + r('embed.runtime.js'))

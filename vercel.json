@@ -1,8 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/:path*", "has": [{ "type": "host", "value": "www.taptell.de" }], "destination": "https://taptell.de/:path*", "permanent": true }
+  ],
   "rewrites": [
+    { "source": "/", "has": [{ "type": "host", "value": "taptell.de" }], "destination": "/landing/index.html" },
+    { "source": "/", "has": [{ "type": "host", "value": "app.taptell.de" }], "destination": "/app.html" },
+    { "source": "/", "has": [{ "type": "host", "value": ".*\\.vercel\\.app" }], "destination": "/app.html" },
+    { "source": "/", "destination": "/f.html" },
+    { "source": "/app", "destination": "/app.html" },
     { "source": "/f/:slug", "destination": "/f.html" },
-    { "source": "/:slug((?!index$|f$|src$|assets$|landing$|design$|supabase$)[a-z0-9][a-z0-9-]*)", "destination": "/f.html" }
+    { "source": "/:slug((?!(?:index|f|src|assets|landing|design|docs|supabase|app|api|admin|auth|login|logout|signup|register|account|settings|dashboard|embed|config|www|impressum|datenschutz|agb|kontakt|preise|hilfe|support|status|static|public)$)[a-z0-9][a-z0-9-]*)", "destination": "/f.html" }
   ],
   "headers": [
     { "source": "/embed.js", "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }, { "key": "Cache-Control", "value": "public, max-age=300" }] },

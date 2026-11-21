@@ -3,11 +3,15 @@
 Statische Web-App (keine Build-Pipeline nötig) + Supabase als Backend.
 
 ```
-index.html          Dashboard: Admin-Bereich und Kundenportal (ein Login für beide)
-f.html              Öffentliche Funnel-Seite → erreichbar unter /f/<slug>
+app.html            Dashboard: Admin-Bereich und Kundenportal (ein Login für beide)
+index.html          Dasselbe, nur für die lokale Entwicklung (gitignored, wird nicht deployt)
+f.html              Öffentliche Funnel-Seite → erreichbar unter /<slug> und /f/<slug>
+embed.js            Einbetten auf Kunden-Websites
 config.js           Supabase-Zugangsdaten (leer = Demo-Modus im Browser)
-_redirects          Rewrite /f/* → f.html (Netlify, Cloudflare Pages)
-vercel.json         Dasselbe für Vercel
+landing/            Landingpage (auf taptell.de unter /)
+vercel.json         Routing: / je nach Domain, /app, Kurzlinks, CORS
+.vercelignore       Was nicht ausgeliefert wird (Quellen, Doku, SQL, lokale index.html)
+_redirects          Dasselbe Routing für Netlify
 supabase/schema.sql Tabellen, Row Level Security, öffentliche Funktionen
 supabase/functions/invite-user/index.ts   Kundenlogins einladen/löschen
 ```

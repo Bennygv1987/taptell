@@ -1,0 +1,27 @@
+# Was nicht auf Vercel ausgeliefert wird. Ausgeliefert werden nur:
+# app.html, f.html, embed.js, config.js, landing/, assets/ und die Dateien in src/, die die Landingpage lädt.
+
+# Nur für die lokale Entwicklung (Dashboard unter localhost:8080/).
+# Auf Vercel hätte sie Vorrang vor den Rewrites für /, das Dashboard kommt dort aus app.html.
+/index.html
+
+# Quellen und Build-Werkzeug (stecken fertig gebaut in app.html, f.html und embed.js)
+/src/build.py
+/src/__pycache__
+/src/deploy
+/src/funnel-studio.html
+/src/app.js
+/src/app.css
+/src/*.runtime.js
+
+# Interne Unterlagen, Datenbank-Skripte, Agent-Skills
+/design
+/docs
+/supabase
+/.claude
+/.agents
+/CLAUDE.md
+/DESIGN.md
+/README.md
+/skills-lock.json
+/_redirects
