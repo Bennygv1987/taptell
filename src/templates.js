@@ -508,13 +508,114 @@ function tZoo(){
     pages:[pStart, pProblem, pGut, pWunsch, pKontakt, pDankeJa, pDankeNein, pGoogle]};
 }
 
+/* Feedback-Funnel Holz Gehlen – 1:1 nach taptell.de/gehlen (Onepage).
+   Feld-Schlüssel = Onepage-Slugs, damit Webhooks dieselben Felder liefern:
+   Grundstimmung · Problemgrund · Kommentar zum Grund · Kontaktwunsch · name (firstName/lastName) · email-adresse · zustimmung · lob · lob_kommentar
+   Logik: Grundstimmung ≤ 3 → Problem → Kontakt gewünscht (Ja → Kontakt → Finish, sonst Finish Keinkontakt); 4–5 → Was hat gut gefallen → Finish Google */
+function tGehlenFeedback(){
+  var A = '/assets/gehlen-feedback/', LIME = '#aac520';
+  var h = function(text, extra){ return B('heading', Object.assign({text:text, level:1, size:32, fw:700, align:'center', mb:10}, extra||{})); };
+  var badge = function(text, fw){ return B('badge', {text:text, variant:'filled', align:'center', fw:fw||700, scale:96, mb:28}); };
+  var success = function(){ return B('image', {src:A+'success.svg', alt:'', radius:0, height:100, fit:'contain', mb:0}); };
+  var team = function(){ return B('image', {src:A+'team.png', alt:'Das Team von Holz Gehlen', radius:0, ratio:'1280:1210', mb:36}); };
+  var hands = function(){ return B('heading', {text:'🙌', level:1, size:30, fw:500, align:'center', mb:8}); };
+  var check = function(labels){ return labels.map(function(l){ return typeof l === 'string' ? O(l, '') : O(l[0], '', {sub:l[1]}); }); };
+  var lime = function(label, extra){ return B('button', Object.assign({label:label, full:false, shadow:false, icon:'none', align:'center', btnBg:LIME, mt:8}, extra||{})); };
+  var dark = function(label, icon, extra){ return B('button', Object.assign({label:label, variant:'gradient', btnBg:'#000000', btnColor:'rgba(255,255,255,.78)', full:true, shadow:true, icon:icon, iconLeft:true, radiusOn:true, radius:16, align:'center', mt:8}, extra||{})); };
+  var note = function(key, rows){ return B('input', {label:'', placeholder:'Könnten Sie uns kurz mehr dazu sagen?', inputType:'textarea', key:key, rows:rows, required:false, mb:24}); };
+  var MUST = 'Wählen Sie mindestens eine Option', REQ = 'Feld ist erforderlich';
+  var stars = B('html', {code:'<div style="display:flex;justify-content:center;gap:10px">'+new Array(6).join('<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#f8c22d" d="M12.75 1.46l3.11 6.3 6.95 1.01a.83.83 0 01.46 1.42l-5.03 4.9 1.19 6.93a.83.83 0 01-1.21.88L12 19.63 5.78 22.9a.83.83 0 01-1.21-.88l1.19-6.93-5.03-4.9a.83.83 0 01.46-1.42l6.95-1.01 3.11-6.3a.83.83 0 011.5 0z"/></svg>')+'</div>', align:'center', mb:28});
+
+  var pGoogle = P('Finish Google', [success(),
+    B('image', {src:A+'google.jpg', alt:'Deine Bewertung macht den Unterschied', radius:16, ratio:'2:1', mb:0}),
+    B('spacer', {height:72}),
+    h('Vielen Dank für Ihr positives Feedback!', {mb:6}),
+    B('text', {text:'Wenn Ihnen ihr Besuch gefallen hat, würden wir uns sehr über eine kurze Google-Bewertung freuen. ', align:'center', mb:36}),
+    stars,
+    dark('Auf Google bewerten', 'google', {action:'url', url:'https://search.google.com/local/writereview?placeid=ChIJ5ZAgh3VMv0cR9rNQ9QeRkV0', scale:120})], {wide:true, allowBack:false, submitOnEnter:true, autoButton:false});
+  var pDankeNein = P('Finish Keinkontakt', [success(), team(), hands(),
+    h('Danke für Ihr ehrliches Feedback', {size:24, mb:6}),
+    B('text', {text:'Auch anonymes Feedback hilft uns dabei, besser zu werden und Probleme schneller zu erkennen.', align:'center'})], {wide:true, allowBack:false, submitOnEnter:true, autoButton:false});
+  var pDankeJa = P('Finish', [success(), team(), hands(),
+    h('Vielen Dank für Ihr ehrliches Feedback!', {size:30, mb:6}),
+    B('text', {text:'Ihr Feedback ist bei uns angekommen und wird sofort intern besprochen. Ein Mitarbeiter wird Sie dazu schnellstmöglich per eMail kontaktieren.', align:'center'})], {wide:true, hideProgress:true, allowBack:false, submitOnEnter:true, autoButton:false});
+  var pKontakt = P('Kontakt ja', [
+    B('text', {text:'Danke für Ihr Vertrauen!', align:'center', size:14, mb:8}),
+    B('image', {src:A+'kontakt.jpg', alt:'Kontakt', radius:0, ratio:'2:1', mb:32}),
+    h('Hinterlassen Sie uns bitte kurz Ihre Kontaktdaten und wir melden uns bei Ihnen.', {size:22, mb:8}),
+    B('text', {text:'🔒 Ihre Daten werden ***ausschließlich*** zur Kontaktaufnahme bezüglich Ihres Feedbacks verwendet. Wir werden niemals Spam zusenden!', align:'center', mb:32}),
+    B('input', {label:'', placeholder:'Vorname', key:'name.firstName', required:true, errorText:REQ, half:true, mb:12}),
+    B('input', {label:'', placeholder:'Nachname (optional)', key:'name.lastName', required:false, half:true, mb:12}),
+    B('input', {label:'', placeholder:'Ihre E-Mail Adresse', inputType:'email', key:'email-adresse', required:true, errorText:REQ, mb:20}),
+    B('checkbox', {text:'Ich stimme zu, dass Holz Gehlen mich zu meinem Feedback per Email kontaktieren darf.', key:'zustimmung', required:true, errorText:MUST, mb:24}),
+    dark('Mein Feedback absenden', 'plane', {action:'page', target:pDankeJa.id})], {wide:true});
+  var pWunsch = P('Kontakt gewünscht', [badge('NUR NOCH 1 SCHRITT. VERSPROCHEN', 400),
+    h('Wir würden das gerne wieder gut machen.'),
+    B('text', {text:'Dürfen wir uns **per Email** persönlich bei Ihnen melden und eine Lösung finden?', align:'center', mb:32}),
+    B('choice', {question:'', key:'Kontaktwunsch', layout:'image', ratio:'4:3', required:false, autoNext:true, options:[
+      O('Ja, gerne!', '', {img:A+'kontakt-ja.jpg', pos:'50% 50%', goto:pKontakt.id}),
+      O('Nein, das passt schon...', '', {img:A+'kontakt-nein.png', pos:'75% 50%', sub:'Ihr Feedback wird anonym abgesendet.', goto:pDankeNein.id})]})], {wide:true});
+  var pGut = P('Was hat gut gefallen', [badge('NUR EINE FRAGE'),
+    h('😊\nDas freut uns sehr!\nWas hat Ihnen besonders gut gefallen?', {size:28, mb:32}),
+    B('choice', {question:'', key:'lob', layout:'checklist', colsD:2, multi:true, autoNext:false, required:true, errorText:MUST, mb:16, options:check(['Tolle Beratung','gute Auswahl','Faire Preise',['Sonstiges','Bitte gehen Sie unten weiter darauf ein.']])}),
+    note('lob_kommentar', 6),
+    dark('Anonym abschicken', 'plane')], {wide:true, next:pGoogle.id});
+  var pProblem = P('Problem', [
+    h('😲 Ohje!\nWas lief nicht so gut?', {mb:4}),
+    B('text', {text:'Konkretes Feedback ist sehr wichtig für uns, damit wir uns in diesen Bereichen verbessern können', align:'center', size:14, mb:40}),
+    B('choice', {question:'', key:'Problemgrund', layout:'checklist', colsD:2, multi:true, autoNext:false, required:true, errorText:MUST, mb:24, options:check(['Beratung nicht hilfreich','Zu lange gewartet','Produkt nicht gefunden','Preise unklar/zu hoch','Auswahl nicht passend',['Sonstiges','Bitte gehe unten weiter darauf ein.']])}),
+    B('badge', {text:'DETAILS ZU IHREM ANLIEGEN', variant:'grey', align:'center', fw:400, mb:6}),
+    B('text', {text:'Dies ist optional, hilft uns aber enorm weiter', align:'center', size:14, mb:16}),
+    note('Kommentar zum Grund', 10),
+    lime('Weiter geht\'s')], {wide:true, next:pWunsch.id});
+  var pStart = P('Grundstimmung', [badge('ES DAUERT NUR 1 MINUTE'),
+    B('image', {src:A+'feedback.jpg', alt:'Ihr Feedback in nur 1 Minute', radius:16, ratio:'16:9', mb:36}),
+    h('Wie war __Ihr Besuch__ bei uns?', {mb:36}),
+    B('rating', {label:'', style:'emoji', max:5, emojis:'😥 🙁 😐 🙂 😀', key:'Grundstimmung', autoNext:true, required:true, align:'left', minLabel:'sehr schlecht', maxLabel:'sehr gut',
+      routes:[{min:1, max:3, goto:pProblem.id}, {min:4, max:5, goto:pGut.id}]})], {wide:true});
+
+  var css = [
+    '.fp.prog-top .fp-top{padding-top:14px}',
+    '.fp.prog-top .fp-prog{margin:0 0 33px;height:6px;background:rgba(43,42,43,.1)}',
+    '.fp-body{padding-top:24px}',
+    '.fp-h1,.fp-h2,.fp-h3{line-height:1.3;letter-spacing:-.3px}',
+    '.fp-txt{font-size:16px;line-height:1.5;color:var(--tx)}',
+    '.fp-badge{border-radius:6px;padding:5px 12px;font-weight:inherit;letter-spacing:.5px;text-transform:uppercase;font-size:12px}',
+    '.fp-badge.grey{background:rgba(43,42,43,.05);font-size:13px;letter-spacing:0;padding:4px 12px}',
+    '.fp-ul .fp-ulsv{color:var(--p)}',
+    '.fp-emo{gap:12px}.fp-emo button{border-radius:6px;background:rgba(43,42,43,.05);box-shadow:inset 0 0 0 1px rgba(43,42,43,.1);height:52px;font-size:24px}',
+    '.fp-rlab{font-size:13.5px;color:var(--tx);margin-top:8px}',
+    '.fp-opts.checklist{gap:12px}',
+    '.fp-opts.checklist .fp-opt{min-height:40px;padding:0 12px;font-size:13px;border:1px solid rgba(43,42,43,.08);background:#f8f9f9}',
+    '.fp-opts.checklist .fp-opt .chk{width:20px;height:20px;border-radius:4px;border:0;background:rgba(43,42,43,.1)}',
+    '.fp-opts.checklist .fp-opt.sel{border-color:rgba(43,42,43,.35);background:#f8f9f9;font-weight:600}',
+    '.fp-opts.checklist .fp-opt.sel .chk{background:rgba(43,42,43,.3)}',
+    '.fp-opt .sub{font-size:11px;margin-top:0;color:#6f6e6f}',
+    '.fp-opts.image{gap:13px}.fp-opts.image .fp-opt{border:1px solid rgba(43,42,43,.08);font-size:13px;font-weight:400}.fp-opts.image .fp-opt .chk{display:none}.fp-opts.image .fp-opt .lbl{padding:8px 10px 9px}',
+    '.fp-in{padding:10px 12px;font-size:13px;border:1px solid rgba(43,42,43,.15)}',
+    'textarea.fp-in{min-height:0;resize:none}',
+    '.fp-iw .ii{display:none}.fp-iw .ii+.fp-in{padding-left:12px}',
+    '.fp-cb{font-size:14px;color:var(--tx);align-items:center}.fp-cb .box{border-radius:50%}',
+    '.fp-btn{font-size:calc(15px*var(--sc,1));min-height:calc(56px*var(--sc,1));padding:7px 28px}',
+    '.fp-btn.auto{width:auto}',
+    '.fp-lbl .rq,.fp-cb .rq{display:none}',
+    '@container (min-width:640px){.fp.wide .fp-body,.fp.wide .fp-top{max-width:1198px}.fp.prog-top .fp-top{padding-top:28px}.fp.prog-top .fp-prog{margin-bottom:34px}}'
+  ].join('\n');
+
+  return {name:'Feedback-Funnel Holz Gehlen', desc:'Smiley-Bewertung mit Weiterleitung: Zufriedene zu Google, Unzufriedene zu Kontakt oder anonymem Dank. Feldnamen wie im Onepage-Original.', cats:['Feedback'],
+    theme:theme('clean', {primary:LIME, primaryText:'#ffffff', bg:'#ffffff', surface:'#f4f4f4', text:'#2b2a2b', muted:'#6f6e6f', font:'Inter Tight', headingFont:'Onest', radius:6, btnRadius:4,
+      headingWeight:700, headingLs:0, lineHeight:1.5, logoImg:A+'logo.png', logoH:39, progress:'bar', progressTop:true, backButton:false, animation:'slide', pad:24, btnPad:7, btnWeight:600, customCss:css}),
+    settings:{currency:'EUR', basePrice:0, address:'sie'},
+    pages:[pStart, pProblem, pGut, pWunsch, pKontakt, pDankeJa, pDankeNein, pGoogle]};
+}
+
 function tBlank(){
   return {name:'Leerer Funnel', desc:'Starte mit einer leeren Seite.', cats:[], theme:theme('clean'), settings:{currency:'EUR'},
     pages:[P('Seite 1',[B('heading',{text:'Deine erste Seite'}), B('text',{}), B('button',{})]), P('Danke',[B('heading',{text:'Vielen Dank!', align:'center'})],{hideProgress:true})]};
 }
 
 var TEMPLATES = [
-  {id:'gehlen-tisch', make:tGehlen}, {id:'koelner-zoo', make:tZoo}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
+  {id:'gehlen-tisch', make:tGehlen}, {id:'gehlen-feedback', make:tGehlenFeedback}, {id:'koelner-zoo', make:tZoo}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
   {id:'montage', make:tMontage}, {id:'recruiting', make:tRecruiting}, {id:'quiz', make:tQuiz}, {id:'feedback', make:tFeedback}, {id:'abnahme', make:tAbnahme},
   {id:'freebie', make:tFreebie}, {id:'blank', make:tBlank}
 ];

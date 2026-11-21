@@ -178,7 +178,7 @@ async function processLead(admin: any, lead: any, funnel: any, only?: { kind: st
   // 3) Webhooks
   if (!only || only.kind === 'webhook') {
     const payload = { event: 'lead.created', test: !!only, created_at: lead.created_at, funnel: { id: funnel.id, name: funnel.name, slug: funnel.slug },
-      lead: { id: lead.id, name: lead.name, email: lead.email, phone: lead.phone, total: +lead.total || 0, status: lead.status, fields, answers: lead.data?.answers ?? {}, items: lead.data?.items ?? [], utm: lead.data?.utm ?? {} } };
+      lead: { id: lead.id, name: lead.name, email: lead.email, phone: lead.phone, total: +lead.total || 0, status: lead.status, fields, values: lead.data?.values ?? {}, answers: lead.data?.answers ?? {}, items: lead.data?.items ?? [], utm: lead.data?.utm ?? {} } };
     for (const h of (a.webhooks ?? []).filter((h) => h.url && h.active !== false && (!only?.hookId || h.id === only.hookId))) {
       if (h.events && h.events.length && !h.events.includes('lead.created')) continue;
       await log('webhook', h.url, await sendHook(h, 'lead.created', payload));
