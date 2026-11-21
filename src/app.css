@@ -267,7 +267,7 @@ select.inp{appearance:none;background:var(--card) url("data:image/svg+xml,%3Csvg
 .os-soft i.sel{background:var(--n100);box-shadow:inset 1.5px 1.5px 3px rgba(0,0,0,.14),inset -1.5px -1.5px 3px #fff}
 .upl{display:flex;gap:8px;align-items:center}
 .upl .pv{width:44px;height:44px;border-radius:var(--r-md);background:var(--n50) center/cover;border:1px solid var(--line);flex:none;display:grid;place-items:center;color:var(--mut)}
-.upl input[type=file]{display:none}
+.upl input[type=file],label.btn input[type=file]{display:none}
 pre.code,textarea.code{background:var(--n900);color:#d6d9e4;border-radius:var(--r-md);padding:12px 14px;font:var(--fs-12)/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;width:100%;border:0;resize:vertical;min-height:160px;outline:none;white-space:pre;overflow:auto}
 /* toast */
 .toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center}
@@ -385,6 +385,18 @@ pre.code,textarea.code{background:var(--n900);color:#d6d9e4;border-radius:var(--
 .preset .sw{height:30px;border-radius:var(--r-sm);display:flex;align-items:flex-end;padding:4px;gap:3px}
 .preset .sw i{width:12px;height:12px;border-radius:var(--r-xs);display:block}
 .preset span{display:block;font-size:var(--fs-12);font-weight:600;margin-top:6px}
+/* Icon-Auswahl je Antwort */
+.icgrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+.icb{appearance:none;aspect-ratio:1;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card);color:var(--ink2);display:grid;place-items:center;cursor:pointer;padding:0;transition:transform var(--dur-press) var(--ease-out),border-color var(--dur-fast) ease}
+.icb svg{width:16px;height:16px}
+.icb:active{transform:scale(.94)}
+.icb.on{border-color:var(--ink);color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+@media (hover:hover) and (pointer:fine){.icb:not(.on):hover{border-color:var(--n300);color:var(--ink)}}
+.sthumb{flex:none;width:34px;height:34px;border-radius:var(--r-sm);background:var(--n100) center/contain no-repeat;box-shadow:inset 0 0 0 1px var(--line)}
+/* Galerie: weicher Wechsel der Vorschau-Seiten */
+.tcard .thumb{position:relative}
+.tcard .thumb .mini.nx{position:absolute;top:18px;left:50%;margin-left:-195px;animation:tplIn 300ms var(--ease-out) both}
+@keyframes tplIn{from{opacity:0}}
 /* Hervorhebung: Vorschau mit den Klassen des Funnel-Players */
 .hlstyles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .hlw{appearance:none;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;color:var(--ink2);font:550 var(--fs-11) var(--ui);transition:transform var(--dur-press) var(--ease-out),border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}

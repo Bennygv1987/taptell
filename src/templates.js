@@ -34,6 +34,12 @@ var DEF = {
   list:        function(){ return {items:['Erster Vorteil','Zweiter Vorteil','Dritter Vorteil'], icon:'check'}; },
   testimonial: function(){ return {quote:'„Super Beratung, schnelle Umsetzung – absolut empfehlenswert!“', name:'Julia Schneider', role:'Kundin aus Düsseldorf', stars:5, img:''}; },
   trust:       function(){ return {items:['⭐ 4,9 bei Google','✓ 500+ Kunden','🔒 DSGVO-konform'], align:'center'}; },
+  reviews:     function(){ return {score:4.9, count:127, source:'Google', variant:'', align:'center'}; },
+  avatars:     function(){ return {names:['Anna K.','Markus T.','Sabine L.','Jonas W.'], photos:[], text:'Über **200** zufriedene Kunden', stars:true, more:'', align:'center'}; },
+  logos:       function(){ return {title:'Wir verbauen Qualität von', items:['Kährs','Osmo','Bauhaus','Hornbach','Remmers'], speed:28, gray:true}; },
+  recap:       function(){ return {title:'Deine Auswahl', showImage:true, showPrice:true, totalLabel:'Geschätzter Preis', prefix:'', max:6}; },
+  steps:       function(){ return {title:'So geht es weiter', items:['Anfrage eingegangen | Gerade eben','Persönlicher Rückruf | Innerhalb von 24 Stunden','Dein Angebot | Passend zu deiner Auswahl']}; },
+  loader:      function(){ return {anim:'search', duration:3, size:120, texts:['Wir prüfen deine Angaben …','Wir vergleichen die Preise …','Gleich geschafft …'], showBar:true, align:'center'}; },
   faq:         function(){ return {items:[{q:'Ist das Angebot kostenlos?', a:'Ja, die Anfrage ist komplett kostenlos und unverbindlich.'},{q:'Wie schnell meldet ihr euch?', a:'In der Regel innerhalb von 24 Stunden an Werktagen.'}]}; },
   countdown:   function(){ return {minutes:15, label:'Dein Angebot ist reserviert für', align:'center'}; },
   choice:      function(){ return {question:'Deine Frage?', desc:'', key:'', layout:'list', multi:false, autoNext:true, required:true, showPrices:false, options:[O('Option A','👍'),O('Option B','✌️'),O('Option C','🙌')]}; },
@@ -82,6 +88,13 @@ var LIB = [
   {id:'liveprice', type:'summary', n:'Live-Preis', ic:'tag', g:'Aktion & Preis', over:{compact:true, title:'Geschätzter Preis', prefix:'ab', note:''}},
   {id:'testimonial', type:'testimonial', n:'Bewertung', ic:'quote', g:'Vertrauen'},
   {id:'trust', type:'trust', n:'Trust-Badges', ic:'shield', g:'Vertrauen'},
+  {id:'reviews', type:'reviews', n:'Bewertungs-Abzeichen', ic:'star', g:'Vertrauen'},
+  {id:'avatars', type:'avatars', n:'Kundenstapel', ic:'users', g:'Vertrauen'},
+  {id:'logos', type:'logos', n:'Logo-Leiste', ic:'layers', g:'Vertrauen'},
+  {id:'recap', type:'recap', n:'Auswahl-Karte', ic:'receipt', g:'Aktion & Preis'},
+  {id:'steps', type:'steps', n:'Zeitleiste', ic:'list', g:'Aktion & Preis'},
+  {id:'loader', type:'loader', n:'Lade-Animation', ic:'refresh', g:'Aktion & Preis'},
+  {id:'faces', type:'rating', n:'Smileys flach', ic:'star', g:'Fragen', over:{label:'Wie zufrieden bist du?', style:'faces', max:5, key:'zufriedenheit', autoNext:true, align:'center'}},
   {id:'faq', type:'faq', n:'FAQ', ic:'help', g:'Vertrauen'},
   {id:'countdown', type:'countdown', n:'Countdown', ic:'clock', g:'Vertrauen'},
   {id:'spacer', type:'spacer', n:'Abstand', ic:'space', g:'Layout'},
@@ -97,6 +110,7 @@ var SECTIONS = [
   {id:'s-contact', n:'Kontaktformular', ic:'user', make:function(){ return [B('heading',{text:'Fast geschafft! Wohin dürfen wir dein Angebot senden?', level:2}), B('input',{label:'Vor- und Nachname', placeholder:'Max Mustermann', key:'name', icon:'user'}), B('input',{label:'E-Mail-Adresse', placeholder:'max@beispiel.de', inputType:'email', key:'email'}), B('input',{label:'Telefonnummer', placeholder:'+49 170 1234567', inputType:'tel', key:'telefon'}), B('checkbox',{}), B('button',{label:'Jetzt anfragen', action:'submit'})]; }},
   {id:'s-hero', n:'Hero / Start', ic:'sparkles', make:function(){ return [B('badge',{}), B('heading',{text:'Finde in 60 Sekunden das ==perfekte Angebot==', align:'center'}), B('text',{text:'Beantworte ein paar kurze Fragen und erhalte sofort eine persönliche Einschätzung.', align:'center'}), B('button',{label:'Jetzt starten', sub:'Dauert nur 60 Sekunden'}), B('trust',{})]; }},
   {id:'s-thanks', n:'Danke-Seite', ic:'check', make:function(){ return [B('heading',{text:'Vielen Dank, {{vorname}}! 🎉', align:'center'}), B('text',{text:'Wir haben deine Anfrage erhalten und melden uns innerhalb von 24 Stunden.', align:'center'}), B('list',{items:['Wir prüfen deine Angaben','Du erhältst dein persönliches Angebot','Gemeinsam besprechen wir die Details'], icon:'number'})]; }},
+  {id:'s-loader', n:'Ladeseite', ic:'refresh', make:function(){ return [B('loader',{}), B('heading',{text:'Einen Moment …', level:2, align:'center', mb:6}), B('text',{text:'Der beste Preis wird gerade für dich gesucht.', align:'center'})]; }},
   {id:'s-book', n:'Terminbuchung', ic:'calendar', make:function(){ return [B('heading',{text:'Wann passt es dir am besten?', level:2}), B('calendar',{}), B('button',{label:'Termin auswählen'})]; }}
 ];
 
@@ -136,14 +150,15 @@ function tTerrasse(){
   return {name:'Terrassen-Konfigurator', desc:'Material, Fläche & Extras wählen – mit Live-Preis und Angebotsanfrage.', cats:['Konfigurator','Leads'],
     theme:modern({primary:'#2f5d46', logoText:'Terrassenbau Muster'}), settings:{currency:'EUR', basePrice:0},
     pages:[
-      P('Start',[hero('1787491581115-1d9a0e9f11ec'), B('badge',{text:'Preis in 60 Sekunden', align:'left'}), B('heading',{text:'Konfiguriere deine ==Traumterrasse==', level:1}), B('text',{text:'Wähle Material, Größe und Extras – und erhalte sofort eine unverbindliche Preisschätzung.', mb:22}), B('button',{label:'Jetzt konfigurieren', sub:'Kostenlos & unverbindlich'}), B('trust',{items:['4,9 bei Google','320+ Terrassen','Regionaler Fachbetrieb'], align:'center'})]),
+      P('Start',[hero('1787491581115-1d9a0e9f11ec'), B('badge',{text:'Preis in 60 Sekunden', align:'left'}), B('heading',{text:'Konfiguriere deine ==Traumterrasse==', level:1}), B('text',{text:'Wähle Material, Größe und Extras – und erhalte sofort eine unverbindliche Preisschätzung.', mb:22}), B('button',{label:'Jetzt konfigurieren', sub:'Kostenlos & unverbindlich'}), B('reviews',{score:4.9, count:127, source:'Google', align:'center'})]),
       P('Material',[mat]),
       P('Größe',[B('image',{src:U('1787491581115-1d9a0e9f11ec',900), ratio:'16:9', radius:14, alt:''}), B('heading',{text:'Wie groß soll deine Terrasse werden?', level:2}), B('text',{text:'Grobe Schätzung reicht – wir messen vor Ort genau aus.', mb:20}), size, B('spacer',{height:8}), B('summary',{compact:true, title:'Geschätzter Preis', prefix:'ab', note:''})]),
       P('Extras',[extras, B('summary',{compact:true, sticky:true, title:'Aktueller Preis', prefix:'', note:''})]),
       P('Zeitraum',[when]),
+      P('Berechnung',[B('loader',{anim:'search', duration:3.2, texts:['Wir prüfen deine Auswahl …','Wir suchen den besten Preis …','Fast fertig …']}), B('heading',{text:'Einen Moment …', level:2, align:'center', mb:6}), B('text',{text:'Der beste Preis für deine Terrasse wird berechnet.', align:'center'})], {hideProgress:true, vcenter:true, allowBack:false}),
       P('Zusammenfassung',[B('heading',{text:'Deine Wunschterrasse', level:2}), B('summary',{}), B('button',{label:'Angebot anfordern'})]),
       P('Kontakt', contact('Wohin dürfen wir dein Angebot senden?', '', 'Angebot anfordern')),
-      P('Danke', done('Danke, {{vorname|dir}}!', 'Deine Anfrage über **{{total}}** ist eingegangen. Wir melden uns innerhalb von 24 Stunden mit deinem Angebot.', [B('list',{items:['Wir prüfen deine Konfiguration','Kostenloser Aufmaß-Termin vor Ort','Dein verbindliches Angebot'], icon:'number'})]), {hideProgress:true, allowBack:false})
+      P('Danke', done('Danke, {{vorname|dir}}!', 'Deine Anfrage über **{{total}}** ist eingegangen. Wir melden uns innerhalb von 24 Stunden mit deinem Angebot.', [B('recap',{title:'Deine Wunschterrasse', mt:8, mb:22}), B('steps',{items:['Anfrage eingegangen | Gerade eben','Persönlicher Rückruf | Innerhalb von 24 Stunden','Kostenloses Aufmaß vor Ort | Zum Wunschtermin','Dein verbindliches Angebot | Passend zu deiner Auswahl']})]), {hideProgress:true, allowBack:false})
     ]};
 }
 
@@ -158,7 +173,7 @@ function tSolar(){
       P('Speicher',[B('choice',{question:'Interessierst du dich für einen Stromspeicher?', key:'speicher', options:[O('Ja, unbedingt'),O('Vielleicht'),O('Nein')]})]),
       P('PLZ',[B('heading',{text:'Wo befindet sich das Gebäude?', level:2}), B('input',{label:'Postleitzahl', placeholder:'41516', key:'plz', inputType:'number'})]),
       P('Kontakt', [B('badge',{text:'Deine Region wird beliefert', align:'left'})].concat(contact('Wohin dürfen wir deine Berechnung senden?', '', 'Berechnung anfordern'))),
-      P('Danke', done('Perfekt, {{vorname|danke}}!', 'Ein Solar-Experte meldet sich innerhalb von 24 Stunden mit deiner persönlichen Berechnung.'), {hideProgress:true, allowBack:false})
+      P('Danke', done('Perfekt, {{vorname|danke}}!', 'Ein Solar-Experte meldet sich innerhalb von 24 Stunden mit deiner persönlichen Berechnung.', [B('recap',{title:'Deine Angaben', mt:8, mb:22}), B('steps',{items:['Anfrage eingegangen | Gerade eben','Rückruf vom Solar-Experten | Innerhalb von 24 Stunden','Deine persönliche Berechnung | Mit Förderung und Ertrag']})]), {hideProgress:true, allowBack:false})
     ]};
 }
 
@@ -173,7 +188,7 @@ function tImmo(){
       P('Zustand',[B('choice',{question:'Wie ist der Zustand?', key:'zustand', layout:'grid', options:[O('Neuwertig'),O('Gepflegt'),O('Renovierungsbedürftig'),O('Sanierungsbedürftig')]})]),
       P('Verkauf',[B('choice',{question:'Planst du einen Verkauf?', key:'verkauf', options:[O('Ja, in den nächsten 3 Monaten'),O('Ja, in 6–12 Monaten'),O('Nein, nur Interesse')]})]),
       P('Kontakt', contact('Wohin dürfen wir die Bewertung senden?', 'Deine Daten behandeln wir vertraulich.', 'Bewertung anfordern')),
-      P('Danke', done('Danke, {{vorname|dir}}!', 'Deine Wertermittlung ist in Arbeit und kommt in Kürze per E-Mail.'), {hideProgress:true, allowBack:false})
+      P('Danke', done('Danke, {{vorname|dir}}!', 'Deine Wertermittlung ist in Arbeit und kommt in Kürze per E-Mail.', [B('steps',{mt:12, items:['Angaben eingegangen | Gerade eben','Marktanalyse | Mit aktuellen Vergleichsdaten','Deine Wertermittlung | Per E-Mail, meist am selben Tag']})]), {hideProgress:true, allowBack:false})
     ]};
 }
 
@@ -261,7 +276,7 @@ function tMontage(){
     B('badge',{text:'Es dauert nur 1 Minute', variant:'filled', align:'center', mb:22}),
     hero('1505798577917-a65157d3320a', {mb:26}),
     B('heading',{text:'Wie zufrieden waren Sie mit unserer __Montage__?', level:2, align:'center', mb:24}),
-    B('choice',{question:'', key:'zufriedenheit', layout:'scale', autoNext:true, required:true, minLabel:'sehr schlecht', maxLabel:'sehr gut', options:[face('😥','Sehr schlecht',1,neg.id),face('🙁','Schlecht',2,neg.id),face('😐','Okay',3,neg.id),face('🙂','Gut',4,pos.id),face('😀','Sehr gut',5,pos.id)]})
+    B('choice',{question:'', key:'zufriedenheit', layout:'scale', faceStyle:'flat', autoNext:true, required:true, minLabel:'sehr schlecht', maxLabel:'sehr gut', options:[face('😥','Sehr schlecht',1,neg.id),face('🙁','Schlecht',2,neg.id),face('😐','Okay',3,neg.id),face('🙂','Gut',4,pos.id),face('😀','Sehr gut',5,pos.id)]})
   ];
   pos.blocks = [
     B('badge',{text:'Nur eine Frage', variant:'filled', align:'center', mb:18}),
