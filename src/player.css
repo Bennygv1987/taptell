@@ -21,7 +21,7 @@
 .fp-steps i{flex:1;height:var(--prh,5px);border-radius:var(--prr,9px);background:color-mix(in srgb,var(--tx) 9%,transparent);transition:background .3s}
 .fp-steps i.on{background:var(--p)}
 /* Aktuelles Segment füllt sich beim Öffnen der Seite von links */
-.fp-steps:not(.pa-none) i.cur{background:linear-gradient(var(--p),var(--p)) 0 0/100% 100% no-repeat,color-mix(in srgb,var(--tx) 9%,transparent);animation:fpSeg 560ms var(--ease-out) both}
+.fp:not(.is-edit) .fp-steps:not(.pa-none) i.cur,.fp-steps.demo:not(.pa-none) i.cur{background:linear-gradient(var(--p),var(--p)) 0 0/100% 100% no-repeat,color-mix(in srgb,var(--tx) 9%,transparent);animation:fpSeg 560ms var(--ease-out) both}
 @keyframes fpSeg{from{background-size:0 100%,auto}}
 /* Füllung: Verlauf, Leuchten, Schimmer */
 :is(.fp-prog,.fp-steps).pf-gradient :is(i,i.on){background:linear-gradient(90deg,color-mix(in srgb,var(--p) 45%,#fff),var(--p))}

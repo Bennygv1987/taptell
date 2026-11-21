@@ -657,6 +657,25 @@ var TEMPLATES = [
   {id:'freebie', make:tFreebie}, {id:'blank', make:tBlank}
 ];
 
+/* Feste Layout-Werte aus Vorlagen-CSS in Theme-Einstellungen übernehmen, damit „Abstand oben“, Fortschrittsbalken und
+   Button-Größe im Design-Tab wirken (eigenes CSS hätte sonst Vorrang). Ergebnis sieht identisch aus. Gibt true zurück, wenn etwas übernommen wurde. */
+function liftCss(t){
+  if(!t || !t.customCss) return false;
+  var css = String(t.customCss), before = css, set = function(k, v){ if(t[k] == null || t[k] === '') t[k] = v; };
+  var top = null, hg = null;
+  css = css.replace(/(^|\n)\.fp\.prog-top \.fp-top\{padding-top:(\d+)px\}(?=\n|$)/, function(m, a, n){ top = +n; set('spTop', top); return a; });
+  css = css.replace(/(^|\n)\.fp\.prog-top \.fp-prog\{margin:0 0 (\d+)px;height:(\d+)px;background:rgba\(43,42,43,\.1\)\}(?=\n|$)/, function(m, a, mb, h){ hg = +mb; set('spHead', hg); set('progH', +h); return a; });
+  css = css.replace(/(^|\n)\.fp-body\{padding-top:(\d+)px\}(?=\n|$)/, function(m, a, n){ set('spContent', +n); return a; });
+  css = css.replace(/\.fp-btn\{font-size:([^;{}]+);min-height:[^;{}]+;padding:(\d+)px (\d+)px\}/, function(m, fs, py, px){ if(t.btnPad == null || +t.btnPad === +py) t.btnPad = 19; set('btnPadX', +px); return '.fp-btn{font-size:'+fs+'}'; });
+  /* Desktop-Werte relativ zu den Einstellungen statt fest */
+  if(top != null) css = css.replace(/\.fp\.prog-top \.fp-top\{padding-top:(\d+)px\}/g, function(m, n){ return '.fp.prog-top .fp-top{padding-top:calc(var(--tpt,'+top+'px) + '+(n - top)+'px)}'; });
+  if(hg != null) css = css.replace(/\.fp\.prog-top \.fp-prog\{margin-bottom:(\d+)px\}/g, function(m, n){ return '.fp.prog-top .fp-prog{margin-bottom:calc(var(--hg,'+hg+'px) + '+(n - hg)+'px)}'; });
+  css = css.replace(/\n{2,}/g, '\n').replace(/^\n/, '');
+  if(css === before) return false;
+  t.customCss = css; return true;
+}
+TEMPLATES.forEach(function(tp){ var mk = tp.make; tp.make = function(){ var d = mk(); liftCss(d.theme); return d; }; });
+
 function newFunnel(tplId, overrides){
   var t = TEMPLATES.filter(function(x){return x.id===tplId;})[0] || TEMPLATES[TEMPLATES.length-1];
   var d = t.make();
@@ -664,5 +683,5 @@ function newFunnel(tplId, overrides){
   return Object.assign({id:uid()+uid().slice(0,4), name:d.name, template:tplId, status:'draft', createdAt:now, updatedAt:now, theme:d.theme, settings:Object.assign({currency:'EUR', basePrice:0, baseLabel:'Grundpreis', webhook:'', redirect:'', pixel:''}, d.settings||{}), pages:d.pages, stats:{views:0, starts:0, completes:0, pages:{}, daily:{}}}, overrides||{});
 }
 
-window.FS_T = {uid:uid, clone:clone, THEMES:THEMES, THEME_BASE:THEME_BASE, theme:theme, DEF:DEF, LIB:LIB, SECTIONS:SECTIONS, B:B, P:P, O:O, fromLib:fromLib, TEMPLATES:TEMPLATES, CATS:CATS, newFunnel:newFunnel, art:art};
+window.FS_T = {uid:uid, clone:clone, THEMES:THEMES, THEME_BASE:THEME_BASE, theme:theme, DEF:DEF, LIB:LIB, SECTIONS:SECTIONS, B:B, P:P, O:O, fromLib:fromLib, TEMPLATES:TEMPLATES, CATS:CATS, newFunnel:newFunnel, art:art, liftCss:liftCss};
 })();

@@ -23,6 +23,7 @@ var IP = {
   chevUp:'<path d="M18 15l-6-6-6 6"/>', chevDown:'<path d="M6 9l6 6 6-6"/>',
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 000 11H13"/>',
   mobile:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>', monitor:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  sidebar:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
   rocket:'<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
   check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>', x:'<path d="M18 6L6 18M6 6l12 12"/>',
   heading:'<path d="M6 4v16M18 4v16M6 12h12"/>', type:'<path d="M4 7V5h16v2M9 19h6M12 5v14"/>',
@@ -545,15 +546,32 @@ var STYLE_FX = [['anim','select','Einblenden',[['none','Keine'],['fade','Einblen
 var BNAME = {loader:'Lade-Animation',recap:'Auswahl-Karte',steps:'Zeitleiste',reviews:'Bewertungs-Abzeichen',avatars:'Kundenstapel',logos:'Logo-Leiste',heading:'Überschrift',text:'Text',badge:'Badge',image:'Bild',compare:'Vorher/Nachher',video:'Video',list:'Liste',testimonial:'Bewertung',trust:'Trust-Badges',faq:'FAQ',countdown:'Countdown',choice:'Auswahl',input:'Eingabefeld',slider:'Schieberegler',rating:'Bewertung',calendar:'Terminwahl',upload:'Datei-Upload',signature:'Unterschrift',checkbox:'Einwilligung',button:'Button',summary:'Preisübersicht',spacer:'Abstand',divider:'Trennlinie',html:'HTML'};
 var BICON = {loader:'refresh',recap:'receipt',steps:'list',reviews:'star',avatars:'users',logos:'layers',heading:'heading',text:'type',badge:'badge',image:'image',compare:'compare',video:'video',list:'list',testimonial:'quote',trust:'shield',faq:'help',countdown:'clock',choice:'choice',input:'cursor',slider:'sliders',rating:'star',calendar:'calendar',upload:'upload',signature:'pen',checkbox:'checkbox',button:'pointer',summary:'receipt',spacer:'space',divider:'minus',html:'code'};
 
+/* Vorschau-Geräte: echte Bildschirmbreiten in CSS-Pixeln, damit die Vorschau dem Handy entspricht */
+var DEVICES = [
+  {k:'iphone15', n:'iPhone 15 / 16', w:393, h:852, notch:'island', sb:54},
+  {k:'iphone16pro', n:'iPhone 16 Pro', w:402, h:874, notch:'island', sb:56},
+  {k:'iphonemax', n:'iPhone 15 / 16 Pro Max', w:430, h:932, notch:'island', sb:56},
+  {k:'iphone13', n:'iPhone 12 – 14', w:390, h:844, notch:'notch', sb:47},
+  {k:'iphonese', n:'iPhone SE', w:375, h:667, notch:'none', sb:20},
+  {k:'galaxy', n:'Samsung Galaxy S24', w:360, h:780, notch:'punch', sb:36},
+  {k:'pixel', n:'Google Pixel 8', w:412, h:915, notch:'punch', sb:40}
+];
+function curDevice(){ var k = ''; try{ k = localStorage.getItem('tt-phone') || ''; }catch(e){} return DEVICES.filter(function(d){ return d.k === k; })[0] || DEVICES[0]; }
+function phoneAttrs(desk){ if(desk) return 'class="phone desk"'; var d = curDevice(); return 'class="phone n-'+d.notch+'" style="width:'+(d.w+22)+'px;height:'+(d.h+22)+'px;--sbh:'+d.sb+'px"'; }
+function lpOff(){ try{ return localStorage.getItem('tt-lp') === '0'; }catch(e){ return false; } }
 function renderEditor(){
   var f = F(); if(!f){ go('funnels'); return; }
+  /* Ältere Funnels aus Vorlagen: feste Werte aus dem eigenen CSS in die Einstellungen übernehmen (sieht gleich aus, ist aber einstellbar) */
+  if(T.liftCss && T.liftCss(f.theme)) touch();
   fixSel();
-  var h = '<div class="ed"><header class="etop">'
+  var h = '<div class="ed'+(lpOff()?' lp-off':'')+'"><header class="etop">'
     + '<button class="btn ghost sm ic" data-a="nav" data-v="funnels" title="Zurück zum Dashboard">'+I('left')+'</button>'
+    + '<button class="btn ghost sm ic" data-a="lpToggle" title="Elemente ein- oder ausblenden ( [ )" aria-pressed="'+(!lpOff())+'">'+I('sidebar')+'</button>'
     + '<input class="nmin" id="fname" value="'+esc(f.name)+'" size="'+Math.max(8,f.name.length)+'">'
     + '<span class="pill '+(f.status==='live'?'live':'draft')+'">'+(f.status==='live'?'Live':'Entwurf')+'</span><span class="sv" id="svst">'+I('check',13)+' Gespeichert</span>'
     + '<div class="sp"></div>'
     + '<div class="seg"><button class="'+(S.device==='mobile'?'on':'')+'" data-a="device" data-v="mobile" title="Mobil">'+I('mobile',15)+'</button><button class="'+(S.device==='desk'?'on':'')+'" data-a="device" data-v="desk" title="Desktop">'+I('monitor',15)+'</button></div>'
+    + (S.device !== 'desk' ? '<button class="btn ghost sm devpick" data-a="devPick" title="Handy für die Vorschau wählen">'+esc(curDevice().n)+'<span class="dvw">'+curDevice().w+' px</span>'+I('chevDown',12)+'</button>' : '')
     + '<div class="vr"></div><button class="btn ghost sm ic" data-a="undo" title="Rückgängig (⌘Z)"'+(S.hist.length?'':' disabled')+'>'+I('undo')+'</button><button class="btn ghost sm ic" data-a="redo" title="Wiederholen (⌘⇧Z)"'+(S.fut.length?'':' disabled')+'>'+I('redo')+'</button><div class="vr"></div>'
     + '<button class="btn sm" data-a="preview">'+I('play',14)+'Vorschau</button><button class="btn sm pri" data-a="publish">'+I('rocket',14)+'Veröffentlichen</button></header>'
     + '<div class="ebody"><aside class="lp" id="lp"></aside><section class="canvas" id="canvas"></section><aside class="rp" id="rp"></aside></div></div>';
@@ -593,12 +611,19 @@ function renderCanvas(keepScroll){
   var t = f.theme;
   var html = FP.renderPage(f, S.pi, {edit:true, answers:{}});
   cv.innerHTML = nav
-    + '<div class="phone '+(S.device==='desk'?'desk':'')+'"><div class="notch"></div><div class="scr" id="scr" style="background:'+esc(t.bg)+'"><div class="sbar" style="color:'+esc(t.text)+';background:'+esc(curPage().bg||t.bg)+'"><span>9:41</span><i></i></div><div class="fp-host">'+html+'</div></div></div>'
+    + '<div '+phoneAttrs(S.device==='desk')+'><div class="notch"></div><div class="scr" id="scr" style="background:'+esc(t.bg)+'"><div class="sbar" style="color:'+esc(t.text)+';background:'+esc(curPage().bg||t.bg)+'"><span>9:41</span><i></i></div><div class="fp-host">'+html+'</div></div></div>'
     + '<div class="canvas-hint"><span><kbd>Entf</kbd> löschen</span><span><kbd>⌘D</kbd> duplizieren</span><span><kbd>⌘Z</kbd> rückgängig</span><span><kbd>↑</kbd><kbd>↓</kbd> verschieben</span></div>';
   var scr = $('#scr');
   if(keepScroll) scr.scrollTop = st;
   if(S.sel){ var el = scr.querySelector('.fp-b[data-bid="'+S.sel+'"]'); if(el){ el.classList.add('sel'); placeTool(el); if(!keepScroll){ var r = el.getBoundingClientRect(), sr = scr.getBoundingClientRect(); if(r.top < sr.top || r.bottom > sr.bottom) scr.scrollTop += r.top - sr.top - 80; placeTool(el); } } }
   scr.addEventListener('scroll', function(){ var el = S.sel && scr.querySelector('.fp-b.sel'); if(el) placeTool(el); });
+  /* Fortschritt: beim Seitenwechsel im Editor weich vom alten zum neuen Stand laufen lassen (wie im Funnel) */
+  var pgi = scr.querySelector('.fp-prog i'), pst = scr.querySelector('.fp-steps'), pk = f.id + ':' + S.pi;
+  if(S._pp && S._pp.fid === f.id && S._pp.pi !== S.pi){
+    if(pgi && S._pp.pct != null){ var to = pgi.style.width; pgi.style.transition = 'none'; pgi.style.width = S._pp.pct; void pgi.offsetWidth; pgi.style.transition = ''; requestAnimationFrame(function(){ pgi.style.width = to; }); }
+    if(pst) pst.classList.add('demo');
+  }
+  S._pp = {fid:f.id, pi:S.pi, pct:pgi ? pgi.style.width : null};
   if(window.__ldStop){ window.__ldStop(); window.__ldStop = null; }
   if(scr.querySelector('[data-ld]')) window.__ldStop = FP.playLoaders(scr, f);
 }
@@ -1014,7 +1039,7 @@ function openPreview(f, startIdx){
   var w = document.createElement('div'); w.className = 'pvw';
   var build = function(){
     w.innerHTML = '<div class="pbar"><b style="margin-right:8px">'+esc(f.name)+'</b><div class="seg"><button class="'+(dev==='mobile'?'on':'')+'" data-pd="mobile">'+I('mobile',14)+'</button><button class="'+(dev==='desk'?'on':'')+'" data-pd="desk">'+I('monitor',14)+'</button></div><button class="btn sm" data-prs>'+I('refresh',14)+'Neu starten</button><button class="btn sm" data-pcl>'+I('x',14)+'Schließen</button></div>'
-      + '<div class="phone '+(dev==='desk'?'desk':'')+'"><div class="notch"></div><div class="scr" data-fp-scroll style="background:'+esc(f.theme.bg)+'"><div class="sbar" style="color:'+esc(f.theme.text)+';background:'+esc(f.theme.bg)+'"><span>9:41</span><i></i></div><div class="fp-host" id="pvhost"></div></div></div>'
+      + '<div '+phoneAttrs(dev==='desk')+'><div class="notch"></div><div class="scr" data-fp-scroll style="background:'+esc(f.theme.bg)+'"><div class="sbar" style="color:'+esc(f.theme.text)+';background:'+esc(f.theme.bg)+'"><span>9:41</span><i></i></div><div class="fp-host" id="pvhost"></div></div></div>'
       + '<div class="note">Testmodus · Eingaben landen als „Test“ in deinen Kontakten · Videos werden nur im veröffentlichten Funnel abgespielt</div>';
     var host = w.querySelector('#pvhost');
     var inst = FP.mount(host, f, {scrollEl: w.querySelector('.scr'), onEvent:function(t, d){ if(isAdmin()) trackEvent(f, t, d); },
@@ -1909,6 +1934,8 @@ var ACT = {
   ltab:function(el){ S.ltab = el.getAttribute('data-v'); renderLeft(); },
   rtab:function(el){ var v = el.getAttribute('data-v'); if(v === 'el' && !selBlock()) return; S.rtab = v; renderRight(); },
   device:function(el){ S.device = el.getAttribute('data-v'); renderEditor(); },
+  devPick:function(el, e){ if(e) e.stopPropagation(); var cur = curDevice().k; dropdown(el, DEVICES.map(function(d){ return {k:d.k, l:d.n+' · '+d.w+' × '+d.h, ic:d.k === cur ? 'check' : 'mobile', fn:function(){ try{ localStorage.setItem('tt-phone', d.k); }catch(x){} renderEditor(); }}; })); },
+  lpToggle:function(){ var off = !lpOff(); try{ localStorage.setItem('tt-lp', off ? '0' : '1'); }catch(x){} var ed = $('.ed'); if(ed) ed.classList.toggle('lp-off', off); var b = $('[data-a="lpToggle"]'); if(b) b.setAttribute('aria-pressed', !off); setTimeout(function(){ var el = S.sel && $('#scr .fp-b.sel'); if(el) placeTool(el); }, 280); },
   undo:undo, redo:redo,
   preview:function(){ openPreview(F(), S.pi); },
   publish:function(){ publishModal(F()); },
@@ -2083,6 +2110,7 @@ document.addEventListener('keydown', function(e){
   var mod = e.metaKey || e.ctrlKey;
   if(mod && e.key.toLowerCase() === 'z' && !typing){ e.preventDefault(); if(e.shiftKey) redo(); else undo(); return; }
   if(mod && e.key.toLowerCase() === 'y' && !typing){ e.preventDefault(); redo(); return; }
+  if(e.key === '[' && !typing && !mod){ e.preventDefault(); ACT.lpToggle(); return; }
   if(typing || !S.sel) return;
   if(e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); delBlock(); }
   else if(mod && e.key.toLowerCase() === 'd'){ e.preventDefault(); dupBlock(); }
