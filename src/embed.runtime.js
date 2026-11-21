@@ -51,8 +51,10 @@
         rpc(C, 'submit_lead', {p_slug:slug, p_lead:lead});
         if(lead.onepage) lead.onepage.data.source.page.slug = '/' + slug;
         if(S.webhook){ try{ fetch(S.webhook, {method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'}, body:JSON.stringify(lead.onepage || {type:'lead', funnelId:F.id, funnel:F.name, ts:new Date().toISOString(), lead:lead})}).catch(function(){}); }catch(e){} }
-        if(window.fbq) window.fbq('track', 'Lead', {value:lead.total || 0, currency:S.currency || 'EUR'});
-        if(window.dataLayer) window.dataLayer.push({event:'taptell_lead', funnel:F.name, value:lead.total || 0});
+        if(FP.consentOn(F)) lead.consent = FP.getConsent(F);
+        /* Tracking der Website nur mit Einwilligung (wenn das Cookie-Banner des Funnels aktiv ist) */
+        if(window.fbq && FP.allowed(F, 'mkt')) window.fbq('track', 'Lead', {value:lead.total || 0, currency:S.currency || 'EUR'});
+        if(window.dataLayer && FP.allowed(F, 'perf')) window.dataLayer.push({event:'taptell_lead', funnel:F.name, value:lead.total || 0});
         if(S.redirect) setTimeout(function(){ location.href = S.redirect; }, 1500);
       }});
   }

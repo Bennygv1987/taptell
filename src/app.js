@@ -762,6 +762,19 @@ function panelSettings(){
     + '<div class="fld"><label>Weiterleitung nach Absenden (optional)</label><input class="inp" data-s="redirect" value="'+esc(s.redirect||'')+'" placeholder="https://deine-seite.de/danke"></div>'
     + '<div class="fld"><label>Meta Pixel ID (optional)</label><input class="inp" data-s="pixel" value="'+esc(s.pixel||'')+'" placeholder="123456789012345"><div class="hint">Feuert „PageView“ und „Lead“ im exportierten Funnel.</div></div>'
     + '<div class="fld"><label>Anrede in Hinweisen</label><div class="segf">'+[['du','Du'],['sie','Sie']].map(function(x){ return '<button data-a="seg" data-scope="s" data-k="address" data-v="'+x[0]+'" data-t="string" class="'+((s.address||'du')===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div><div class="hint">Gilt für Fehlermeldungen wie „Bitte wähle eine Option“.</div></div></div>';
+  /* Cookie-Banner (DSGVO): ein-/ausschaltbar, Texte, Farben, Kategorien */
+  var ccT = f.theme || {}, ccTg = function(k, label){ return '<label class="tgl"><span>'+label+'</span><input type="checkbox" data-s="'+k+'" data-bool data-inv'+(s[k] !== false ? ' checked' : '')+'><span class="sw"></span></label>'; };
+  h += '<div class="psec"><h5>'+I('shield',13)+'Cookie-Banner</h5><label class="tgl"><span>Banner beim Öffnen anzeigen</span><input type="checkbox" data-s="ccOn" data-bool data-rp'+(s.ccOn?' checked':'')+'><span class="sw"></span></label>'
+    + (s.ccOn ? '<div class="fld"><label>Überschrift</label><input class="inp" data-s="ccTitle" value="'+esc(s.ccTitle||'')+'" placeholder="Wir verwenden Cookies"></div>'
+      + '<div class="fld"><label>Text</label><textarea class="inp" rows="4" data-s="ccText" placeholder="Wir setzen Cookies ein, wie in unserer Datenschutzerklärung beschrieben …">'+esc(s.ccText||'')+'</textarea><div class="hint">Leer lassen für den Standardtext. **fett** und [Link](https://…) sind möglich.</div></div>'
+      + '<div class="row2"><div class="fld"><label>Button Zustimmen</label><input class="inp" data-s="ccAccept" value="'+esc(s.ccAccept||'')+'" placeholder="Alle akzeptieren"></div><div class="fld"><label>Button Ablehnen</label><input class="inp" data-s="ccDecline" value="'+esc(s.ccDecline||'')+'" placeholder="Ablehnen"></div></div>'
+      + '<div class="row2"><div class="fld"><label>Button Bearbeiten</label><input class="inp" data-s="ccEdit" value="'+esc(s.ccEdit||'')+'" placeholder="Bearbeiten"></div><div class="fld"><label>Button Speichern</label><input class="inp" data-s="ccSave" value="'+esc(s.ccSave||'')+'" placeholder="Auswahl speichern"></div></div>'
+      + '<div class="fld"><label>Link zur Datenschutzerklärung</label><input class="inp" data-s="ccPrivacy" value="'+esc(s.ccPrivacy||'')+'" placeholder="https://kunde.de/datenschutz"></div>'
+      + '<div class="row2"><div class="fld"><label>Button-Farbe</label>'+colorField('s','ccBtnBg', s.ccBtnBg || ccT.primary || '#111111')+'</div><div class="fld"><label>Button-Schrift</label>'+colorField('s','ccBtnText', s.ccBtnText || ccT.primaryText || '#ffffff')+'</div></div>'
+      + '<div class="row2"><div class="fld"><label>Hintergrund</label>'+colorField('s','ccBg', s.ccBg || '#ffffff')+'</div><div class="fld"><label>Schrift</label>'+colorField('s','ccInk', s.ccInk || '#1d1d1f')+'</div></div>'
+      + '<div class="flab" style="margin-top:4px">Kategorien (Essentielle ist immer dabei)</div>' + ccTg('ccFun','Funktionale') + ccTg('ccPerf','Performance') + ccTg('ccMkt','Marketing')
+      + '<button class="btn sm" style="width:100%;justify-content:center" data-a="ccPreview">'+I('eye',13)+'Banner-Vorschau</button><div class="hint">Meta-Pixel und Analyse-Skripte starten erst nach Einwilligung. Die Entscheidung wird mit jeder Anfrage gespeichert. Unten im Funnel erscheint „Cookie-Einstellungen“ zum Widerrufen.</div>'
+      : '<div class="hint" style="margin-top:-4px">Nötig, sobald der Funnel Meta-Pixel, Google Analytics oder andere Dienste nutzt, die Cookies setzen.</div>') + '</div>';
   h += '<div class="psec"><h5>'+I('user',13)+'Personalisierung</h5><p class="hint" style="margin:0 0 10px">Wiederhole Eingaben des Besuchers in späteren Texten, z. B. „Danke, {{vorname}}!“. In jedem Textfeld fügst du sie über <b>Variable</b> ein. Mit <code>{{vorname|du}}</code> legst du fest, was erscheint, wenn das Feld leer bleibt.</p><div class="varrows">' + FP.vars(f).map(function(v){ return '<button class="varrow" data-a="copyVar" data-v="{{'+esc(v.key)+'}}" title="Kopieren"><span>'+esc(v.label)+'</span><code>{{'+esc(v.key)+'}}</code></button>'; }).join('') + '</div></div>';
   return h;
 }
@@ -883,13 +896,15 @@ function exportHtml(f){
   var up = (db.fonts && db.fonts.uploaded) || [], used = FP.usedFonts(f);
   var fontLinks = used.filter(function(n){ return !up.some(function(x){ return x.name === n; }); }).map(function(n){ var u = FP.fontLink(n); return u ? '<link rel="stylesheet" href="'+u+'">' : ''; }).join('\n');
   css = up.filter(function(x){ return used.indexOf(x.name) >= 0; }).map(fontFace).join('\n') + '\n' + css;
-  var pixel = s.pixel ? '<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init","'+String(s.pixel).replace(/[^0-9]/g,'')+'");fbq("track","PageView");<\/script>' : '';
+  /* Meta-Pixel: mit aktivem Cookie-Banner erst nach Einwilligung in Marketing */
+  var pixel = s.pixel ? '<script>window.__ttPixel=function(){if(window.fbq)return;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init","'+String(s.pixel).replace(/[^0-9]/g,'')+'");fbq("track","PageView");};'+(s.ccOn?'':'window.__ttPixel();')+'<\/script>' : '';
   var init = 'var F=' + data + ';\n'
     + 'var W=F.settings.webhook||"";\n'
     + 'var Q={};try{new URLSearchParams(location.search).forEach(function(v,k){Q[k]=v;});}catch(e){}\n'
     + 'function send(type,payload){if(!W)return;try{fetch(W,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(Object.assign({type:type,funnelId:F.id,funnel:F.name,ts:new Date().toISOString(),url:location.href,utm:Q},payload||{}))}).catch(function(){});}catch(e){}}\n'
     + 'FP.mount(document.getElementById("funnel"),F,{live:true,\n'
-    + ' onSubmit:function(lead){if(lead.onepage){if(W){try{fetch(W,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(lead.onepage)}).catch(function(){});}catch(e){}}}else send("lead",{lead:lead});if(window.fbq)fbq("track","Lead",{value:lead.total||0,currency:F.settings.currency||"EUR"});if(F.settings.redirect)setTimeout(function(){location.href=F.settings.redirect;},1200);},\n'
+    + ' onConsent:function(v){if(v&&v.mkt&&window.__ttPixel)window.__ttPixel();},\n'
+    + ' onSubmit:function(lead){if(FP.consentOn(F))lead.consent=FP.getConsent(F);if(lead.onepage){if(W){try{fetch(W,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(lead.onepage)}).catch(function(){});}catch(e){}}}else send("lead",{lead:lead});if(window.fbq)fbq("track","Lead",{value:lead.total||0,currency:F.settings.currency||"EUR"});if(F.settings.redirect)setTimeout(function(){location.href=F.settings.redirect;},1200);},\n'
     + ' onEvent:function(t,d){if(F.settings.trackEvents)send("event",{event:t,data:d});}\n'
     + '});';
   return '<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<title>' + esc(f.name) + '</title>\n<meta name="theme-color" content="' + esc(f.theme.bg) + '">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' + fontLinks + '\n'
@@ -1707,6 +1722,7 @@ window.addEventListener('beforeunload', function(e){ if(REMOTE && (syncing || sa
 /* ================= EVENTS ================= */
 var ACT = {
   logout:function(){ logout(); },
+  ccPreview:function(){ FP.showConsent(F(), {preview:true}); },
   afid:function(el){ S.afid = el.getAttribute('data-id'); render(); },
   theme:function(){ var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); try{ localStorage.setItem('tt-theme', t); }catch(e){} render(); },
   demoLogin:function(el){ var u = (db.users||[]).filter(function(x){ return x.id === el.getAttribute('data-id'); })[0]; if(u) loginLocal(u); },

@@ -461,7 +461,8 @@ FP.renderShell = function(f, idx, inner, opts){
   var head = (logo || opts.back) ? '<div class="fp-head'+(t.logoAlign==='left'?' left':'')+(opts.back?' hb':'')+'">'+(opts.back?'<button class="fp-back" data-act="back" aria-label="Zurück">'+IC.back+'</button>':'')+logo+'</div>' : '';
   var ov = bgImg ? '<div class="fp-ov" style="background:'+(t.overlay||'rgba(0,0,0,.35)')+'"></div>' : '';
   var top = (head || prog) ? '<div class="fp-top">'+(t.progressTop?prog+head:head+prog)+'</div>' : '<div style="height:10px"></div>';
-  var foot = t.footer ? '<div class="fp-foot">'+md(t.footer)+'</div>' : '';
+  var ccLink = FP.consentOn(f) && !opts.edit ? '<button type="button" class="fp-ccre" data-act="consent">Cookie-Einstellungen</button>' : '';
+  var foot = (t.footer || ccLink) ? '<div class="fp-foot">'+(t.footer ? md(t.footer) : '')+ccLink+'</div>' : '';
   var cls = 'fp'+(opts.edit?' is-edit':'')+(page.wide?' wide':'')+(t.inputStyle&&t.inputStyle!=='outline'?' in-'+t.inputStyle:'')+(t.optStyle&&t.optStyle!=='filled'?' opt-'+t.optStyle:'')+(t.progressTop?' prog-top':'');
   /* Eigenes CSS: im Live-Funnel global; in Vorschauen (mehrere Funnels auf einer Seite) auf diesen Funnel begrenzt */
   var fsid = opts.scope ? String(f.id || 'f').replace(/[^\w-]/g,'') : '';
@@ -489,6 +490,60 @@ FP.renderPage = function(f, idx, ctx){
 };
 
 /* ---------- interactive runtime ---------- */
+/* ================= Cookie-Banner (DSGVO) =================
+   Einstellungen in f.settings (flach): ccOn, ccTitle, ccText, ccAccept, ccDecline, ccEdit, ccSave, ccPrivacy,
+   ccBtnBg, ccBtnText, ccBg, ccInk, ccFun/ccPerf/ccMkt (Kategorie anzeigen, Standard an).
+   Entscheidung je Funnel im localStorage: {ess:true, fun, perf, mkt, ts}. Marketing (z. B. Meta-Pixel) und
+   Performance (Analyse-Skripte) laufen erst nach Einwilligung. */
+FP.CC_CATS = [
+  {k:'ess', l:'Essentielle', d:'Nötig, damit der Funnel funktioniert, z. B. das Speichern deiner Auswahl. Immer aktiv.'},
+  {k:'fun', l:'Funktionale', s:'ccFun', d:'Komfort-Funktionen wie eingebettete Inhalte und Schriften externer Anbieter.'},
+  {k:'perf', l:'Performance', s:'ccPerf', d:'Anonyme Auswertung, wie der Funnel genutzt wird, um ihn zu verbessern.'},
+  {k:'mkt', l:'Marketing', s:'ccMkt', d:'Messung von Werbekampagnen, z. B. Meta-Pixel oder Google Ads.'}
+];
+FP.consentOn = function(f){ return !!(f && f.settings && f.settings.ccOn); };
+FP.getConsent = function(f){ try{ return JSON.parse(localStorage.getItem('tt-consent-' + (f.id || 'f'))); }catch(e){ return null; } };
+FP.allowed = function(f, cat){ if(!FP.consentOn(f)) return true; var c = FP.getConsent(f); return !!(c && c[cat]); };
+FP.showConsent = function(f, opts, done){
+  opts = opts || {};
+  var s = f.settings || {}, t = f.theme || {}, prev = FP.getConsent(f) || {};
+  var cats = FP.CC_CATS.filter(function(c){ return !c.s || s[c.s] !== false; });
+  var val = {ess:true}; cats.forEach(function(c){ if(c.k !== 'ess') val[c.k] = !!prev[c.k]; });
+  var old = document.querySelector('.fp-cc[data-fid="' + (f.id || 'f') + '"]'); if(old) old.remove();
+  var host = document.createElement('div');
+  host.className = 'fp-cc' + (opts.container ? ' inl' : ''); host.setAttribute('data-fid', f.id || 'f');
+  host.style.cssText = '--cc-bg:' + (s.ccBg || '#ffffff') + ';--cc-ink:' + (s.ccInk || '#1d1d1f') + ';--cc-btn:' + (s.ccBtnBg || t.primary || '#111') + ';--cc-btnt:' + (s.ccBtnText || t.primaryText || '#fff') + ';--cc-r:' + (t.btnRadius != null ? t.btnRadius : 10) + 'px;--cc-ff:' + FP.fontStack(t.font || 'Inter');
+  var edit = false;
+  var paint = function(){
+    host.innerHTML = '<div class="cc-bd"></div><div class="cc-card" role="dialog" aria-modal="true" aria-labelledby="cc-t-' + (f.id||'f') + '">'
+      + '<div class="cc-in"><h3 id="cc-t-' + (f.id||'f') + '">' + esc(s.ccTitle || 'Wir verwenden Cookies') + '</h3>'
+      + '<p class="cc-tx">' + md(s.ccText || 'Wir setzen Cookies ein, wie in unserer Datenschutzerklärung beschrieben. Einige sind technisch erforderlich, andere helfen uns, den Funnel zu verbessern oder Werbung zu messen. Du kannst deine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen.') + '</p></div>'
+      + '<div class="cc-cats' + (edit ? ' ed' : '') + '">' + cats.map(function(c){ var on = c.k === 'ess' || val[c.k]; return '<div class="cc-cat"><button type="button" class="cc-sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '" data-cc-cat="' + c.k + '"' + (c.k === 'ess' ? ' disabled' : '') + '><i></i></button><span><b>' + c.l + '</b>' + (edit ? '<small>' + c.d + '</small>' : '') + '</span></div>'; }).join('') + '</div>'
+      + '<div class="cc-acts"><button type="button" class="cc-b pri" data-cc="all">' + esc(s.ccAccept || 'Alle akzeptieren') + '</button><button type="button" class="cc-b" data-cc="none">' + esc(s.ccDecline || 'Ablehnen') + '</button>'
+      + (edit ? '<button type="button" class="cc-b" data-cc="save">' + esc(s.ccSave || 'Auswahl speichern') + '</button>' : '<button type="button" class="cc-b" data-cc="edit">' + esc(s.ccEdit || 'Bearbeiten') + '</button>') + '</div>'
+      + (s.ccPrivacy ? '<a class="cc-link" href="' + esc(s.ccPrivacy) + '" target="_blank" rel="noopener">Datenschutzerklärung</a>' : '') + '</div>';
+  };
+  var finish = function(v){
+    v.ts = Date.now();
+    if(!opts.preview){ try{ localStorage.setItem('tt-consent-' + (f.id || 'f'), JSON.stringify(v)); }catch(e){} }
+    host.classList.add('out'); setTimeout(function(){ host.remove(); }, 220);
+    if(done) done(v);
+  };
+  host.addEventListener('click', function(e){
+    var sw = e.target.closest('[data-cc-cat]'); if(sw && !sw.disabled){ var k = sw.getAttribute('data-cc-cat'); val[k] = !val[k]; sw.classList.toggle('on', val[k]); sw.setAttribute('aria-checked', val[k]); return; }
+    var b = e.target.closest('[data-cc]'); if(!b) return;
+    var a = b.getAttribute('data-cc');
+    if(a === 'edit'){ edit = true; paint(); return; }
+    if(a === 'all'){ var v = {ess:true}; cats.forEach(function(c){ v[c.k] = true; }); return finish(v); }
+    if(a === 'none'){ var n = {ess:true}; cats.forEach(function(c){ if(c.k !== 'ess') n[c.k] = false; }); return finish(n); }
+    if(a === 'save') return finish(val);
+  });
+  paint();
+  (opts.container || document.body).appendChild(host);
+  var first = host.querySelector('.cc-b.pri'); if(first && !opts.noFocus) try{ first.focus({preventScroll:true}); }catch(e){}
+  return host;
+};
+
 FP.mount = function(root, f, opts){
   opts = opts || {};
   var st = {i:0, hist:[], answers:{}, errors:{}, dir:'fwd', started:false, done:false, startedAt:Date.now()};
@@ -634,6 +689,7 @@ FP.mount = function(root, f, opts){
     if(e.target.closest('a[href]')) return;
     var el = e.target.closest('[data-act]'); if(!el || !root.contains(el)) return;
     var act = el.getAttribute('data-act'), b = blockById(el.getAttribute('data-bid'));
+    if(act === 'consent') return; /* eigener Handler unten */
     if(!b && act !== 'next' && act !== 'back') return; /* Element gehört nicht (mehr) zu diesem Funnel */
     if(act !== 'sigclr') e.preventDefault();
     if(act === 'next') go();
@@ -739,6 +795,13 @@ FP.mount = function(root, f, opts){
   }
 
   render();
+  /* Cookie-Banner: im Live-Funnel bis zur Entscheidung, in der Vorschau auf Wunsch */
+  var ccContainer = opts.inline ? root.parentNode : null;
+  if(ccContainer && getComputedStyle(ccContainer).position === 'static') ccContainer.style.position = 'relative';
+  var ccDone = function(v){ if(opts.onConsent) try{ opts.onConsent(v); }catch(e){} };
+  if(FP.consentOn(f) && (opts.consentPreview || (opts.live && !FP.getConsent(f)))) FP.showConsent(f, {container:ccContainer, preview:!!opts.consentPreview}, ccDone);
+  else if(FP.consentOn(f) && opts.live) ccDone(FP.getConsent(f));
+  root.addEventListener('click', function(e){ var r = e.target.closest('[data-act="consent"]'); if(r){ e.preventDefault(); FP.showConsent(f, {container:ccContainer, preview:!opts.live}, ccDone); } });
   return { state: st, restart: function(){ st.i=0; st.hist=[]; st.answers={}; st.errors={}; st.done=false; st.started=false; st.startedAt=Date.now(); render(); }, goTo: function(i){ st.i=i; st.hist=[]; render(); } };
 };
 

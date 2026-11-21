@@ -27,11 +27,15 @@
     var mt = document.querySelector('meta[name=theme-color]'); if(mt) mt.content = t.bg || '#fff';
     FP.usedFonts(F).forEach(function(n){ var u = FP.fontLink(n); if(u && !(F.fonts || []).some(function(x){ return x.name === n; })){ var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; document.head.appendChild(l); } });
     if((F.fonts || []).length){ var st = document.createElement('style'); st.textContent = F.fonts.map(function(x){ return "@font-face{font-family:'" + String(x.name).replace(/'/g,'') + "';src:url(" + x.data + ");font-display:swap}"; }).join('\n'); document.head.appendChild(st); }
-    if(S.pixel){ !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js'); fbq('init', String(S.pixel).replace(/\D/g,'')); fbq('track','PageView'); }
+    /* Meta-Pixel erst nach Einwilligung in Marketing (wenn das Cookie-Banner aktiv ist) */
+    var initPixel = function(){ if(!S.pixel || window.fbq) return; !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js'); fbq('init', String(S.pixel).replace(/\D/g,'')); fbq('track','PageView'); };
+    if(!FP.consentOn(F)) initPixel();
     FP.mount(el, F, {live:true,
+      onConsent:function(v){ if(v && v.mkt) initPixel(); },
       onEvent:function(type, d){ if(type === 'complete') return; sb.rpc('track_event', {p_slug:slug, p_type:type, p_page:(d && d.pageId) || null}).then(function(){}); },
       onSubmit:function(lead){
         lead.utm = Q; lead.page = location.href; lead.userAgent = navigator.userAgent.slice(0, 160);
+        if(FP.consentOn(F)) lead.consent = FP.getConsent(F);
         sb.rpc('submit_lead', {p_slug:slug, p_lead:lead}).then(function(){});
         if(lead.onepage) lead.onepage.data.source.page.slug = '/' + slug;
         /* text/plain: einfacher Request ohne CORS-Vorabprüfung, der Inhalt ist trotzdem JSON */

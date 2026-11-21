@@ -305,6 +305,42 @@ textarea.fp-in{min-height:110px;resize:vertical}
 @container (max-width:439px){.fp-nps{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.fp-nps button{aspect-ratio:auto;height:44px}}
 @media (hover:none){.fp-back:hover{background:none}}
 
+/* ---- Cookie-Banner (wie Onepage/Perspective: Karte, 4 Kategorien, 3 Buttons) ----
+   Handy: von unten (Sheet, 320 ms Schubladen-Kurve) · Desktop: mittig · Raus schneller (200 ms) */
+.fp-cc{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:flex-end;justify-content:center;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));font-family:var(--cc-ff);-webkit-tap-highlight-color:transparent}
+.fp-cc.inl{position:absolute}
+.fp-cc .cc-bd{position:absolute;inset:0;background:rgba(0,0,0,.38);animation:ccFade 200ms ease both}
+.fp-cc .cc-card{position:relative;width:min(520px,100%);max-height:calc(100% - 8px);overflow:auto;overscroll-behavior:contain;background:var(--cc-bg);color:var(--cc-ink);border-radius:20px;box-shadow:0 24px 60px -18px rgba(0,0,0,.45);animation:ccUp 320ms cubic-bezier(.32,.72,0,1) both}
+.fp-cc.out .cc-bd{animation:ccFadeOut 200ms ease both}.fp-cc.out .cc-card{animation:ccDown 200ms cubic-bezier(.23,1,.32,1) both}
+.fp-cc .cc-in{padding:24px 24px 18px}
+.fp-cc h3{margin:0 0 12px;font-size:21px;line-height:1.25;font-weight:700;letter-spacing:-.01em;color:var(--cc-ink)}
+.fp-cc .cc-tx{margin:0;font-size:14.5px;line-height:1.55;color:color-mix(in srgb,var(--cc-ink) 68%,transparent)}
+.fp-cc .cc-tx a{color:inherit}
+.fp-cc .cc-cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;padding:18px 24px;border-top:1px solid color-mix(in srgb,var(--cc-ink) 9%,transparent);border-bottom:1px solid color-mix(in srgb,var(--cc-ink) 9%,transparent)}
+.fp-cc .cc-cats.ed{grid-template-columns:minmax(0,1fr)}
+.fp-cc .cc-cat{display:flex;align-items:flex-start;gap:12px;font-size:15px}
+.fp-cc .cc-cat span{display:flex;flex-direction:column;gap:2px;padding-top:2px}
+.fp-cc .cc-cat b{font-weight:500}
+.fp-cc .cc-cat small{font-size:12.5px;line-height:1.45;color:color-mix(in srgb,var(--cc-ink) 60%,transparent)}
+.fp-cc .cc-sw{all:unset;box-sizing:border-box;flex:none;position:relative;width:44px;height:26px;border-radius:99px;background:color-mix(in srgb,var(--cc-ink) 12%,transparent);cursor:pointer;transition:background-color 200ms ease;touch-action:manipulation}
+.fp-cc .cc-sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 200ms cubic-bezier(.23,1,.32,1)}
+.fp-cc .cc-sw.on{background:var(--cc-btn)}.fp-cc .cc-sw.on i{transform:translateX(18px)}
+.fp-cc .cc-sw[disabled]{cursor:default;opacity:.55}
+.fp-cc .cc-sw:focus-visible{outline:2px solid var(--cc-btn);outline-offset:2px}
+.fp-cc .cc-acts{display:flex;flex-direction:column;gap:10px;padding:20px 24px 8px}
+.fp-cc .cc-b{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:50px;padding:10px 16px;border-radius:var(--cc-r);background:color-mix(in srgb,var(--cc-ink) 6%,transparent);color:var(--cc-ink);font-weight:600;font-size:15.5px;text-align:center;touch-action:manipulation;-webkit-user-select:none;user-select:none;transition:transform 160ms cubic-bezier(.23,1,.32,1),filter 150ms ease}
+.fp-cc .cc-b.pri{background:var(--cc-btn);color:var(--cc-btnt)}
+.fp-cc .cc-b:active{transform:scale(.97)}
+.fp-cc .cc-b:focus-visible{outline:2px solid var(--cc-btn);outline-offset:2px}
+@media (hover:hover) and (pointer:fine){.fp-cc .cc-b:hover{filter:brightness(.96)}}
+.fp-cc .cc-link{display:inline-block;margin:6px 24px 22px;font-size:14px;color:color-mix(in srgb,var(--cc-ink) 60%,transparent);text-decoration:underline;text-underline-offset:3px}
+@media (min-width:640px){.fp-cc{align-items:center}.fp-cc .cc-card{animation-name:ccPop}.fp-cc.out .cc-card{animation-name:ccPopOut}}
+@keyframes ccFade{from{opacity:0}}@keyframes ccFadeOut{to{opacity:0}}
+@keyframes ccUp{from{transform:translateY(100%)}}@keyframes ccDown{to{transform:translateY(100%)}}
+@keyframes ccPop{from{opacity:0;transform:scale(.97)}}@keyframes ccPopOut{to{opacity:0;transform:scale(.98)}}
+@media (prefers-reduced-motion:reduce){.fp-cc .cc-card,.fp-cc.out .cc-card{animation-name:ccFade}.fp-cc.out .cc-card{animation-name:ccFadeOut}}
+.fp-ccre{all:unset;cursor:pointer;display:inline-block;margin:6px 8px 0;font-size:12px;color:var(--mt);text-decoration:underline;text-underline-offset:2px}
+
 </style>
 <script src="/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -775,7 +811,8 @@ FP.renderShell = function(f, idx, inner, opts){
   var head = (logo || opts.back) ? '<div class="fp-head'+(t.logoAlign==='left'?' left':'')+(opts.back?' hb':'')+'">'+(opts.back?'<button class="fp-back" data-act="back" aria-label="Zurück">'+IC.back+'</button>':'')+logo+'</div>' : '';
   var ov = bgImg ? '<div class="fp-ov" style="background:'+(t.overlay||'rgba(0,0,0,.35)')+'"></div>' : '';
   var top = (head || prog) ? '<div class="fp-top">'+(t.progressTop?prog+head:head+prog)+'</div>' : '<div style="height:10px"></div>';
-  var foot = t.footer ? '<div class="fp-foot">'+md(t.footer)+'</div>' : '';
+  var ccLink = FP.consentOn(f) && !opts.edit ? '<button type="button" class="fp-ccre" data-act="consent">Cookie-Einstellungen</button>' : '';
+  var foot = (t.footer || ccLink) ? '<div class="fp-foot">'+(t.footer ? md(t.footer) : '')+ccLink+'</div>' : '';
   var cls = 'fp'+(opts.edit?' is-edit':'')+(page.wide?' wide':'')+(t.inputStyle&&t.inputStyle!=='outline'?' in-'+t.inputStyle:'')+(t.optStyle&&t.optStyle!=='filled'?' opt-'+t.optStyle:'')+(t.progressTop?' prog-top':'');
   /* Eigenes CSS: im Live-Funnel global; in Vorschauen (mehrere Funnels auf einer Seite) auf diesen Funnel begrenzt */
   var fsid = opts.scope ? String(f.id || 'f').replace(/[^\w-]/g,'') : '';
@@ -803,6 +840,60 @@ FP.renderPage = function(f, idx, ctx){
 };
 
 /* ---------- interactive runtime ---------- */
+/* ================= Cookie-Banner (DSGVO) =================
+   Einstellungen in f.settings (flach): ccOn, ccTitle, ccText, ccAccept, ccDecline, ccEdit, ccSave, ccPrivacy,
+   ccBtnBg, ccBtnText, ccBg, ccInk, ccFun/ccPerf/ccMkt (Kategorie anzeigen, Standard an).
+   Entscheidung je Funnel im localStorage: {ess:true, fun, perf, mkt, ts}. Marketing (z. B. Meta-Pixel) und
+   Performance (Analyse-Skripte) laufen erst nach Einwilligung. */
+FP.CC_CATS = [
+  {k:'ess', l:'Essentielle', d:'Nötig, damit der Funnel funktioniert, z. B. das Speichern deiner Auswahl. Immer aktiv.'},
+  {k:'fun', l:'Funktionale', s:'ccFun', d:'Komfort-Funktionen wie eingebettete Inhalte und Schriften externer Anbieter.'},
+  {k:'perf', l:'Performance', s:'ccPerf', d:'Anonyme Auswertung, wie der Funnel genutzt wird, um ihn zu verbessern.'},
+  {k:'mkt', l:'Marketing', s:'ccMkt', d:'Messung von Werbekampagnen, z. B. Meta-Pixel oder Google Ads.'}
+];
+FP.consentOn = function(f){ return !!(f && f.settings && f.settings.ccOn); };
+FP.getConsent = function(f){ try{ return JSON.parse(localStorage.getItem('tt-consent-' + (f.id || 'f'))); }catch(e){ return null; } };
+FP.allowed = function(f, cat){ if(!FP.consentOn(f)) return true; var c = FP.getConsent(f); return !!(c && c[cat]); };
+FP.showConsent = function(f, opts, done){
+  opts = opts || {};
+  var s = f.settings || {}, t = f.theme || {}, prev = FP.getConsent(f) || {};
+  var cats = FP.CC_CATS.filter(function(c){ return !c.s || s[c.s] !== false; });
+  var val = {ess:true}; cats.forEach(function(c){ if(c.k !== 'ess') val[c.k] = !!prev[c.k]; });
+  var old = document.querySelector('.fp-cc[data-fid="' + (f.id || 'f') + '"]'); if(old) old.remove();
+  var host = document.createElement('div');
+  host.className = 'fp-cc' + (opts.container ? ' inl' : ''); host.setAttribute('data-fid', f.id || 'f');
+  host.style.cssText = '--cc-bg:' + (s.ccBg || '#ffffff') + ';--cc-ink:' + (s.ccInk || '#1d1d1f') + ';--cc-btn:' + (s.ccBtnBg || t.primary || '#111') + ';--cc-btnt:' + (s.ccBtnText || t.primaryText || '#fff') + ';--cc-r:' + (t.btnRadius != null ? t.btnRadius : 10) + 'px;--cc-ff:' + FP.fontStack(t.font || 'Inter');
+  var edit = false;
+  var paint = function(){
+    host.innerHTML = '<div class="cc-bd"></div><div class="cc-card" role="dialog" aria-modal="true" aria-labelledby="cc-t-' + (f.id||'f') + '">'
+      + '<div class="cc-in"><h3 id="cc-t-' + (f.id||'f') + '">' + esc(s.ccTitle || 'Wir verwenden Cookies') + '</h3>'
+      + '<p class="cc-tx">' + md(s.ccText || 'Wir setzen Cookies ein, wie in unserer Datenschutzerklärung beschrieben. Einige sind technisch erforderlich, andere helfen uns, den Funnel zu verbessern oder Werbung zu messen. Du kannst deine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen.') + '</p></div>'
+      + '<div class="cc-cats' + (edit ? ' ed' : '') + '">' + cats.map(function(c){ var on = c.k === 'ess' || val[c.k]; return '<div class="cc-cat"><button type="button" class="cc-sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '" data-cc-cat="' + c.k + '"' + (c.k === 'ess' ? ' disabled' : '') + '><i></i></button><span><b>' + c.l + '</b>' + (edit ? '<small>' + c.d + '</small>' : '') + '</span></div>'; }).join('') + '</div>'
+      + '<div class="cc-acts"><button type="button" class="cc-b pri" data-cc="all">' + esc(s.ccAccept || 'Alle akzeptieren') + '</button><button type="button" class="cc-b" data-cc="none">' + esc(s.ccDecline || 'Ablehnen') + '</button>'
+      + (edit ? '<button type="button" class="cc-b" data-cc="save">' + esc(s.ccSave || 'Auswahl speichern') + '</button>' : '<button type="button" class="cc-b" data-cc="edit">' + esc(s.ccEdit || 'Bearbeiten') + '</button>') + '</div>'
+      + (s.ccPrivacy ? '<a class="cc-link" href="' + esc(s.ccPrivacy) + '" target="_blank" rel="noopener">Datenschutzerklärung</a>' : '') + '</div>';
+  };
+  var finish = function(v){
+    v.ts = Date.now();
+    if(!opts.preview){ try{ localStorage.setItem('tt-consent-' + (f.id || 'f'), JSON.stringify(v)); }catch(e){} }
+    host.classList.add('out'); setTimeout(function(){ host.remove(); }, 220);
+    if(done) done(v);
+  };
+  host.addEventListener('click', function(e){
+    var sw = e.target.closest('[data-cc-cat]'); if(sw && !sw.disabled){ var k = sw.getAttribute('data-cc-cat'); val[k] = !val[k]; sw.classList.toggle('on', val[k]); sw.setAttribute('aria-checked', val[k]); return; }
+    var b = e.target.closest('[data-cc]'); if(!b) return;
+    var a = b.getAttribute('data-cc');
+    if(a === 'edit'){ edit = true; paint(); return; }
+    if(a === 'all'){ var v = {ess:true}; cats.forEach(function(c){ v[c.k] = true; }); return finish(v); }
+    if(a === 'none'){ var n = {ess:true}; cats.forEach(function(c){ if(c.k !== 'ess') n[c.k] = false; }); return finish(n); }
+    if(a === 'save') return finish(val);
+  });
+  paint();
+  (opts.container || document.body).appendChild(host);
+  var first = host.querySelector('.cc-b.pri'); if(first && !opts.noFocus) try{ first.focus({preventScroll:true}); }catch(e){}
+  return host;
+};
+
 FP.mount = function(root, f, opts){
   opts = opts || {};
   var st = {i:0, hist:[], answers:{}, errors:{}, dir:'fwd', started:false, done:false, startedAt:Date.now()};
@@ -948,6 +1039,7 @@ FP.mount = function(root, f, opts){
     if(e.target.closest('a[href]')) return;
     var el = e.target.closest('[data-act]'); if(!el || !root.contains(el)) return;
     var act = el.getAttribute('data-act'), b = blockById(el.getAttribute('data-bid'));
+    if(act === 'consent') return; /* eigener Handler unten */
     if(!b && act !== 'next' && act !== 'back') return; /* Element gehört nicht (mehr) zu diesem Funnel */
     if(act !== 'sigclr') e.preventDefault();
     if(act === 'next') go();
@@ -1053,6 +1145,13 @@ FP.mount = function(root, f, opts){
   }
 
   render();
+  /* Cookie-Banner: im Live-Funnel bis zur Entscheidung, in der Vorschau auf Wunsch */
+  var ccContainer = opts.inline ? root.parentNode : null;
+  if(ccContainer && getComputedStyle(ccContainer).position === 'static') ccContainer.style.position = 'relative';
+  var ccDone = function(v){ if(opts.onConsent) try{ opts.onConsent(v); }catch(e){} };
+  if(FP.consentOn(f) && (opts.consentPreview || (opts.live && !FP.getConsent(f)))) FP.showConsent(f, {container:ccContainer, preview:!!opts.consentPreview}, ccDone);
+  else if(FP.consentOn(f) && opts.live) ccDone(FP.getConsent(f));
+  root.addEventListener('click', function(e){ var r = e.target.closest('[data-act="consent"]'); if(r){ e.preventDefault(); FP.showConsent(f, {container:ccContainer, preview:!opts.live}, ccDone); } });
   return { state: st, restart: function(){ st.i=0; st.hist=[]; st.answers={}; st.errors={}; st.done=false; st.started=false; st.startedAt=Date.now(); render(); }, goTo: function(i){ st.i=i; st.hist=[]; render(); } };
 };
 
@@ -1090,11 +1189,15 @@ window.FP = FP;
     var mt = document.querySelector('meta[name=theme-color]'); if(mt) mt.content = t.bg || '#fff';
     FP.usedFonts(F).forEach(function(n){ var u = FP.fontLink(n); if(u && !(F.fonts || []).some(function(x){ return x.name === n; })){ var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; document.head.appendChild(l); } });
     if((F.fonts || []).length){ var st = document.createElement('style'); st.textContent = F.fonts.map(function(x){ return "@font-face{font-family:'" + String(x.name).replace(/'/g,'') + "';src:url(" + x.data + ");font-display:swap}"; }).join('\n'); document.head.appendChild(st); }
-    if(S.pixel){ !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js'); fbq('init', String(S.pixel).replace(/\D/g,'')); fbq('track','PageView'); }
+    /* Meta-Pixel erst nach Einwilligung in Marketing (wenn das Cookie-Banner aktiv ist) */
+    var initPixel = function(){ if(!S.pixel || window.fbq) return; !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js'); fbq('init', String(S.pixel).replace(/\D/g,'')); fbq('track','PageView'); };
+    if(!FP.consentOn(F)) initPixel();
     FP.mount(el, F, {live:true,
+      onConsent:function(v){ if(v && v.mkt) initPixel(); },
       onEvent:function(type, d){ if(type === 'complete') return; sb.rpc('track_event', {p_slug:slug, p_type:type, p_page:(d && d.pageId) || null}).then(function(){}); },
       onSubmit:function(lead){
         lead.utm = Q; lead.page = location.href; lead.userAgent = navigator.userAgent.slice(0, 160);
+        if(FP.consentOn(F)) lead.consent = FP.getConsent(F);
         sb.rpc('submit_lead', {p_slug:slug, p_lead:lead}).then(function(){});
         if(lead.onepage) lead.onepage.data.source.page.slug = '/' + slug;
         /* text/plain: einfacher Request ohne CORS-Vorabprüfung, der Inhalt ist trotzdem JSON */
