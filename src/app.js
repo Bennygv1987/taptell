@@ -28,6 +28,7 @@ var IP = {
   heading:'<path d="M6 4v16M18 4v16M6 12h12"/>', type:'<path d="M4 7V5h16v2M9 19h6M12 5v14"/>',
   image:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
   images:'<rect x="2" y="6" width="14" height="14" rx="2"/><path d="M6 2h14a2 2 0 012 2v12"/><circle cx="7.5" cy="11" r="1.5"/><path d="M16 17l-4-4-8 7"/>',
+  compare:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 2v20"/><path d="M8.5 10 6.5 12l2 2M15.5 10l2 2-2 2"/>',
   video:'<rect x="2" y="5" width="15" height="14" rx="2.5"/><path d="M17 10l5-3v10l-5-3"/>',
   badge:'<path d="M12 2l2.4 2.1 3.2-.3.8 3.1 2.8 1.6-1.2 3 1.2 3-2.8 1.6-.8 3.1-3.2-.3L12 22l-2.4-2.1-3.2.3-.8-3.1L2.8 15.5l1.2-3-1.2-3 2.8-1.6.8-3.1 3.2.3z"/>',
   list:'<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
@@ -493,6 +494,7 @@ var FIELDS = {
   heading:[['text','textarea','Text','**fett** · ==Akzentfarbe== · __handgezeichnet unterstrichen__ · [[Marker]] · Variablen: {{name}}'],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['size','num','Schriftgröße (px, optional)']],
   text:[['text','textarea','Text','**fett** · ==Akzent== · __unterstrichen__ · [[Marker]] · {{name}}, {{total}}'],['size','num','Schriftgröße (px, optional)']],
   badge:[['text','text','Text'],['variant','seg','Stil',[['','Soft'],['filled','Gefüllt'],['outline','Rahmen'],['grey','Grau']]],['upper','toggle','Großbuchstaben']],
+  compare:[['before','image','Vorher-Bild (links)'],['after','image','Nachher-Bild (rechts)'],['row2','row',[['labelBefore','text','Text links'],['labelAfter','text','Text rechts']]],['ratio','select','Seitenverhältnis',[['4:3','4:3'],['1:1','1:1'],['16:9','16:9'],['3:4','3:4 (hoch)']]],['start','range','Startposition',[5,95,1,'%']],['radius','range','Ecken',[0,40,1]]],
   image:[['src','image','Bild'],['ratio','select','Seitenverhältnis',[['','Feste Höhe'],['2:1','2:1'],['16:9','16:9'],['4:3','4:3'],['1:1','1:1'],['auto','Original']]],['height','range','Höhe',[80,420,10],function(p){ return !p.ratio; }],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text']],
   video:[['url','text','YouTube- oder Vimeo-Link','Wird im veröffentlichten Funnel eingebettet.'],['radius','range','Ecken',[0,40,1]]],
   list:[['items','strings','Punkte'],['icon','seg','Symbol',[['check','Haken'],['number','Zahlen']]]],
@@ -509,7 +511,7 @@ var FIELDS = {
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen']]],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
-  summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }]],
+  summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }],['sticky','toggle','Unten fixieren','Bleibt beim Scrollen am unteren Rand sichtbar, solange das Element weiter unten auf der Seite steht.']],
   spacer:[['height','range','Höhe',[4,160,2]]],
   divider:[],
   html:[['code','code','HTML-Code','Wird 1:1 eingefügt (z. B. Embeds, Tracking, eigenes Styling).']]
@@ -519,8 +521,8 @@ var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','pad
 var STYLE_TYPO = [['ff','font','Schrift'],['fw','seg','Stärke',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']]],['scale','range','Größe',[60,180,5,'%']],['row2','row',[['lh','num','Zeilenhöhe'],['ls','num','Laufweite']]],['tt','seg','Schreibweise',[['','Normal'],['uppercase','GROSS'],['lowercase','klein']]],['it','toggle','Kursiv'],['color','color','Textfarbe']];
 var STYLE_BOX = [['bgc','color','Hintergrund'],['pad','pad4','Innenabstand',{keys:['padT','padR','padB','padL'], ph:function(p){ var v = +p.pad || 0; return [v,v,v,v]; }}],['brad','range','Ecken',[0,40,1]],['row2','row',[['bwid','num','Rahmen (px)'],['bc','color','Rahmenfarbe']]],['shd','seg','Schatten',[['','Kein'],['sm','S'],['md','M'],['lg','L']]]];
 var STYLE_FX = [['anim','select','Einblenden',[['none','Keine'],['fade','Einblenden'],['up','Von unten'],['left','Von rechts'],['zoom','Zoom']]],['delay','range','Verzögerung',[0,1500,50,'ms']],['vis','seg','Sichtbar auf',[['all','Allen'],['mobile','Mobil'],['desktop','Desktop']]]];
-var BNAME = {heading:'Überschrift',text:'Text',badge:'Badge',image:'Bild',video:'Video',list:'Liste',testimonial:'Bewertung',trust:'Trust-Badges',faq:'FAQ',countdown:'Countdown',choice:'Auswahl',input:'Eingabefeld',slider:'Schieberegler',rating:'Bewertung',calendar:'Terminwahl',upload:'Datei-Upload',signature:'Unterschrift',checkbox:'Einwilligung',button:'Button',summary:'Preisübersicht',spacer:'Abstand',divider:'Trennlinie',html:'HTML'};
-var BICON = {heading:'heading',text:'type',badge:'badge',image:'image',video:'video',list:'list',testimonial:'quote',trust:'shield',faq:'help',countdown:'clock',choice:'choice',input:'cursor',slider:'sliders',rating:'star',calendar:'calendar',upload:'upload',signature:'pen',checkbox:'checkbox',button:'pointer',summary:'receipt',spacer:'space',divider:'minus',html:'code'};
+var BNAME = {heading:'Überschrift',text:'Text',badge:'Badge',image:'Bild',compare:'Vorher/Nachher',video:'Video',list:'Liste',testimonial:'Bewertung',trust:'Trust-Badges',faq:'FAQ',countdown:'Countdown',choice:'Auswahl',input:'Eingabefeld',slider:'Schieberegler',rating:'Bewertung',calendar:'Terminwahl',upload:'Datei-Upload',signature:'Unterschrift',checkbox:'Einwilligung',button:'Button',summary:'Preisübersicht',spacer:'Abstand',divider:'Trennlinie',html:'HTML'};
+var BICON = {heading:'heading',text:'type',badge:'badge',image:'image',compare:'compare',video:'video',list:'list',testimonial:'quote',trust:'shield',faq:'help',countdown:'clock',choice:'choice',input:'cursor',slider:'sliders',rating:'star',calendar:'calendar',upload:'upload',signature:'pen',checkbox:'checkbox',button:'pointer',summary:'receipt',spacer:'space',divider:'minus',html:'code'};
 
 function renderEditor(){
   var f = F(); if(!f){ go('funnels'); return; }
@@ -605,6 +607,7 @@ function renderRight(){
   var sc = $('#rps'), st = sc ? sc.scrollTop : 0;
   rp.innerHTML = h + '</div>';
   $('#rps').scrollTop = st;
+  if(S.rtab === 'design') fillLogoColors();
 }
 function pageOptions(sel, emptyLabel){ var f = F(); return '<option value="">'+esc(emptyLabel||'– Standard –')+'</option>' + f.pages.map(function(p, i){ return '<option value="'+p.id+'"'+(p.id===sel?' selected':'')+'>'+(i+1)+'. '+esc(p.name)+'</option>'; }).join(''); }
 var VARK = ['text','label','question','desc','sub','quote','title','note','placeholder'];
@@ -720,13 +723,73 @@ function panelPage(){
   return h;
 }
 var SP_KEYS = ['spTop','spHead','spContent','spBlock','spBottom'];  /* Seitenrand (pad) gehört zum Theme und bleibt beim Zurücksetzen */
+/* Stil-Pakete: Form, Schrift und Kartenstil – die Markenfarben (primary, Text) bleiben */
+var STYLE_PACKS = {
+  minimal:  {n:'Minimal',   d:'Inter, kleine Schrift, weiße Karten mit weichem Schatten', t:{font:'Inter', headingFont:'Inter', headingWeight:650, headingLs:-2, scale:92, lineHeight:1.5, radius:12, btnRadius:12, btnPad:15, btnPadX:22, btnWeight:600, optStyle:'shadow', inputStyle:'outline', progress:'bar', progressTop:true}},
+  editorial:{n:'Editorial', d:'Serifen-Überschriften, feine Linien, viel Ruhe', t:{font:'DM Sans', headingFont:'Fraunces', headingWeight:500, headingLs:-1, scale:96, lineHeight:1.6, radius:6, btnRadius:40, btnPad:15, btnPadX:26, btnWeight:500, optStyle:'outline', inputStyle:'line', progress:'bar', progressTop:false}},
+  bold:     {n:'Kräftig',   d:'Fette Überschriften, große Buttons, gefüllte Karten', t:{font:'Plus Jakarta Sans', headingFont:'Plus Jakarta Sans', headingWeight:800, headingLs:-3, scale:100, lineHeight:1.5, radius:18, btnRadius:16, btnPad:18, btnPadX:24, btnWeight:700, optStyle:'filled', inputStyle:'filled', progress:'bar', progressTop:true}},
+  soft:     {n:'Soft',      d:'Soft UI auf hellgrauem Grund, runde Formen', t:{font:'Manrope', headingFont:'Manrope', headingWeight:700, headingLs:-2, scale:94, lineHeight:1.55, radius:20, btnRadius:40, btnPad:16, btnPadX:24, btnWeight:650, optStyle:'soft', inputStyle:'filled', progress:'bar', progressTop:true, bg:'#eef0f3', surface:'#e4e7ec', bgGrad:false}},
+  glass:    {n:'Glas',      d:'Milchglas-Karten über einem Verlauf in deiner Farbe', t:{font:'Inter', headingFont:'Inter', headingWeight:700, headingLs:-2, scale:94, lineHeight:1.5, radius:16, btnRadius:14, btnPad:16, btnPadX:22, btnWeight:600, optStyle:'glass', inputStyle:'outline', progress:'bar', progressTop:true, bg:'#ffffff', bgGrad:true, bgAngle:160}}
+};
+function hexMix(a, b, w){ var pa = toHex(a).slice(1), pb = toHex(b).slice(1); var c = function(h, i){ return parseInt(h.substr(i, 2), 16) || 0; }; var o = '#'; for(var i = 0; i < 6; i += 2) o += ('0' + Math.round(c(pa, i) * w + c(pb, i) * (1 - w)).toString(16)).slice(-2); return o; }
+function packOn(t){ var hit = ''; Object.keys(STYLE_PACKS).forEach(function(k){ var pt = STYLE_PACKS[k].t; if(!hit && ['headingFont','font','optStyle','radius','btnRadius'].every(function(x){ return String(t[x]) === String(pt[x]); })) hit = k; }); return hit; }
+/* Hell/dunkel für Text auf einer Farbe (WCAG-Luminanz) */
+function onColor(hex){ var h = toHex(hex).slice(1), l = [0,2,4].map(function(i){ var c = parseInt(h.substr(i,2),16)/255; return c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4); }); return (.2126*l[0] + .7152*l[1] + .0722*l[2]) > .45 ? '#111113' : '#ffffff'; }
+/* Markenfarben aus dem Logo lesen: kräftige Farben zählen, Weiß, Schwarz und Grau zählen nicht (außer das Logo hat keine Farbe) */
+var LOGO_COLS = {};
+function logoColors(src, done){
+  if(LOGO_COLS[src]) return done(LOGO_COLS[src]);
+  var img = new Image(); img.crossOrigin = 'anonymous';
+  img.onload = function(){
+    try{
+      var c = document.createElement('canvas'), n = 64; c.width = n; c.height = n;
+      var x = c.getContext('2d', {willReadFrequently:true}); x.drawImage(img, 0, 0, n, n);
+      var d = x.getImageData(0, 0, n, n).data, buckets = {}, dark = {};
+      for(var i = 0; i < d.length; i += 4){
+        if(d[i+3] < 200) continue;
+        var r = d[i], g = d[i+1], b = d[i+2], mx = Math.max(r,g,b), mn = Math.min(r,g,b), l = (mx+mn)/510, s = mx === mn ? 0 : (mx-mn)/(255 - Math.abs(mx+mn-255));
+        var key = (r>>4)+','+(g>>4)+','+(b>>4);
+        if(s < .2 || l < .1 || l > .86){ if(l < .35){ var dk = dark[key] || (dark[key] = {n:0,r:0,g:0,b:0}); dk.n++; dk.r += r; dk.g += g; dk.b += b; } continue; }
+        var bk = buckets[key] || (buckets[key] = {n:0,w:0,r:0,g:0,b:0}); bk.n++; bk.w += .4 + s; bk.r += r; bk.g += g; bk.b += b;
+      }
+      var hex = function(o){ return '#' + [o.r/o.n, o.g/o.n, o.b/o.n].map(function(v){ return ('0' + Math.round(v).toString(16)).slice(-2); }).join(''); };
+      var list = Object.keys(buckets).map(function(k){ return buckets[k]; }).sort(function(a, b){ return b.w - a.w; }), out = [];
+      var dist = function(a, b){ var pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16); return Math.abs((pa>>16)-(pb>>16)) + Math.abs((pa>>8&255)-(pb>>8&255)) + Math.abs((pa&255)-(pb&255)); };
+      list.forEach(function(o){ var hx = hex(o); if(out.length < 4 && o.n > 6 && out.every(function(y){ return dist(y, hx) > 90; })) out.push(hx); });
+      var dl = Object.keys(dark).map(function(k){ return dark[k]; }).sort(function(a, b){ return b.n - a.n; })[0];
+      if(dl && dl.n > 20 && out.length < 4) out.push(hex(dl));
+      LOGO_COLS[src] = out; done(out);
+    }catch(e){ done([]); }
+  };
+  img.onerror = function(){ done([]); };
+  img.src = src;
+}
+function fillLogoColors(){
+  var box = $('#logocols'), t = F() && F().theme; if(!box || !t || !t.logoImg) return;
+  logoColors(t.logoImg, function(cols){
+    if(!box.isConnected) return;
+    box.innerHTML = cols.length ? cols.map(function(c){ var on = toHex(t.primary) === c; return '<button class="lcol'+(on?' on':'')+'" data-a="logoColor" data-v="'+c+'" title="Als Primärfarbe übernehmen" aria-label="Farbe '+c+' übernehmen"><i style="background:'+c+'"></i><span>'+c.toUpperCase()+'</span></button>'; }).join('')
+      : '<span class="hint" style="margin:0">Im Logo wurden keine klaren Farben gefunden.</span>';
+  });
+}
+/* Seitenübergänge: Kachel mit Mini-Seite; mit Maus spielt sie beim Überfahren den echten Übergang, ein Klick zeigt ihn im Handy */
+var PAGE_ANIMS = [['slide','Slide'],['spring','Federnd'],['fade','Fade'],['blur','Blur'],['up','Aufwärts'],['stagger','Gestaffelt'],['zoom','Zoom'],['tilt','Kippen'],['wipe','Wischen'],['none','Keine']];
+function animPicker(v, chat){
+  return '<div class="fld"><label>Seitenübergang</label><div class="anims" role="radiogroup" aria-label="Seitenübergang">'
+    + PAGE_ANIMS.map(function(o){ return '<button class="anw'+(v===o[0]?' on':'')+'" role="radio" aria-checked="'+(v===o[0])+'" data-a="pageAnim" data-v="'+o[0]+'"><span class="anp"><span class="fp-anim-'+o[0]+'"><i></i><i></i><i></i></span></span><span class="anl">'+o[1]+'</span></button>'; }).join('')
+    + '</div><div class="hint">'+(chat ? 'Im Chat-Modus erscheinen Seiten als Nachrichten, der Übergang gilt dann nur für Seiten ohne Text. ' : '')+'Klick zeigt den Übergang direkt im Handy. Wer am Gerät weniger Bewegung eingestellt hat, sieht immer eine sanfte Einblendung.</div></div>';
+}
 function panelDesign(){
   var t = F().theme;
   var seg = function(k, l, opts){ return field([k,'seg',l,opts], t, 't'); };
   var tgl = function(k, l, hint){ return field([k,'toggle',l,hint||null], t, 't'); };
   var rng = function(k, l, a){ return field([k,'range',l,a], Object.assign({}, t, (function(){ var o = {}; o[k] = t[k] == null || t[k] === '' ? a[4] : t[k]; return o; })()), 't'); };
-  var h = '<div class="psec"><h5>Themes</h5><div class="presets">' + Object.keys(T.THEMES).map(function(k){ var th = T.THEMES[k], on = th.primary===t.primary && th.bg===t.bg; return '<button class="preset'+(on?' on':'')+'" data-a="preset" data-v="'+k+'"><div class="sw" style="background:'+th.bg+';border:1px solid rgba(0,0,0,.06)"><i style="background:'+th.primary+'"></i><i style="background:'+th.surface+'"></i><i style="background:'+th.text+'"></i></div><span style="font-family:\''+th.headingFont+'\'">'+th.name+'</span></button>'; }).join('') + '</div></div>';
-  h += '<div class="psec"><h5>Farben</h5><div class="row2"><div class="fld"><label>Primär / Akzent</label>'+colorField('t','primary',t.primary)+'</div><div class="fld"><label>Text auf Primär</label>'+colorField('t','primaryText',t.primaryText)+'</div></div>'
+  var pk = packOn(t);
+  var h = '<div class="psec"><h5>Stil-Pakete</h5><div class="packs">' + Object.keys(STYLE_PACKS).map(function(k){ var P0 = STYLE_PACKS[k], pv = P0.t;
+      return '<button class="pack'+(pk===k?' on':'')+'" data-a="pack" data-v="'+k+'" title="'+esc(P0.d)+'"><span class="pkp pk-'+k+'"><b style="font-family:'+esc(FP.fontStack(pv.headingFont))+';font-weight:'+pv.headingWeight+'">Aa</b><i style="border-radius:'+Math.min(+pv.btnRadius, 10)+'px"></i></span><span class="pkl">'+esc(P0.n)+'</span></button>'; }).join('')
+    + '</div><div class="hint">Schrift, Rundungen, Kartenstil und Abstände in einem Klick. Deine Farben bleiben.</div></div>';
+  h += '<div class="psec"><h5>Themes</h5><div class="presets">' + Object.keys(T.THEMES).map(function(k){ var th = T.THEMES[k], on = th.primary===t.primary && th.bg===t.bg; return '<button class="preset'+(on?' on':'')+'" data-a="preset" data-v="'+k+'"><div class="sw" style="background:'+th.bg+';border:1px solid rgba(0,0,0,.06)"><i style="background:'+th.primary+'"></i><i style="background:'+th.surface+'"></i><i style="background:'+th.text+'"></i></div><span style="font-family:\''+th.headingFont+'\'">'+th.name+'</span></button>'; }).join('') + '</div></div>';
+  h += '<div class="psec"><h5>Farben</h5>' + (t.logoImg ? '<div class="fld"><label>Aus deinem Logo</label><div class="logocols" id="logocols" data-src="'+esc(t.logoImg.length > 200 ? 'data' : t.logoImg)+'"><span class="hint" style="margin:0">Farben werden gelesen …</span></div></div>' : '') + '<div class="row2"><div class="fld"><label>Primär / Akzent</label>'+colorField('t','primary',t.primary)+'</div><div class="fld"><label>Text auf Primär</label>'+colorField('t','primaryText',t.primaryText)+'</div></div>'
     + '<div class="row2"><div class="fld"><label>Hintergrund</label>'+colorField('t','bg',t.bg)+'</div><div class="fld"><label>Flächen / Karten</label>'+colorField('t','surface',t.surface)+'</div></div>'
     + '<div class="row2"><div class="fld"><label>Text</label>'+colorField('t','text',t.text)+'</div><div class="fld"><label>Text sekundär</label>'+colorField('t','muted',t.muted)+'</div></div>'
     + tgl('bgGrad','Hintergrund als Verlauf') + (t.bgGrad ? '<div class="row2"><div class="fld"><label>Verlauf bis</label>'+colorField('t','bg2',t.bg2||'#eef0ff')+'</div>'+rng('bgAngle','Winkel',[0,360,5,'°',180])+'</div>' : '') + '</div>';
@@ -760,8 +823,11 @@ function panelDesign(){
     + rng('spBottom','Abstand unten',[0,64,1,'px',32])
     + rng('pad','Seitenrand links/rechts',[8,40,1,'px',20])
     + '<div class="sphint"><span class="hint">Gilt für alle Seiten. Eigene Abstände einzelner Elemente haben Vorrang.</span>' + (spSet ? '<button class="btn ghost sm" data-a="spReset">'+I('refresh',13)+'Zurücksetzen</button>' : '') + '</div></div>';
+  h += '<div class="psec"><h5>Chat-Modus</h5>' + tgl('chat','Funnel als Chat anzeigen','Überschriften und Texte erscheinen als Nachrichten, davor kurz „schreibt …“. Bisherige Antworten stehen als Verlauf darüber.')
+    + (t.chat ? '<div class="row2"><div class="fld"><label>Name</label><input class="inp" data-t="chatName" value="'+esc(t.chatName||'')+'" placeholder="z. B. Lisa"></div><div class="fld"><label>Untertitel</label><input class="inp" data-t="chatRole" value="'+esc(t.chatRole||'')+'" placeholder="Antwortet in der Regel sofort"></div></div>' + field(['chatAvatar','image','Foto (sonst Initialen)'], t, 't') : '') + '</div>';
   h += '<div class="psec"><h5>Animation & Hintergrund</h5>'
-    + '<div class="fld"><label>Seitenübergang</label><select class="inp" data-t="animation">'+[['slide','Slide'],['fade','Fade'],['up','Von unten'],['zoom','Zoom'],['none','Keine']].map(function(o){ return '<option value="'+o[0]+'"'+(t.animation===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select></div>'
+    + animPicker(t.animation || 'slide', !!t.chat)
+    + tgl('morph','Bild-Übergang zwischen Seiten','Das gewählte Antwortbild wächst ins Titelbild der nächsten Seite. Funktioniert in Chrome, Edge und Safari; sonst normaler Übergang.')
     + field(['bgImage','image','Hintergrundbild (alle Seiten)'], t, 't') + (t.bgImage?'<div class="fld"><label>Overlay</label>'+colorField('t','overlay',t.overlay)+'<div class="hint">z. B. rgba(0,0,0,0.4) für bessere Lesbarkeit</div></div>':'')
     + '<div class="fld"><label>Footer-Text</label><input class="inp" data-t="footer" value="'+esc(t.footer||'')+'" placeholder="Impressum · Datenschutz"></div></div>';
   h += '<div class="psec"><h5>'+I('code',13)+'Eigenes CSS</h5><textarea class="inp" data-t="customCss" rows="5" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)" placeholder=".fp-btn{letter-spacing:.02em}\n.fp-h1{font-size:32px}">'+esc(t.customCss||'')+'</textarea><div class="hint">Klassen: .fp-h1/.fp-h2 (Überschriften), .fp-txt, .fp-btn, .fp-opt, .fp-in, .fp-badge, .fp-prog</div></div>';
@@ -1821,6 +1887,17 @@ var ACT = {
   seg:function(el){
     var scope = el.getAttribute('data-scope'), k = el.getAttribute('data-k'), v = el.getAttribute('data-v'); if(el.getAttribute('data-t') === 'number') v = +v;
     snap(true); setScoped(scope, k, v); renderCanvas(true); renderRight();
+  },
+  pack:function(el){ var f = F(), P0 = STYLE_PACKS[el.getAttribute('data-v')]; if(!P0) return; snap(true); Object.keys(P0.t).forEach(function(k){ f.theme[k] = P0.t[k]; });
+    if(el.getAttribute('data-v') === 'glass'){ f.theme.bg = hexMix(f.theme.primary || '#4b4bf0', '#ffffff', .06); f.theme.bg2 = hexMix(f.theme.primary || '#4b4bf0', '#ffffff', .28); f.theme.surface = hexMix(f.theme.primary || '#4b4bf0', '#ffffff', .08); }
+    else if(el.getAttribute('data-v') !== 'soft' && (f.theme.bg === '#eef0f3' || f.theme.bgGrad)){ f.theme.bg = '#ffffff'; f.theme.surface = '#f4f4f5'; f.theme.bgGrad = false; }
+    ensureFonts(); touch(); renderCanvas(true); renderRight(); },
+  logoColor:function(el){ var t = F().theme, c = el.getAttribute('data-v'); snap(true); t.primary = c; t.primaryText = onColor(c); touch(); renderCanvas(true); renderRight(); },
+  pageAnim:function(el){
+    var v = el.getAttribute('data-v'); snap(true); setScoped('t', 'animation', v); renderCanvas(true); renderRight();
+    /* Vorschau im Handy: Klasse kurz setzen, damit der Übergang einmal abläuft */
+    var pg = $('#canvas .fp-page'); if(!pg || v === 'none') return;
+    pg.classList.add('fp-anim-' + v); clearTimeout(window.__animDemo); window.__animDemo = setTimeout(function(){ pg.classList.remove('fp-anim-' + v); }, 900);
   },
   spReset:function(){ var t = F().theme; snap(true); SP_KEYS.forEach(function(k){ delete t[k]; }); touch(); renderCanvas(true); renderRight(); },
   clearProp:function(el){ snap(true); setScoped(el.getAttribute('data-scope'), el.getAttribute('data-k'), ''); renderCanvas(true); renderRight(); },

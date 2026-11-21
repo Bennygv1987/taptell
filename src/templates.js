@@ -29,6 +29,7 @@ var DEF = {
   text:        function(){ return {text:'Beschreibe hier kurz, worum es geht und was der Nutzer davon hat.'}; },
   badge:       function(){ return {text:'✨ Kostenlos & unverbindlich', align:'center'}; },
   image:       function(){ return {src:'', radius:14, height:200, alt:''}; },
+  compare:     function(){ return {before:'https://images.unsplash.com/photo-1710579682386-aeff3f831b7d?auto=format&fit=crop&w=900&q=75', after:'https://images.unsplash.com/photo-1787491581115-1d9a0e9f11ec?auto=format&fit=crop&w=900&q=75', labelBefore:'Vorher', labelAfter:'Nachher', start:50, ratio:'4:3', radius:14}; },
   video:       function(){ return {url:'', radius:14}; },
   list:        function(){ return {items:['Erster Vorteil','Zweiter Vorteil','Dritter Vorteil'], icon:'check'}; },
   testimonial: function(){ return {quote:'„Super Beratung, schnelle Umsetzung – absolut empfehlenswert!“', name:'Julia Schneider', role:'Kundin aus Düsseldorf', stars:5, img:''}; },
@@ -54,6 +55,7 @@ var LIB = [
   {id:'heading', type:'heading', n:'Überschrift', ic:'heading', g:'Inhalt'},
   {id:'text', type:'text', n:'Text', ic:'type', g:'Inhalt'},
   {id:'image', type:'image', n:'Bild', ic:'image', g:'Inhalt'},
+  {id:'compare', type:'compare', n:'Vorher/Nachher', ic:'compare', g:'Inhalt'},
   {id:'video', type:'video', n:'Video', ic:'video', g:'Inhalt'},
   {id:'badge', type:'badge', n:'Badge', ic:'badge', g:'Inhalt'},
   {id:'list', type:'list', n:'Liste', ic:'list', g:'Inhalt'},
@@ -107,7 +109,7 @@ var CATS = ['Alle','Konfigurator','Leads','Termine','Recruiting','Feedback','Ver
 var U = function(id, w){ return 'https://images.unsplash.com/photo-' + id + '?auto=format&fit=crop&w=' + (w || 1200) + '&q=75'; };
 var OK_IMG = '/assets/common/success.svg';
 function modern(extra){
-  return theme('clean', Object.assign({font:'Inter', headingFont:'Inter', headingWeight:650, headingLs:-2, lineHeight:1.5, scale:92,
+  return theme('clean', Object.assign({morph:true, font:'Inter', headingFont:'Inter', headingWeight:650, headingLs:-2, lineHeight:1.5, scale:92,
     radius:12, btnRadius:12, pad:22, bg:'#ffffff', surface:'#f4f4f5', text:'#111113', muted:'#6e6e73', btnWeight:600, btnPad:15,
     progress:'bar', progressTop:true, backButton:true, logoAlign:'center'}, extra || {}));
 }
@@ -136,8 +138,8 @@ function tTerrasse(){
     pages:[
       P('Start',[hero('1787491581115-1d9a0e9f11ec'), B('badge',{text:'Preis in 60 Sekunden', align:'left'}), B('heading',{text:'Konfiguriere deine ==Traumterrasse==', level:1}), B('text',{text:'Wähle Material, Größe und Extras – und erhalte sofort eine unverbindliche Preisschätzung.', mb:22}), B('button',{label:'Jetzt konfigurieren', sub:'Kostenlos & unverbindlich'}), B('trust',{items:['4,9 bei Google','320+ Terrassen','Regionaler Fachbetrieb'], align:'center'})]),
       P('Material',[mat]),
-      P('Größe',[B('heading',{text:'Wie groß soll deine Terrasse werden?', level:2}), B('text',{text:'Grobe Schätzung reicht – wir messen vor Ort genau aus.', mb:20}), size, B('spacer',{height:8}), B('summary',{compact:true, title:'Geschätzter Preis', prefix:'ab', note:''})]),
-      P('Extras',[extras, B('summary',{compact:true, title:'Aktueller Preis', prefix:'', note:''})]),
+      P('Größe',[B('image',{src:U('1787491581115-1d9a0e9f11ec',900), ratio:'16:9', radius:14, alt:''}), B('heading',{text:'Wie groß soll deine Terrasse werden?', level:2}), B('text',{text:'Grobe Schätzung reicht – wir messen vor Ort genau aus.', mb:20}), size, B('spacer',{height:8}), B('summary',{compact:true, title:'Geschätzter Preis', prefix:'ab', note:''})]),
+      P('Extras',[extras, B('summary',{compact:true, sticky:true, title:'Aktueller Preis', prefix:'', note:''})]),
       P('Zeitraum',[when]),
       P('Zusammenfassung',[B('heading',{text:'Deine Wunschterrasse', level:2}), B('summary',{}), B('button',{label:'Angebot anfordern'})]),
       P('Kontakt', contact('Wohin dürfen wir dein Angebot senden?', '', 'Angebot anfordern')),
