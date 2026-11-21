@@ -508,16 +508,16 @@ var FIELDS = {
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen']]],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
+  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen']]],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
   summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }]],
   spacer:[['height','range','Höhe',[4,160,2]]],
   divider:[],
   html:[['code','code','HTML-Code','Wird 1:1 eingefügt (z. B. Embeds, Tracking, eigenes Styling).']]
 };
 var TEXTY = {heading:1,text:1,badge:1,list:1,button:1,choice:1,input:1,testimonial:1,faq:1,trust:1,summary:1,checkbox:1,rating:1,calendar:1,countdown:1,slider:1,upload:1,signature:1};
-var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','brad','bwid','bc','shd','anim','delay','vis'];
+var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','padT','padR','padB','padL','brad','bwid','bc','shd','anim','delay','vis'];
 var STYLE_TYPO = [['ff','font','Schrift'],['fw','seg','Stärke',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']]],['scale','range','Größe',[60,180,5,'%']],['row2','row',[['lh','num','Zeilenhöhe'],['ls','num','Laufweite']]],['tt','seg','Schreibweise',[['','Normal'],['uppercase','GROSS'],['lowercase','klein']]],['it','toggle','Kursiv'],['color','color','Textfarbe']];
-var STYLE_BOX = [['bgc','color','Hintergrund'],['pad','range','Innenabstand',[0,48,1]],['brad','range','Ecken',[0,40,1]],['row2','row',[['bwid','num','Rahmen (px)'],['bc','color','Rahmenfarbe']]],['shd','seg','Schatten',[['','Kein'],['sm','S'],['md','M'],['lg','L']]]];
+var STYLE_BOX = [['bgc','color','Hintergrund'],['pad','pad4','Innenabstand',{keys:['padT','padR','padB','padL'], ph:function(p){ var v = +p.pad || 0; return [v,v,v,v]; }}],['brad','range','Ecken',[0,40,1]],['row2','row',[['bwid','num','Rahmen (px)'],['bc','color','Rahmenfarbe']]],['shd','seg','Schatten',[['','Kein'],['sm','S'],['md','M'],['lg','L']]]];
 var STYLE_FX = [['anim','select','Einblenden',[['none','Keine'],['fade','Einblenden'],['up','Von unten'],['left','Von rechts'],['zoom','Zoom']]],['delay','range','Verzögerung',[0,1500,50,'ms']],['vis','seg','Sichtbar auf',[['all','Allen'],['mobile','Mobil'],['desktop','Desktop']]]];
 var BNAME = {heading:'Überschrift',text:'Text',badge:'Badge',image:'Bild',video:'Video',list:'Liste',testimonial:'Bewertung',trust:'Trust-Badges',faq:'FAQ',countdown:'Countdown',choice:'Auswahl',input:'Eingabefeld',slider:'Schieberegler',rating:'Bewertung',calendar:'Terminwahl',upload:'Datei-Upload',signature:'Unterschrift',checkbox:'Einwilligung',button:'Button',summary:'Preisübersicht',spacer:'Abstand',divider:'Trennlinie',html:'HTML'};
 var BICON = {heading:'heading',text:'type',badge:'badge',image:'image',video:'video',list:'list',testimonial:'quote',trust:'shield',faq:'help',countdown:'clock',choice:'choice',input:'cursor',slider:'sliders',rating:'star',calendar:'calendar',upload:'upload',signature:'pen',checkbox:'checkbox',button:'pointer',summary:'receipt',spacer:'space',divider:'minus',html:'code'};
@@ -634,6 +634,12 @@ function field(spec, p, scope){
     case 'textarea': return VARK.indexOf(k) >= 0 && scope === 'p' ? wv('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>') : w('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>');
     case 'code': return w('<textarea class="inp" '+a+' rows="6" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)">'+esc(v)+'</textarea>');
     case 'num': return w('<input class="inp" type="number" '+a+' data-num value="'+(v==null?'':esc(v))+'">');
+    case 'pad4':
+      var pk = extra.keys, pph = typeof extra.ph === 'function' ? extra.ph(p) : (extra.ph || [0,0,0,0]), pnames = ['Oben','Rechts','Unten','Links'];
+      var pset = pk.some(function(x){ return p[x] !== undefined && p[x] !== ''; });
+      return '<div class="fld"><div class="flh"><label>'+esc(label)+'</label><button class="varbtn" data-a="padLink" data-scope="'+scope+'" data-keys="'+pk.join(',')+'" data-mode="'+(pset?'reset':'all')+'" title="'+(pset?'Alle Seiten zurücksetzen':'Oben auf alle Seiten übernehmen')+'">'+(pset?I('x',12)+'Zurücksetzen':I('link',12)+'Alle gleich')+'</button></div><div class="pad4">'
+        + pk.map(function(x, i){ var pv = p[x]; return '<label><input class="inp" type="number" min="0" max="120" inputmode="numeric" data-'+scope+'="'+x+'" data-num value="'+(pv==null?'':esc(pv))+'" placeholder="'+esc(pph[i])+'" aria-label="'+esc(label)+' '+pnames[i]+'"><span>'+pnames[i]+'</span></label>'; }).join('')
+        + '</div>'+(extra.hint?'<div class="hint">'+esc(extra.hint)+'</div>':'')+'</div>';
     case 'range': var un = extra[3] != null ? extra[3] : (k==='stars'||k==='max'?'':'px'); return w('<div class="rng"><input type="range" '+a+' data-num data-unit="'+un+'" min="'+extra[0]+'" max="'+extra[1]+'" step="'+extra[2]+'" value="'+(v==null||v===''?extra[0]:v)+'"><span>'+(v==null||v===''?extra[0]:v)+un+'</span></div>');
     case 'font': return w(fontSelect(scope, k, v || '', true));
     case 'select': return w('<select class="inp" '+a+' data-rp>'+extra.map(function(o){ return '<option value="'+o[0]+'"'+(String(v)===String(o[0])?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select>');
@@ -706,6 +712,7 @@ function panelPage(){
   h += '<div class="psec" style="display:flex;gap:8px"><button class="btn sm" data-a="pdup" data-i="'+S.pi+'">'+I('dup',13)+'Duplizieren</button><button class="btn sm danger" data-a="pdel" data-i="'+S.pi+'"'+(f.pages.length<2?' disabled':'')+'>'+I('trash',13)+'Löschen</button></div>';
   return h;
 }
+var SP_KEYS = ['spTop','spHead','spContent','spBlock','spBottom'];  /* Seitenrand (pad) gehört zum Theme und bleibt beim Zurücksetzen */
 function panelDesign(){
   var t = F().theme;
   var seg = function(k, l, opts){ return field([k,'seg',l,opts], t, 't'); };
@@ -723,7 +730,8 @@ function panelDesign(){
     + '<div class="row2">' + rng('headingLs','Laufweite Überschr.',[-6,10,1,'',-2]) + rng('lineHeight','Zeilenhöhe Text',[1.2,2,0.05,'',1.55]) + '</div>'
     + tgl('headingUpper','Überschriften in Großbuchstaben') + '</div>';
   h += '<div class="psec"><h5>Buttons</h5>' + field(['btnVariant','select','Standard-Stil',[['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen']]], t, 't')
-    + '<div class="row2">' + rng('btnRadius','Ecken',[0,40,1,'px',12]) + rng('btnPad','Höhe',[10,24,1,'px',16]) + '</div>'
+    + '<div class="row2">' + rng('btnPad','Innen oben/unten',[4,28,1,'px',16]) + rng('btnPadX','Innen links/rechts',[8,48,1,'px',22]) + '</div>'
+    + rng('btnRadius','Ecken',[0,40,1,'px',12])
     + seg('btnWeight','Schriftstärke',[[500,'500'],[600,'600'],[700,'700'],[800,'800']])
     + tgl('btnUpper','Button-Text in Großbuchstaben') + tgl('stickyCta','Button unten fixieren (Sticky CTA)','Der letzte Button jeder Seite bleibt am unteren Bildschirmrand sichtbar.') + '</div>';
   h += '<div class="psec"><h5>Felder & Antwortkarten</h5>' + rng('radius','Ecken',[0,28,1,'px',14])
@@ -736,7 +744,16 @@ function panelDesign(){
     + tgl('progressTop','Fortschrittsbalken ganz oben (über dem Logo)')
     + tgl('backButton','Zurück-Button anzeigen')
     + '<div class="fld"><label>Standard-Text „Weiter“-Button</label><input class="inp" data-t="nextLabel" value="'+esc(t.nextLabel||'Weiter')+'"></div></div>';
-  h += '<div class="psec"><h5>Layout & Animation</h5>' + rng('pad','Seitenabstand',[8,40,1,'px',20])
+  var spSet = SP_KEYS.some(function(k){ return t[k] != null && t[k] !== ''; });
+  h += '<div class="psec"><h5>Abstände</h5>'
+    + rng('spTop','Abstand oben',[0,48,1,'px',t.progressTop?14:16])
+    + rng('spHead',t.progressTop?'Fortschritt bis Logo':'Logo bis Fortschritt',[0,40,1,'px',t.progressTop?22:12])
+    + rng('spContent','Kopfbereich bis Inhalt',[0,48,1,'px',14])
+    + rng('spBlock','Zwischen Elementen',[0,40,1,'px',16])
+    + rng('spBottom','Abstand unten',[0,64,1,'px',32])
+    + rng('pad','Seitenrand links/rechts',[8,40,1,'px',20])
+    + '<div class="sphint"><span class="hint">Gilt für alle Seiten. Eigene Abstände einzelner Elemente haben Vorrang.</span>' + (spSet ? '<button class="btn ghost sm" data-a="spReset">'+I('refresh',13)+'Zurücksetzen</button>' : '') + '</div></div>';
+  h += '<div class="psec"><h5>Animation & Hintergrund</h5>'
     + '<div class="fld"><label>Seitenübergang</label><select class="inp" data-t="animation">'+[['slide','Slide'],['fade','Fade'],['up','Von unten'],['zoom','Zoom'],['none','Keine']].map(function(o){ return '<option value="'+o[0]+'"'+(t.animation===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select></div>'
     + field(['bgImage','image','Hintergrundbild (alle Seiten)'], t, 't') + (t.bgImage?'<div class="fld"><label>Overlay</label>'+colorField('t','overlay',t.overlay)+'<div class="hint">z. B. rgba(0,0,0,0.4) für bessere Lesbarkeit</div></div>':'')
     + '<div class="fld"><label>Footer-Text</label><input class="inp" data-t="footer" value="'+esc(t.footer||'')+'" placeholder="Impressum · Datenschutz"></div></div>';
@@ -1798,6 +1815,7 @@ var ACT = {
     var scope = el.getAttribute('data-scope'), k = el.getAttribute('data-k'), v = el.getAttribute('data-v'); if(el.getAttribute('data-t') === 'number') v = +v;
     snap(true); setScoped(scope, k, v); renderCanvas(true); renderRight();
   },
+  spReset:function(){ var t = F().theme; snap(true); SP_KEYS.forEach(function(k){ delete t[k]; }); touch(); renderCanvas(true); renderRight(); },
   clearProp:function(el){ snap(true); setScoped(el.getAttribute('data-scope'), el.getAttribute('data-k'), ''); renderCanvas(true); renderRight(); },
   preset:function(el){ var f = F(), th = T.THEMES[el.getAttribute('data-v')]; snap(true); Object.keys(th).forEach(function(k){ if(k !== 'name') f.theme[k] = th[k]; }); if(!th.primaryText) f.theme.primaryText = '#ffffff'; f.theme.progress = th.progress || 'bar'; touch(); renderCanvas(true); renderRight(); },
   arrAdd:function(el){ var b = selBlock(), k = el.getAttribute('data-k'); snap(true); b.props[k] = (b.props[k]||[]).concat([k==='slots'?'18:00':'Neuer Eintrag']); touch(); renderCanvas(true); renderRight(); },
@@ -1813,6 +1831,10 @@ var ACT = {
   srAdd:function(){ var pg = curPage(); snap(true); pg.scoreRoutes = (pg.scoreRoutes||[]).concat([{min:0, max:5, goto:''}]); touch(); renderRight(); renderLeft(); },
   srDel:function(el){ var pg = curPage(); snap(true); pg.scoreRoutes.splice(+el.getAttribute('data-i'),1); touch(); renderRight(); renderLeft(); },
   fstatus:function(el){ var f = F(); f.status = el.getAttribute('data-v'); touch(); renderEditor(); toast(f.status==='live'?'Funnel ist live':'Funnel ist Entwurf'); },
+  padLink:function(el){ var scope = el.getAttribute('data-scope'), keys = el.getAttribute('data-keys').split(','), tgt = scope==='p'?selBlock().props:scope==='t'?F().theme:null; if(!tgt) return; snap(true);
+    if(el.getAttribute('data-mode') === 'reset') keys.forEach(function(k){ delete tgt[k]; });
+    else { var inp = el.closest('.fld').querySelector('input'), v = inp && inp.value !== '' ? +inp.value : +(inp && inp.placeholder) || 0; keys.forEach(function(k){ tgt[k] = v; }); }
+    touch(); renderCanvas(true); renderRight(); },
   styleReset:function(){ var b = selBlock(); if(!b) return; snap(true); STYLE_KEYS.forEach(function(k){ delete b.props[k]; }); touch(); renderCanvas(true); renderRight(); },
   fontAdd:function(){ promptBox('Google Font hinzufügen','Exakter Name wie auf fonts.google.com (z. B. „Josefin Sans“)','',function(v){
     v = v.replace(/\s+/g,' ').trim(); if(FP.FONTS.indexOf(v) >= 0 || (db.fonts.google||[]).indexOf(v) >= 0){ toast('Schrift ist schon verfügbar'); return; }

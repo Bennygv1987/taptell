@@ -5,7 +5,7 @@ TapTell ist ein SaaS für mobile Funnels (Konfiguratoren, Feedback, Leads) für 
 ## Aufbau & Build
 
 - Quellcode liegt in `src/` (`app.js`, `app.css`, `player.js`, `player.css`, `templates.js`).
-- `index.html` und `f.html` im Root werden **erzeugt**: nach jeder Änderung in `src/` `python3 src/build.py` ausführen.
+- `app.html` (Dashboard fürs Hosting), `index.html` (lokale Kopie, gitignored) und `f.html` im Root werden **erzeugt**: nach jeder Änderung in `src/` `python3 src/build.py` ausführen.
 - Lokal testen: `python3 -m http.server 8080` im Root, dann `http://localhost:8080` (Demo-Modus, Login `admin@demo.de` / `demo`).
 
 ## Design
