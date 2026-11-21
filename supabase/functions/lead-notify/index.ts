@@ -177,7 +177,11 @@ async function processLead(admin: any, lead: any, funnel: any, only?: { kind: st
 
   // 3) Webhooks
   if (!only || only.kind === 'webhook') {
-    const payload = { event: 'lead.created', test: !!only, created_at: lead.created_at, funnel: { id: funnel.id, name: funnel.name, slug: funnel.slug },
+    // Onepage-kompatibel: die beim Absenden berechnete Onepage-Struktur unverändert senden
+    const onepage = funnel.settings?.webhookFormat === 'onepage' && lead.data?.onepage
+      ? { ...lead.data.onepage, data: { ...lead.data.onepage.data, id: lead.data.onepage.data?.id || lead.id, source: { ...(lead.data.onepage.data?.source ?? {}), page: { ...(lead.data.onepage.data?.source?.page ?? {}), slug: '/' + (funnel.slug ?? '') } } } }
+      : null;
+    const payload = onepage ?? { event: 'lead.created', test: !!only, created_at: lead.created_at, funnel: { id: funnel.id, name: funnel.name, slug: funnel.slug },
       lead: { id: lead.id, name: lead.name, email: lead.email, phone: lead.phone, total: +lead.total || 0, status: lead.status, fields, values: lead.data?.values ?? {}, answers: lead.data?.answers ?? {}, items: lead.data?.items ?? [], utm: lead.data?.utm ?? {} } };
     for (const h of (a.webhooks ?? []).filter((h) => h.url && h.active !== false && (!only?.hookId || h.id === only.hookId))) {
       if (h.events && h.events.length && !h.events.includes('lead.created')) continue;

@@ -444,6 +444,59 @@ FP.values = function(f, answers){
   return out;
 };
 
+/* Webhook im Onepage-Format (für Empfänger, die bisher Onepage-Leads auswerten).
+   Aufbau wie der Onepage-Webhook „lead.created“:
+   {type, data:{id, formId, siteId, status, createdAt, updatedAt, source, fields:[{step,label,value,fieldType}], fieldsMap:{"Step N. Schritt -> slug": value}, leadInfo}}
+   Step N = Position der Seite im Funnel (1-basiert), label = Feld-Schlüssel, nur besuchte Seiten in Besuchsreihenfolge.
+   Auswahl → [{_id, value[, description]}] · Name (name.firstName/lastName) → {firstName, lastName, middleName} */
+FP.onepagePayload = function(f, answers, path, meta){
+  meta = meta || {};
+  var s = f.settings || {}, pages = f.pages || [], now = new Date().toISOString();
+  var plain = function(t){ return String(t||'').replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1'); };
+  var opt = function(o){ var r = {_id: o.oid || o.id, value: o.value != null && o.value !== '' ? o.value : o.label}; if(o.odesc !== undefined) r.description = o.odesc; else if(o.sub) r.description = o.sub; return r; };
+  var fields = [], map = {};
+  var show = function(v){ return Array.isArray(v) ? v.map(function(x){ return x && x.value; }).join(', ') : v && typeof v === 'object' ? [v.firstName, v.middleName, v.lastName].filter(Boolean).join(' ') : (v == null ? '' : String(v)); };
+  var add = function(pg, label, value, type){
+    var no = pages.indexOf(pg) + 1;
+    fields.push({step:pg.name, label:label, value:value, fieldType:type});
+    map['Step ' + no + '. ' + pg.name + ' -> ' + label] = value;
+  };
+  (path || []).forEach(function(pid){
+    var pg = pages.filter(function(p){ return p.id === pid; })[0]; if(!pg) return;
+    var names = {};
+    (pg.blocks||[]).forEach(function(b){
+      var p = b.props || {}, k = p.key; if(!k) return;
+      var v = answers[k];
+      var dot = String(k).indexOf('.');
+      if(b.type === 'input' && dot > 0){ /* name.firstName → ein Feld „name“ */
+        var base = k.slice(0, dot), sub = k.slice(dot + 1);
+        if(!names[base]){ names[base] = {firstName:'', lastName:'', middleName:''}; add(pg, base, names[base], 'form-name'); }
+        names[base][sub] = v == null ? '' : String(v);
+        return;
+      }
+      if(b.type === 'choice'){
+        var sel = [].concat(v == null ? [] : v);
+        add(pg, k, (p.options||[]).filter(function(o){ return sel.indexOf(o.id) >= 0; }).map(opt), 'form-select');
+      } else if(b.type === 'rating' || b.type === 'slider'){
+        add(pg, k, v == null ? null : +v, b.type === 'rating' ? 'form-option-scale' : 'form-range');
+      } else if(b.type === 'checkbox'){
+        add(pg, k, v ? [{_id: p.oid || b.id, value: plain(p.text)}] : [], 'form-select');
+      } else if(b.type === 'input'){
+        var it = p.inputType || 'text';
+        add(pg, k, v == null ? '' : (it === 'number' && v !== '' ? +v : String(v)), it === 'email' ? 'form-email' : it === 'tel' ? 'form-phone' : it === 'textarea' ? 'form-textarea' : it === 'number' ? 'form-number' : it === 'date' ? 'form-date' : 'form-input');
+      } else if(b.type === 'calendar'){
+        add(pg, k, v ? (v.date||'') + (v.time ? ' ' + v.time : '') : '', 'form-date');
+      }
+    });
+  });
+  var ua = meta.userAgent || '';
+  return {type:'lead.created', data:{
+    id: meta.id, formId: s.onepageFormId || f.id, siteId: s.onepageSiteId || '', status:'new', createdAt: now, updatedAt: now,
+    source: {device: /Mobi|Android|iPhone/i.test(ua) ? 'Mobile' : /iPad|Tablet/i.test(ua) ? 'Tablet' : 'Desktop', os: /Android/i.test(ua) ? 'Android' : /iPhone|iPad|iOS/i.test(ua) ? 'iOS' : /Mac OS/i.test(ua) ? 'macOS' : /Windows/i.test(ua) ? 'Windows' : '', browser: /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? (/Mobi/.test(ua) ? 'Mobile Chrome' : 'Chrome') : /Safari\//.test(ua) ? (/Mobi/.test(ua) ? 'Mobile Safari' : 'Safari') : /Firefox\//.test(ua) ? 'Firefox' : '',
+      page: {id: f.id, title: s.onepageForm || f.name, slug: meta.slug ? '/' + String(meta.slug).replace(/^\//,'') : ''}},
+    fields: fields, fieldsMap: map, leadInfo: fields.map(function(x){ return (s.onepageForm || f.name) + ' -> ' + x.step + ' -> ' + x.label + ': ' + show(x.value); }).join(' ')}};
+};
+
 /* Personalisierung: {{schluessel}} oder {{schluessel|Ersatztext}} */
 FP.VAR_RE = /\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g;
 FP.vars = function(f){
@@ -845,12 +898,17 @@ FP.mount = function(root, f, opts){
     if(st.done) return;
     st.done = true;
     var r = FP.readable(f, st.answers), tot = FP.computeTotal(f, st.answers);
-    var lead = {answers: JSON.parse(JSON.stringify(st.answers)), values: FP.values(f, st.answers), fields:r, total:tot.total, items:tot.items, score:tot.score, durationSec: Math.round((Date.now()-st.startedAt)/1000)};
+    var path = st.hist.concat([st.i]).map(function(i){ return pages[i] && pages[i].id; }).filter(Boolean);
+    var lead = {answers: JSON.parse(JSON.stringify(st.answers)), values: FP.values(f, st.answers), path: path, fields:r, total:tot.total, items:tot.items, score:tot.score, durationSec: Math.round((Date.now()-st.startedAt)/1000)};
     r.forEach(function(x){
       if(x.inputType === 'email' && !lead.email) lead.email = x.value;
       else if(x.inputType === 'tel' && !lead.phone) lead.phone = x.value;
       else if(/name/i.test(x.key) && x.type==='input' && x.inputType!=='email') lead.name = lead.name ? lead.name + ' ' + x.value : x.value;
     });
+    if((f.settings||{}).webhookFormat === 'onepage'){
+      var hex = ''; for(var hx = 0; hx < 24; hx++) hex += '0123456789abcdef'[Math.floor(Math.random()*16)];
+      lead.onepage = FP.onepagePayload(f, st.answers, path, {id: hex, slug: f.slug, userAgent: (typeof navigator !== 'undefined' && navigator.userAgent) || ''});
+    }
     emit('complete', lead);
     if(opts.onSubmit) opts.onSubmit(lead);
     if(!silent && st.i === pages.length-1){ root.innerHTML = FP.renderShell(f, st.i, '<div class="fp-done"><div class="ok">'+IC.ok+'</div><h2 class="fp-h2">Vielen Dank!</h2><p class="fp-txt">Deine Angaben sind bei uns eingegangen.</p></div>', {}); }
@@ -1011,7 +1069,9 @@ window.FP = FP;
       onSubmit:function(lead){
         lead.utm = Q; lead.page = location.href; lead.userAgent = navigator.userAgent.slice(0, 160);
         sb.rpc('submit_lead', {p_slug:slug, p_lead:lead}).then(function(){});
-        if(S.webhook){ try{ fetch(S.webhook, {method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'}, body:JSON.stringify({type:'lead', funnelId:F.id, funnel:F.name, ts:new Date().toISOString(), lead:lead})}).catch(function(){}); }catch(e){} }
+        if(lead.onepage) lead.onepage.data.source.page.slug = '/' + slug;
+        /* text/plain: einfacher Request ohne CORS-Vorabprüfung, der Inhalt ist trotzdem JSON */
+        if(S.webhook){ try{ fetch(S.webhook, {method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'}, body:JSON.stringify(lead.onepage || {type:'lead', funnelId:F.id, funnel:F.name, ts:new Date().toISOString(), lead:lead})}).catch(function(){}); }catch(e){} }
         if(window.fbq) fbq('track', 'Lead', {value:lead.total || 0, currency:S.currency || 'EUR'});
         if(S.redirect) setTimeout(function(){ location.href = S.redirect; }, 1500);
       }});

@@ -26,7 +26,9 @@
       onSubmit:function(lead){
         lead.utm = Q; lead.page = location.href; lead.userAgent = navigator.userAgent.slice(0, 160);
         sb.rpc('submit_lead', {p_slug:slug, p_lead:lead}).then(function(){});
-        if(S.webhook){ try{ fetch(S.webhook, {method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'}, body:JSON.stringify({type:'lead', funnelId:F.id, funnel:F.name, ts:new Date().toISOString(), lead:lead})}).catch(function(){}); }catch(e){} }
+        if(lead.onepage) lead.onepage.data.source.page.slug = '/' + slug;
+        /* text/plain: einfacher Request ohne CORS-Vorabprüfung, der Inhalt ist trotzdem JSON */
+        if(S.webhook){ try{ fetch(S.webhook, {method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'}, body:JSON.stringify(lead.onepage || {type:'lead', funnelId:F.id, funnel:F.name, ts:new Date().toISOString(), lead:lead})}).catch(function(){}); }catch(e){} }
         if(window.fbq) fbq('track', 'Lead', {value:lead.total || 0, currency:S.currency || 'EUR'});
         if(S.redirect) setTimeout(function(){ location.href = S.redirect; }, 1500);
       }});

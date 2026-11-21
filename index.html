@@ -1017,6 +1017,59 @@ FP.values = function(f, answers){
   return out;
 };
 
+/* Webhook im Onepage-Format (für Empfänger, die bisher Onepage-Leads auswerten).
+   Aufbau wie der Onepage-Webhook „lead.created“:
+   {type, data:{id, formId, siteId, status, createdAt, updatedAt, source, fields:[{step,label,value,fieldType}], fieldsMap:{"Step N. Schritt -> slug": value}, leadInfo}}
+   Step N = Position der Seite im Funnel (1-basiert), label = Feld-Schlüssel, nur besuchte Seiten in Besuchsreihenfolge.
+   Auswahl → [{_id, value[, description]}] · Name (name.firstName/lastName) → {firstName, lastName, middleName} */
+FP.onepagePayload = function(f, answers, path, meta){
+  meta = meta || {};
+  var s = f.settings || {}, pages = f.pages || [], now = new Date().toISOString();
+  var plain = function(t){ return String(t||'').replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1'); };
+  var opt = function(o){ var r = {_id: o.oid || o.id, value: o.value != null && o.value !== '' ? o.value : o.label}; if(o.odesc !== undefined) r.description = o.odesc; else if(o.sub) r.description = o.sub; return r; };
+  var fields = [], map = {};
+  var show = function(v){ return Array.isArray(v) ? v.map(function(x){ return x && x.value; }).join(', ') : v && typeof v === 'object' ? [v.firstName, v.middleName, v.lastName].filter(Boolean).join(' ') : (v == null ? '' : String(v)); };
+  var add = function(pg, label, value, type){
+    var no = pages.indexOf(pg) + 1;
+    fields.push({step:pg.name, label:label, value:value, fieldType:type});
+    map['Step ' + no + '. ' + pg.name + ' -> ' + label] = value;
+  };
+  (path || []).forEach(function(pid){
+    var pg = pages.filter(function(p){ return p.id === pid; })[0]; if(!pg) return;
+    var names = {};
+    (pg.blocks||[]).forEach(function(b){
+      var p = b.props || {}, k = p.key; if(!k) return;
+      var v = answers[k];
+      var dot = String(k).indexOf('.');
+      if(b.type === 'input' && dot > 0){ /* name.firstName → ein Feld „name“ */
+        var base = k.slice(0, dot), sub = k.slice(dot + 1);
+        if(!names[base]){ names[base] = {firstName:'', lastName:'', middleName:''}; add(pg, base, names[base], 'form-name'); }
+        names[base][sub] = v == null ? '' : String(v);
+        return;
+      }
+      if(b.type === 'choice'){
+        var sel = [].concat(v == null ? [] : v);
+        add(pg, k, (p.options||[]).filter(function(o){ return sel.indexOf(o.id) >= 0; }).map(opt), 'form-select');
+      } else if(b.type === 'rating' || b.type === 'slider'){
+        add(pg, k, v == null ? null : +v, b.type === 'rating' ? 'form-option-scale' : 'form-range');
+      } else if(b.type === 'checkbox'){
+        add(pg, k, v ? [{_id: p.oid || b.id, value: plain(p.text)}] : [], 'form-select');
+      } else if(b.type === 'input'){
+        var it = p.inputType || 'text';
+        add(pg, k, v == null ? '' : (it === 'number' && v !== '' ? +v : String(v)), it === 'email' ? 'form-email' : it === 'tel' ? 'form-phone' : it === 'textarea' ? 'form-textarea' : it === 'number' ? 'form-number' : it === 'date' ? 'form-date' : 'form-input');
+      } else if(b.type === 'calendar'){
+        add(pg, k, v ? (v.date||'') + (v.time ? ' ' + v.time : '') : '', 'form-date');
+      }
+    });
+  });
+  var ua = meta.userAgent || '';
+  return {type:'lead.created', data:{
+    id: meta.id, formId: s.onepageFormId || f.id, siteId: s.onepageSiteId || '', status:'new', createdAt: now, updatedAt: now,
+    source: {device: /Mobi|Android|iPhone/i.test(ua) ? 'Mobile' : /iPad|Tablet/i.test(ua) ? 'Tablet' : 'Desktop', os: /Android/i.test(ua) ? 'Android' : /iPhone|iPad|iOS/i.test(ua) ? 'iOS' : /Mac OS/i.test(ua) ? 'macOS' : /Windows/i.test(ua) ? 'Windows' : '', browser: /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? (/Mobi/.test(ua) ? 'Mobile Chrome' : 'Chrome') : /Safari\//.test(ua) ? (/Mobi/.test(ua) ? 'Mobile Safari' : 'Safari') : /Firefox\//.test(ua) ? 'Firefox' : '',
+      page: {id: f.id, title: s.onepageForm || f.name, slug: meta.slug ? '/' + String(meta.slug).replace(/^\//,'') : ''}},
+    fields: fields, fieldsMap: map, leadInfo: fields.map(function(x){ return (s.onepageForm || f.name) + ' -> ' + x.step + ' -> ' + x.label + ': ' + show(x.value); }).join(' ')}};
+};
+
 /* Personalisierung: {{schluessel}} oder {{schluessel|Ersatztext}} */
 FP.VAR_RE = /\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g;
 FP.vars = function(f){
@@ -1418,12 +1471,17 @@ FP.mount = function(root, f, opts){
     if(st.done) return;
     st.done = true;
     var r = FP.readable(f, st.answers), tot = FP.computeTotal(f, st.answers);
-    var lead = {answers: JSON.parse(JSON.stringify(st.answers)), values: FP.values(f, st.answers), fields:r, total:tot.total, items:tot.items, score:tot.score, durationSec: Math.round((Date.now()-st.startedAt)/1000)};
+    var path = st.hist.concat([st.i]).map(function(i){ return pages[i] && pages[i].id; }).filter(Boolean);
+    var lead = {answers: JSON.parse(JSON.stringify(st.answers)), values: FP.values(f, st.answers), path: path, fields:r, total:tot.total, items:tot.items, score:tot.score, durationSec: Math.round((Date.now()-st.startedAt)/1000)};
     r.forEach(function(x){
       if(x.inputType === 'email' && !lead.email) lead.email = x.value;
       else if(x.inputType === 'tel' && !lead.phone) lead.phone = x.value;
       else if(/name/i.test(x.key) && x.type==='input' && x.inputType!=='email') lead.name = lead.name ? lead.name + ' ' + x.value : x.value;
     });
+    if((f.settings||{}).webhookFormat === 'onepage'){
+      var hex = ''; for(var hx = 0; hx < 24; hx++) hex += '0123456789abcdef'[Math.floor(Math.random()*16)];
+      lead.onepage = FP.onepagePayload(f, st.answers, path, {id: hex, slug: f.slug, userAgent: (typeof navigator !== 'undefined' && navigator.userAgent) || ''});
+    }
     emit('complete', lead);
     if(opts.onSubmit) opts.onSubmit(lead);
     if(!silent && st.i === pages.length-1){ root.innerHTML = FP.renderShell(f, st.i, '<div class="fp-done"><div class="ok">'+IC.ok+'</div><h2 class="fp-h2">Vielen Dank!</h2><p class="fp-txt">Deine Angaben sind bei uns eingegangen.</p></div>', {}); }
@@ -2077,7 +2135,8 @@ function tGehlenFeedback(){
   var success = function(){ return B('image', {src:A+'success.svg', alt:'', radius:0, height:100, fit:'contain', mb:0}); };
   var team = function(){ return B('image', {src:A+'team.png', alt:'Das Team von Holz Gehlen', radius:0, ratio:'1280:1210', mb:36}); };
   var hands = function(){ return B('heading', {text:'🙌', level:1, size:30, fw:500, align:'center', mb:8}); };
-  var check = function(labels){ return labels.map(function(l){ return typeof l === 'string' ? O(l, '') : O(l[0], '', {sub:l[1]}); }); };
+  /* Antworten mit Onepage-IDs: [Label, Onepage-_id, Beschreibung (optional, auch leer)] */
+  var check = function(items){ return items.map(function(l){ var o = O(l[0], '', {oid:l[1]}); if(l.length > 2){ o.odesc = l[2]; if(l[2]) o.sub = l[2]; } return o; }); };
   var lime = function(label, extra){ return B('button', Object.assign({label:label, full:false, shadow:false, icon:'none', align:'center', btnBg:LIME, mt:8}, extra||{})); };
   var dark = function(label, icon, extra){ return B('button', Object.assign({label:label, variant:'gradient', btnBg:'#000000', btnColor:'rgba(255,255,255,.78)', full:true, shadow:true, icon:icon, iconLeft:true, radiusOn:true, radius:16, align:'center', mt:8}, extra||{})); };
   var note = function(key, rows){ return B('input', {label:'', placeholder:'Könnten Sie uns kurz mehr dazu sagen?', inputType:'textarea', key:key, rows:rows, required:false, mb:24}); };
@@ -2105,23 +2164,23 @@ function tGehlenFeedback(){
     B('input', {label:'', placeholder:'Vorname', key:'name.firstName', required:true, errorText:REQ, half:true, mb:12}),
     B('input', {label:'', placeholder:'Nachname (optional)', key:'name.lastName', required:false, half:true, mb:12}),
     B('input', {label:'', placeholder:'Ihre E-Mail Adresse', inputType:'email', key:'email-adresse', required:true, errorText:REQ, mb:20}),
-    B('checkbox', {text:'Ich stimme zu, dass Holz Gehlen mich zu meinem Feedback per Email kontaktieren darf.', key:'zustimmung', required:true, errorText:MUST, mb:24}),
+    B('checkbox', {text:'Ich stimme zu, dass Holz Gehlen mich zu meinem Feedback per Email kontaktieren darf.', key:'zustimmung', oid:'c61c4e5a-b1d4-420b-9be3-ac9727b440f7', required:true, errorText:MUST, mb:24}),
     dark('Mein Feedback absenden', 'plane', {action:'page', target:pDankeJa.id})], {wide:true});
   var pWunsch = P('Kontakt gewünscht', [badge('NUR NOCH 1 SCHRITT. VERSPROCHEN', 400),
     h('Wir würden das gerne wieder gut machen.'),
     B('text', {text:'Dürfen wir uns **per Email** persönlich bei Ihnen melden und eine Lösung finden?', align:'center', mb:32}),
     B('choice', {question:'', key:'Kontaktwunsch', layout:'image', ratio:'4:3', required:false, autoNext:true, options:[
-      O('Ja, gerne!', '', {img:A+'kontakt-ja.jpg', pos:'50% 50%', goto:pKontakt.id}),
-      O('Nein, das passt schon...', '', {img:A+'kontakt-nein.png', pos:'75% 50%', sub:'Ihr Feedback wird anonym abgesendet.', goto:pDankeNein.id})]})], {wide:true});
+      O('Ja, gerne!', '', {oid:'1WRjH5digqmhgQtg889Qj', odesc:'', img:A+'kontakt-ja.jpg', pos:'50% 50%', goto:pKontakt.id}),
+      O('Nein, das passt schon...', '', {oid:'gXEU2_3bHyHF8vXL6bBTs', odesc:'Ihr Feedback wird anonym abgesendet.', img:A+'kontakt-nein.png', pos:'75% 50%', sub:'Ihr Feedback wird anonym abgesendet.', goto:pDankeNein.id})]})], {wide:true});
   var pGut = P('Was hat gut gefallen', [badge('NUR EINE FRAGE'),
     h('😊\nDas freut uns sehr!\nWas hat Ihnen besonders gut gefallen?', {size:28, mb:32}),
-    B('choice', {question:'', key:'lob', layout:'checklist', colsD:2, multi:true, autoNext:false, required:true, errorText:MUST, mb:16, options:check(['Tolle Beratung','gute Auswahl','Faire Preise',['Sonstiges','Bitte gehen Sie unten weiter darauf ein.']])}),
+    B('choice', {question:'', key:'lob', layout:'checklist', colsD:2, multi:true, autoNext:false, required:true, errorText:MUST, mb:16, options:check([['Tolle Beratung','113e2ac4-fabd-4d93-8712-522afe26ab56',''],['gute Auswahl','70372d1f-865c-4ce2-b9aa-071fe45b85c7'],['Faire Preise','01874fdf-ddef-48b1-ae8c-1f5db7d321e7'],['Sonstiges','8f15f77d-6498-43a9-a940-a50b67888167','Bitte gehen Sie unten weiter darauf ein.']])}),
     note('lob_kommentar', 6),
     dark('Anonym abschicken', 'plane')], {wide:true, next:pGoogle.id});
   var pProblem = P('Problem', [
     h('😲 Ohje!\nWas lief nicht so gut?', {mb:4}),
     B('text', {text:'Konkretes Feedback ist sehr wichtig für uns, damit wir uns in diesen Bereichen verbessern können', align:'center', size:14, mb:40}),
-    B('choice', {question:'', key:'Problemgrund', layout:'checklist', colsD:2, multi:true, autoNext:false, required:true, errorText:MUST, mb:24, options:check(['Beratung nicht hilfreich','Zu lange gewartet','Produkt nicht gefunden','Preise unklar/zu hoch','Auswahl nicht passend',['Sonstiges','Bitte gehe unten weiter darauf ein.']])}),
+    B('choice', {question:'', key:'Problemgrund', layout:'checklist', colsD:2, multi:true, autoNext:false, required:true, errorText:MUST, mb:24, options:check([['Beratung nicht hilfreich','upWngF3-41Ag8oo05reK0',''],['Zu lange gewartet','t7gNYiFUmb2mVTJZgi_R3'],['Produkt nicht gefunden','Ir8ffh7jHaFI6DtU2N_Ou'],['Preise unklar/zu hoch','pKEgppBRWCaSRuuYs3vu5'],['Auswahl nicht passend','7iYNjcFZ4yhLSPCkO8EiS'],['Sonstiges','lqmpZ04ricZQqhGixIbxk','Bitte gehe unten weiter darauf ein.']])}),
     B('badge', {text:'DETAILS ZU IHREM ANLIEGEN', variant:'grey', align:'center', fw:400, mb:6}),
     B('text', {text:'Dies ist optional, hilft uns aber enorm weiter', align:'center', size:14, mb:16}),
     note('Kommentar zum Grund', 10),
@@ -2163,8 +2222,9 @@ function tGehlenFeedback(){
   return {name:'Feedback-Funnel Holz Gehlen', desc:'Smiley-Bewertung mit Weiterleitung: Zufriedene zu Google, Unzufriedene zu Kontakt oder anonymem Dank. Feldnamen wie im Onepage-Original.', cats:['Feedback'],
     theme:theme('clean', {primary:LIME, primaryText:'#ffffff', bg:'#ffffff', surface:'#f4f4f4', text:'#2b2a2b', muted:'#6f6e6f', font:'Inter Tight', headingFont:'Onest', radius:6, btnRadius:4,
       headingWeight:700, headingLs:0, lineHeight:1.5, logoImg:A+'logo.png', logoH:39, progress:'bar', progressTop:true, backButton:false, animation:'slide', pad:24, btnPad:7, btnWeight:600, customCss:css}),
-    settings:{currency:'EUR', basePrice:0, address:'sie'},
-    pages:[pStart, pProblem, pGut, pWunsch, pKontakt, pDankeJa, pDankeNein, pGoogle]};
+    settings:{currency:'EUR', basePrice:0, address:'sie', webhookFormat:'onepage', onepageForm:'Gehlen', onepageFormId:'K6UAq-fnmPbYyHG5s0GAZ', onepageSiteId:'7e7ce4b6-1606-4c36-9ae6-58d3b6f1b8e2'},
+    /* Reihenfolge wie im Onepage-Formular: ergibt dieselben „Step N.“-Schlüssel in data.fieldsMap */
+    pages:[pStart, pProblem, pWunsch, pDankeJa, pKontakt, pGut, pDankeNein, pGoogle]};
 }
 
 function tBlank(){
@@ -2914,6 +2974,8 @@ function panelSettings(){
     + '<div class="hint">Formel: Grundpreis + Festpreise + (Preise pro Einheit × Menge). Die Menge kommt aus Schiebereglern oder Zahlenfeldern mit „Als Menge für Preisberechnung“. Intern und in der Anfrage wird immer der exakte Preis gespeichert.</div></div>';
   h += '<div class="psec"><h5>'+I('send',13)+'Automationen</h5><div class="ausum">' + autoSummary(f).map(function(x){ return '<div class="aus'+(x[3]?' on':'')+'">'+I(x[0],13)+'<span>'+x[1]+'</span><b>'+esc(x[2])+'</b></div>'; }).join('') + '</div><button class="btn sm" style="width:100%;justify-content:center;margin-top:8px" data-a="autoOpen">'+I('settings',13)+'Automationen bearbeiten</button><div class="hint">E-Mails nach jeder Anfrage, Regeln wie Sofort-Alarm, Webhooks und eigene Domain.</div></div>';
   h += '<div class="psec"><h5>'+I('zap',13)+'Integrationen</h5><div class="fld"><label>Webhook-URL (aus dem Browser)</label><input class="inp" data-s="webhook" value="'+esc(s.webhook||'')+'" placeholder="https://hook.eu1.make.com/…"><div class="hint">Leads werden beim Absenden als JSON gesendet (Make, Zapier, n8n, Supabase Edge Function).</div></div>'
+    + '<div class="fld"><label>Webhook-Format</label><div class="segf">'+[['taptell','TapTell'],['onepage','Onepage-kompatibel']].map(function(x){ return '<button data-a="seg" data-scope="s" data-k="webhookFormat" data-v="'+x[0]+'" data-t="string" class="'+((s.webhookFormat||'taptell')===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div><div class="hint">Onepage-kompatibel sendet dieselbe Struktur wie ein Onepage-Webhook („lead.created“ mit data.fields und data.fieldsMap). Empfänger, die bisher Onepage auswerten, funktionieren ohne Umbau. Die Feld-Schlüssel müssen den Onepage-Slugs entsprechen.</div></div>'
+    + (s.webhookFormat === 'onepage' ? '<div class="fld"><label>Formularname (wie in Onepage)</label><input class="inp" data-s="onepageForm" value="'+esc(s.onepageForm||'')+'" placeholder="'+esc(f.name)+'"><div class="hint">Erscheint in data.leadInfo und data.source.page.title.</div></div>' : '')
     + '<div class="fld"><label>Weiterleitung nach Absenden (optional)</label><input class="inp" data-s="redirect" value="'+esc(s.redirect||'')+'" placeholder="https://deine-seite.de/danke"></div>'
     + '<div class="fld"><label>Meta Pixel ID (optional)</label><input class="inp" data-s="pixel" value="'+esc(s.pixel||'')+'" placeholder="123456789012345"><div class="hint">Feuert „PageView“ und „Lead“ im exportierten Funnel.</div></div>'
     + '<div class="fld"><label>Anrede in Hinweisen</label><div class="segf">'+[['du','Du'],['sie','Sie']].map(function(x){ return '<button data-a="seg" data-scope="s" data-k="address" data-v="'+x[0]+'" data-t="string" class="'+((s.address||'du')===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div><div class="hint">Gilt für Fehlermeldungen wie „Bitte wähle eine Option“.</div></div></div>';
@@ -3044,7 +3106,7 @@ function exportHtml(f){
     + 'var Q={};try{new URLSearchParams(location.search).forEach(function(v,k){Q[k]=v;});}catch(e){}\n'
     + 'function send(type,payload){if(!W)return;try{fetch(W,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(Object.assign({type:type,funnelId:F.id,funnel:F.name,ts:new Date().toISOString(),url:location.href,utm:Q},payload||{}))}).catch(function(){});}catch(e){}}\n'
     + 'FP.mount(document.getElementById("funnel"),F,{live:true,\n'
-    + ' onSubmit:function(lead){send("lead",{lead:lead});if(window.fbq)fbq("track","Lead",{value:lead.total||0,currency:F.settings.currency||"EUR"});if(F.settings.redirect)setTimeout(function(){location.href=F.settings.redirect;},1200);},\n'
+    + ' onSubmit:function(lead){if(lead.onepage){if(W){try{fetch(W,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(lead.onepage)}).catch(function(){});}catch(e){}}}else send("lead",{lead:lead});if(window.fbq)fbq("track","Lead",{value:lead.total||0,currency:F.settings.currency||"EUR"});if(F.settings.redirect)setTimeout(function(){location.href=F.settings.redirect;},1200);},\n'
     + ' onEvent:function(t,d){if(F.settings.trackEvents)send("event",{event:t,data:d});}\n'
     + '});';
   return '<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<title>' + esc(f.name) + '</title>\n<meta name="theme-color" content="' + esc(f.theme.bg) + '">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' + fontLinks + '\n'
