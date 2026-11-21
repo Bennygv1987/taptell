@@ -204,9 +204,35 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp.opt-outline .fp-opt{background:transparent;border-color:color-mix(in srgb,var(--tx) 13%,transparent)}
 .fp.opt-outline .fp-opt.sel{border-color:var(--p);background:color-mix(in srgb,var(--p) 6%,transparent)}
 .fp.opt-outline .fp-opt .ico{background:var(--sf)}
-.fp.opt-shadow .fp-opt{background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 18px -8px rgba(0,0,0,.18)}
-.fp.opt-shadow .fp-opt .ico{background:var(--sf)}
-.fp.opt-shadow .fp-opt.sel{box-shadow:0 0 0 1px var(--p),0 8px 22px -10px color-mix(in srgb,var(--p) 60%,transparent)}
+/* ---- Kartenstile für alles Antippbare: Antworten, Smileys, Bildkacheln, NPS, Termine, Checkboxen ----
+   Karte = weiß mit weichem Außenschatten · Glas = Milchglas mit Lichtkante · Soft = Soft UI (Neumorphismus, gewählt = eingedrückt) */
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) :is(.fp-opt,.fp-emo button,.fp-sopt,.fp-nps button,.fp-day){border-color:transparent;background:var(--tile);box-shadow:var(--tsh);transition:transform 160ms var(--ease-out),box-shadow 200ms var(--ease-out),background-color 150ms ease,border-color 150ms ease}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) :is(.fp-opt.sel,.fp-emo button.on,.fp-sopt.sel,.fp-day.sel){border-color:transparent;background:var(--tile-on);box-shadow:var(--tsh-on)}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-nps button.on{background:var(--p);color:var(--pt);box-shadow:var(--tsh-on)}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-opts.checklist .fp-opt{border:0}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-opt .ico{background:var(--sf)}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-cb .box{border-color:transparent;background:var(--tile);box-shadow:var(--tsh)}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-cb.on .box{background:var(--p);box-shadow:0 4px 10px -4px color-mix(in srgb,var(--p) 70%,transparent)}
+@media (hover:hover) and (pointer:fine){.fp:is(.opt-shadow,.opt-glass,.opt-soft) :is(.fp-opt,.fp-sopt,.fp-day):not(.sel):hover{border-color:transparent;box-shadow:var(--tsh-hv)}}
+
+.fp.opt-shadow{--tile:color-mix(in srgb,var(--bg) 85%,#fff);--tile-on:color-mix(in srgb,var(--p) 6%,var(--tile));
+  --tsh:0 0 0 1px color-mix(in srgb,var(--tx) 5%,transparent),0 1px 2px color-mix(in srgb,var(--tx) 6%,transparent),0 6px 16px -6px color-mix(in srgb,var(--tx) 14%,transparent);
+  --tsh-hv:0 0 0 1px color-mix(in srgb,var(--tx) 6%,transparent),0 2px 4px color-mix(in srgb,var(--tx) 6%,transparent),0 12px 24px -10px color-mix(in srgb,var(--tx) 22%,transparent);
+  --tsh-on:0 0 0 2px var(--p),0 10px 24px -12px color-mix(in srgb,var(--p) 70%,transparent)}
+
+.fp.opt-glass{--tile:linear-gradient(180deg,color-mix(in srgb,var(--tx) 4%,rgba(255,255,255,.72)),color-mix(in srgb,var(--tx) 7%,rgba(255,255,255,.5)));--tile-on:linear-gradient(205deg,var(--p) 0%,color-mix(in srgb,var(--p) 45%,#fff) 48%,rgba(255,255,255,.85) 100%);
+  --tsh:inset 0 0 0 1.5px rgba(255,255,255,.95),0 0 0 1px color-mix(in srgb,var(--tx) 9%,transparent),0 10px 24px -12px color-mix(in srgb,var(--tx) 26%,transparent);
+  --tsh-hv:inset 0 0 0 1.5px #fff,0 0 0 1px color-mix(in srgb,var(--tx) 11%,transparent),0 16px 30px -14px color-mix(in srgb,var(--tx) 32%,transparent);
+  --tsh-on:inset 0 0 0 1.5px rgba(255,255,255,.75),0 0 0 1px color-mix(in srgb,var(--p) 35%,transparent),0 14px 28px -12px color-mix(in srgb,var(--p) 60%,transparent)}
+.fp.opt-glass :is(.fp-opt,.fp-emo button,.fp-sopt,.fp-nps button,.fp-day,.fp-cb .box){-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%)}
+.fp.opt-glass .fp-opt .ico{background:rgba(255,255,255,.6)}
+
+.fp.opt-soft{--tile:var(--bg);--tile-on:var(--bg);
+  --tsh:-5px -5px 12px rgba(255,255,255,.95),6px 7px 14px color-mix(in srgb,var(--tx) 13%,transparent),inset 0 1px 0 rgba(255,255,255,.8);
+  --tsh-hv:-6px -6px 14px #fff,8px 9px 18px color-mix(in srgb,var(--tx) 16%,transparent),inset 0 1px 0 rgba(255,255,255,.85);
+  --tsh-on:inset 4px 4px 9px color-mix(in srgb,var(--tx) 14%,transparent),inset -4px -4px 9px rgba(255,255,255,.95),0 0 0 1px rgba(255,255,255,.6)}
+.fp.opt-soft :is(.fp-opt.sel,.fp-sopt.sel){color:var(--p)}
+.fp.opt-soft .fp-emo button.on{transform:none}
 .fp-sticky{position:sticky;bottom:0;z-index:4;margin:auto calc(-1*var(--pad,20px)) calc(-1*var(--bpb,32px));padding:16px var(--pad,20px) calc(18px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--sbg,var(--bg)) 26%)}
 .fp-sticky .fp-b{margin-bottom:0!important}
 .fp-ea-fade{animation:fpFade 400ms ease both}.fp-ea-up{animation:fpUp 420ms var(--ease-out) both}.fp-ea-zoom{animation:fpZoom 400ms var(--ease-out) both}.fp-ea-left{animation:fpSlide 400ms var(--ease-out) both}
@@ -591,6 +617,27 @@ select.inp{appearance:none;background:var(--card) url("data:image/svg+xml,%3Csvg
 .segf{display:flex;background:var(--n100);border-radius:var(--r-md);padding:2px;gap:2px}
 .segf button{flex:1;border:0;background:none;height:28px;border-radius:var(--r-sm);font-size:var(--fs-12);font-weight:550;color:var(--ink2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
 .segf button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+/* Kartenstil-Auswahl: Mini-Vorschau je Stil */
+.ostyles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.osw{appearance:none;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);padding:6px 4px 5px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:var(--ink2);font:550 var(--fs-11) var(--ui);transition:transform 160ms var(--ease-out),border-color 150ms ease,box-shadow 150ms ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.osw:active{transform:scale(.97)}
+.osw.on{border-color:var(--ink);color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+@media (hover:hover) and (pointer:fine){.osw:not(.on):hover{border-color:var(--n300);color:var(--ink)}}
+.osw:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.osp{width:100%;height:30px;border-radius:var(--r-sm);background:var(--n100);display:flex;gap:4px;align-items:center;justify-content:center;padding:0 5px}
+.osp i{flex:1;height:16px;border-radius:var(--r-xs);background:var(--n200)}
+.osp i.sel{background:color-mix(in srgb,var(--acc) 14%,var(--n100));box-shadow:0 0 0 1.5px var(--acc)}
+.os-outline i{background:transparent;box-shadow:inset 0 0 0 1px var(--n300)}
+.os-outline i.sel{background:color-mix(in srgb,var(--acc) 8%,transparent);box-shadow:inset 0 0 0 1.5px var(--acc)}
+.os-shadow{background:var(--card)}
+.os-shadow i{background:var(--card);box-shadow:0 0 0 1px rgba(0,0,0,.04),0 2px 5px -1px rgba(0,0,0,.18)}
+.os-shadow i.sel{box-shadow:0 0 0 1.5px var(--acc),0 3px 6px -2px color-mix(in srgb,var(--acc) 60%,transparent)}
+.os-glass{background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 40%,var(--card)),var(--card) 70%)}
+.os-glass i{background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.35));box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(255,255,255,.6),0 2px 5px -2px rgba(0,0,0,.2)}
+.os-glass i.sel{background:linear-gradient(200deg,color-mix(in srgb,var(--acc) 55%,#fff),rgba(255,255,255,.8) 70%);box-shadow:inset 0 1px 0 #fff,0 0 0 1px color-mix(in srgb,var(--acc) 55%,transparent)}
+.os-soft{background:var(--n100)}
+.os-soft i{background:linear-gradient(180deg,#fff,var(--n100));box-shadow:inset 0 1px 0 #fff,0 2px 5px -1px rgba(0,0,0,.14)}
+.os-soft i.sel{background:var(--n100);box-shadow:inset 1.5px 1.5px 3px rgba(0,0,0,.14),inset -1.5px -1.5px 3px #fff}
 .upl{display:flex;gap:8px;align-items:center}
 .upl .pv{width:44px;height:44px;border-radius:var(--r-md);background:var(--n50) center/cover;border:1px solid var(--line);flex:none;display:grid;place-items:center;color:var(--mut)}
 .upl input[type=file]{display:none}
@@ -3220,6 +3267,13 @@ function panelElement(b){
   h += '<div class="subh">Effekte & Sichtbarkeit</div>' + STYLE_FX.map(function(sp){ return field(sp, dv, 'p'); }).join('') + '</div>';
   return h;
 }
+/* Kartenstil: Auswahl mit kleiner Vorschau (zwei Kacheln, die rechte ist gewählt) */
+var OPT_STYLES = [['filled','Gefüllt'],['outline','Rahmen'],['shadow','Karte'],['glass','Glas'],['soft','Soft UI']];
+function optStylePicker(v){
+  return '<div class="fld"><label>Karten & Auswahl</label><div class="ostyles" role="radiogroup" aria-label="Kartenstil">'
+    + OPT_STYLES.map(function(o){ return '<button class="osw'+(v===o[0]?' on':'')+'" role="radio" aria-checked="'+(v===o[0])+'" data-a="seg" data-scope="t" data-k="optStyle" data-v="'+o[0]+'" data-t="string"><span class="osp os-'+o[0]+'"><i></i><i class="sel"></i></span><span class="osl">'+o[1]+'</span></button>'; }).join('')
+    + '</div><div class="hint">Gilt für Antworten, Smileys, Bildkacheln, NPS, Termine und Checkboxen.'+(v==='soft'?' Wirkt am stärksten auf hellgrauem Hintergrund.':v==='glass'?' Wirkt am stärksten über Farbe oder einem Hintergrundbild.':'')+'</div></div>';
+}
 function panelPage(){
   var f = F(), pg = curPage();
   var h = '<div class="psec"><h5>Seite '+(S.pi+1)+' von '+f.pages.length+'</h5>'
@@ -3263,7 +3317,7 @@ function panelDesign(){
     + tgl('btnUpper','Button-Text in Großbuchstaben') + tgl('stickyCta','Button unten fixieren (Sticky CTA)','Der letzte Button jeder Seite bleibt am unteren Bildschirmrand sichtbar.') + '</div>';
   h += '<div class="psec"><h5>Felder & Antwortkarten</h5>' + rng('radius','Ecken',[0,28,1,'px',14])
     + seg('inputStyle','Eingabefelder',[['outline','Rahmen'],['filled','Gefüllt'],['line','Linie']])
-    + seg('optStyle','Antwortkarten',[['filled','Gefüllt'],['outline','Rahmen'],['shadow','Schatten']]) + '</div>';
+    + optStylePicker(t.optStyle || 'filled') + '</div>';
   h += '<div class="psec"><h5>Header & Navigation</h5><div class="fld"><label>Logo-Text</label><input class="inp" data-t="logoText" value="'+esc(t.logoText)+'" placeholder="Firmenname"></div>' + field(['logoImg','image','Logo (Bild, ersetzt Text)'], t, 't')
     + seg('logoAlign','Logo-Position',[['center','Mitte'],['left','Links']])
     + (t.logoImg ? rng('logoH','Logo-Höhe',[20,80,1,'px',28]) : '')

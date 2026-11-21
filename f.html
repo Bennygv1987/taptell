@@ -202,9 +202,35 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp.opt-outline .fp-opt{background:transparent;border-color:color-mix(in srgb,var(--tx) 13%,transparent)}
 .fp.opt-outline .fp-opt.sel{border-color:var(--p);background:color-mix(in srgb,var(--p) 6%,transparent)}
 .fp.opt-outline .fp-opt .ico{background:var(--sf)}
-.fp.opt-shadow .fp-opt{background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 18px -8px rgba(0,0,0,.18)}
-.fp.opt-shadow .fp-opt .ico{background:var(--sf)}
-.fp.opt-shadow .fp-opt.sel{box-shadow:0 0 0 1px var(--p),0 8px 22px -10px color-mix(in srgb,var(--p) 60%,transparent)}
+/* ---- Kartenstile für alles Antippbare: Antworten, Smileys, Bildkacheln, NPS, Termine, Checkboxen ----
+   Karte = weiß mit weichem Außenschatten · Glas = Milchglas mit Lichtkante · Soft = Soft UI (Neumorphismus, gewählt = eingedrückt) */
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) :is(.fp-opt,.fp-emo button,.fp-sopt,.fp-nps button,.fp-day){border-color:transparent;background:var(--tile);box-shadow:var(--tsh);transition:transform 160ms var(--ease-out),box-shadow 200ms var(--ease-out),background-color 150ms ease,border-color 150ms ease}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) :is(.fp-opt.sel,.fp-emo button.on,.fp-sopt.sel,.fp-day.sel){border-color:transparent;background:var(--tile-on);box-shadow:var(--tsh-on)}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-nps button.on{background:var(--p);color:var(--pt);box-shadow:var(--tsh-on)}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-opts.checklist .fp-opt{border:0}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-opt .ico{background:var(--sf)}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-cb .box{border-color:transparent;background:var(--tile);box-shadow:var(--tsh)}
+.fp:is(.opt-shadow,.opt-glass,.opt-soft) .fp-cb.on .box{background:var(--p);box-shadow:0 4px 10px -4px color-mix(in srgb,var(--p) 70%,transparent)}
+@media (hover:hover) and (pointer:fine){.fp:is(.opt-shadow,.opt-glass,.opt-soft) :is(.fp-opt,.fp-sopt,.fp-day):not(.sel):hover{border-color:transparent;box-shadow:var(--tsh-hv)}}
+
+.fp.opt-shadow{--tile:color-mix(in srgb,var(--bg) 85%,#fff);--tile-on:color-mix(in srgb,var(--p) 6%,var(--tile));
+  --tsh:0 0 0 1px color-mix(in srgb,var(--tx) 5%,transparent),0 1px 2px color-mix(in srgb,var(--tx) 6%,transparent),0 6px 16px -6px color-mix(in srgb,var(--tx) 14%,transparent);
+  --tsh-hv:0 0 0 1px color-mix(in srgb,var(--tx) 6%,transparent),0 2px 4px color-mix(in srgb,var(--tx) 6%,transparent),0 12px 24px -10px color-mix(in srgb,var(--tx) 22%,transparent);
+  --tsh-on:0 0 0 2px var(--p),0 10px 24px -12px color-mix(in srgb,var(--p) 70%,transparent)}
+
+.fp.opt-glass{--tile:linear-gradient(180deg,color-mix(in srgb,var(--tx) 4%,rgba(255,255,255,.72)),color-mix(in srgb,var(--tx) 7%,rgba(255,255,255,.5)));--tile-on:linear-gradient(205deg,var(--p) 0%,color-mix(in srgb,var(--p) 45%,#fff) 48%,rgba(255,255,255,.85) 100%);
+  --tsh:inset 0 0 0 1.5px rgba(255,255,255,.95),0 0 0 1px color-mix(in srgb,var(--tx) 9%,transparent),0 10px 24px -12px color-mix(in srgb,var(--tx) 26%,transparent);
+  --tsh-hv:inset 0 0 0 1.5px #fff,0 0 0 1px color-mix(in srgb,var(--tx) 11%,transparent),0 16px 30px -14px color-mix(in srgb,var(--tx) 32%,transparent);
+  --tsh-on:inset 0 0 0 1.5px rgba(255,255,255,.75),0 0 0 1px color-mix(in srgb,var(--p) 35%,transparent),0 14px 28px -12px color-mix(in srgb,var(--p) 60%,transparent)}
+.fp.opt-glass :is(.fp-opt,.fp-emo button,.fp-sopt,.fp-nps button,.fp-day,.fp-cb .box){-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%)}
+.fp.opt-glass .fp-opt .ico{background:rgba(255,255,255,.6)}
+
+.fp.opt-soft{--tile:var(--bg);--tile-on:var(--bg);
+  --tsh:-5px -5px 12px rgba(255,255,255,.95),6px 7px 14px color-mix(in srgb,var(--tx) 13%,transparent),inset 0 1px 0 rgba(255,255,255,.8);
+  --tsh-hv:-6px -6px 14px #fff,8px 9px 18px color-mix(in srgb,var(--tx) 16%,transparent),inset 0 1px 0 rgba(255,255,255,.85);
+  --tsh-on:inset 4px 4px 9px color-mix(in srgb,var(--tx) 14%,transparent),inset -4px -4px 9px rgba(255,255,255,.95),0 0 0 1px rgba(255,255,255,.6)}
+.fp.opt-soft :is(.fp-opt.sel,.fp-sopt.sel){color:var(--p)}
+.fp.opt-soft .fp-emo button.on{transform:none}
 .fp-sticky{position:sticky;bottom:0;z-index:4;margin:auto calc(-1*var(--pad,20px)) calc(-1*var(--bpb,32px));padding:16px var(--pad,20px) calc(18px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--sbg,var(--bg)) 26%)}
 .fp-sticky .fp-b{margin-bottom:0!important}
 .fp-ea-fade{animation:fpFade 400ms ease both}.fp-ea-up{animation:fpUp 420ms var(--ease-out) both}.fp-ea-zoom{animation:fpZoom 400ms var(--ease-out) both}.fp-ea-left{animation:fpSlide 400ms var(--ease-out) both}

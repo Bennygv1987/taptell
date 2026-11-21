@@ -693,6 +693,13 @@ function panelElement(b){
   h += '<div class="subh">Effekte & Sichtbarkeit</div>' + STYLE_FX.map(function(sp){ return field(sp, dv, 'p'); }).join('') + '</div>';
   return h;
 }
+/* Kartenstil: Auswahl mit kleiner Vorschau (zwei Kacheln, die rechte ist gewählt) */
+var OPT_STYLES = [['filled','Gefüllt'],['outline','Rahmen'],['shadow','Karte'],['glass','Glas'],['soft','Soft UI']];
+function optStylePicker(v){
+  return '<div class="fld"><label>Karten & Auswahl</label><div class="ostyles" role="radiogroup" aria-label="Kartenstil">'
+    + OPT_STYLES.map(function(o){ return '<button class="osw'+(v===o[0]?' on':'')+'" role="radio" aria-checked="'+(v===o[0])+'" data-a="seg" data-scope="t" data-k="optStyle" data-v="'+o[0]+'" data-t="string"><span class="osp os-'+o[0]+'"><i></i><i class="sel"></i></span><span class="osl">'+o[1]+'</span></button>'; }).join('')
+    + '</div><div class="hint">Gilt für Antworten, Smileys, Bildkacheln, NPS, Termine und Checkboxen.'+(v==='soft'?' Wirkt am stärksten auf hellgrauem Hintergrund.':v==='glass'?' Wirkt am stärksten über Farbe oder einem Hintergrundbild.':'')+'</div></div>';
+}
 function panelPage(){
   var f = F(), pg = curPage();
   var h = '<div class="psec"><h5>Seite '+(S.pi+1)+' von '+f.pages.length+'</h5>'
@@ -736,7 +743,7 @@ function panelDesign(){
     + tgl('btnUpper','Button-Text in Großbuchstaben') + tgl('stickyCta','Button unten fixieren (Sticky CTA)','Der letzte Button jeder Seite bleibt am unteren Bildschirmrand sichtbar.') + '</div>';
   h += '<div class="psec"><h5>Felder & Antwortkarten</h5>' + rng('radius','Ecken',[0,28,1,'px',14])
     + seg('inputStyle','Eingabefelder',[['outline','Rahmen'],['filled','Gefüllt'],['line','Linie']])
-    + seg('optStyle','Antwortkarten',[['filled','Gefüllt'],['outline','Rahmen'],['shadow','Schatten']]) + '</div>';
+    + optStylePicker(t.optStyle || 'filled') + '</div>';
   h += '<div class="psec"><h5>Header & Navigation</h5><div class="fld"><label>Logo-Text</label><input class="inp" data-t="logoText" value="'+esc(t.logoText)+'" placeholder="Firmenname"></div>' + field(['logoImg','image','Logo (Bild, ersetzt Text)'], t, 't')
     + seg('logoAlign','Logo-Position',[['center','Mitte'],['left','Links']])
     + (t.logoImg ? rng('logoH','Logo-Höhe',[20,80,1,'px',28]) : '')
