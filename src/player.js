@@ -218,7 +218,7 @@ FP.onepagePayload = function(f, answers, path, meta){
   var fields = [], map = {};
   var show = function(v){ return Array.isArray(v) ? v.map(function(x){ return x && x.value; }).join(', ') : v && typeof v === 'object' ? [v.firstName, v.middleName, v.lastName].filter(Boolean).join(' ') : (v == null ? '' : String(v)); };
   var add = function(pg, label, value, type){
-    var no = pages.indexOf(pg) + 1;
+    var no = pg.opStep || pages.indexOf(pg) + 1; /* Onepage-Schrittnummer, falls bekannt (kann Lücken haben) */
     fields.push({step:pg.name, label:label, value:value, fieldType:type});
     map['Step ' + no + '. ' + pg.name + ' -> ' + label] = value;
   };
@@ -461,7 +461,7 @@ FP.renderBlock = function(b, ctx){
     case 'image':
       var ih = p.ratio ? 'aspect-ratio:'+esc(String(p.ratio).replace(':','/'))+';height:auto;' : p.height ? 'height:'+p.height+'px;' : '';
       var ilq = p.fit === 'contain' ? '' : FP.lqSrc(p.src);
-      h = p.src ? '<img class="fp-img" src="'+esc(p.src)+'" alt="'+esc(p.alt)+'" decoding="async" style="border-radius:'+(p.radius!=null?p.radius:14)+'px;'+ih+(p.fit==='contain'?'object-fit:contain;':'')+(ilq?'background-image:url(&quot;'+ilq+'&quot;);':'')+'">'
+      h = p.src ? '<img class="fp-img" src="'+esc(p.src)+'" alt="'+esc(p.alt)+'" decoding="async" style="border-radius:'+(p.radius!=null?p.radius:14)+'px;'+ih+(p.fit==='contain'?'object-fit:contain;':'')+(p.pos?'object-position:'+esc(p.pos)+';':'')+(ilq?'background-image:url(&quot;'+ilq+'&quot;);':'')+'">'
         : '<div class="fp-ph" style="border-radius:'+(p.radius!=null?p.radius:14)+'px;height:'+(p.height||180)+'px">'+IC.img+'Bild hochladen</div>';
       break;
     case 'video':

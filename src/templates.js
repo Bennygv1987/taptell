@@ -459,57 +459,62 @@ function tGehlen(){
 }
 
 /* Feedback-Funnel Kölner Zoo – Nachbau des Onepage-Funnels mit Smiley-Weiterleitung und drei Endseiten */
-function tZoo(){
-  var A = '/assets/koelner-zoo/', LIME = '#aac520';
+/* ---------- Feedback-Funnels 1:1 aus Onepage (Kölner Zoo, Schwimmbad): gleicher Aufbau, eigene Texte, Antworten und Bilder ----------
+   Feldnamen = Onepage-Slugs, Antwort-IDs = Onepage-_id, Seitennamen = Onepage-Schritttitel, opStep = Onepage-Schrittnummer.
+   Damit erzeugt der Webhook im Onepage-Format dieselben Schlüssel (data.fieldsMap „Step N. Schritt -> Slug“). */
+function tFeedbackOp(c){
+  var A = c.assets, PRI = c.primary;
   var h = function(text, extra){ return B('heading', Object.assign({text:text, level:1, size:30, fw:700, align:'center', mb:10}, extra||{})); };
-  var badge = function(text){ return B('badge', {text:text, variant:'filled', align:'center', fw:700, scale:96, mb:28}); };
-  var hero = function(pos){ return B('image', {src:A+'tiere.jpg', radius:16, ratio:'7:3', mb:36}); };
-  var heart = B('heading', {text:'💚', level:1, size:30, fw:500, align:'center', mb:8});
-  var check = function(labels){ return labels.map(function(l){ return typeof l === 'string' ? O(l, '') : O(l[0], '', {sub:l[1]}); }); };
-  var btn = function(label, extra){ return B('button', Object.assign({label:label, full:false, shadow:false, icon:'none', align:'center', btnBg:LIME, mt:8}, extra||{})); };
-  var note = function(){ return B('input', {label:'', placeholder:'Magst du uns kurz mehr dazu sagen?', inputType:'textarea', key:'', required:false, mb:24}); };
+  var badge = function(text){ return B('badge', {text:text, variant:'filled', upper:true, align:'center', fw:700, scale:96, mb:28}); };
+  var img = function(file, ratio, pos, extra){ return B('image', Object.assign({src:A+file, alt:'', radius:16, ratio:ratio, mb:36}, pos ? {pos:pos} : {}, extra||{})); };
+  var heart = function(){ return B('heading', {text:'💚', level:1, size:30, fw:500, align:'center', mb:8}); };
+  /* [Label, Onepage-_id, Beschreibung] – Beschreibung nur, wenn Onepage eine hat (auch leer) */
+  var opts = function(items){ return items.map(function(l){ var o = O(l[0], '', {oid:l[1]}); if(l.length > 2){ o.odesc = l[2]; if(l[2]) o.sub = l[2]; } return o; }); };
+  var btn = function(label, extra){ return B('button', Object.assign({label:label, full:false, shadow:false, icon:'none', align:'center', btnBg:PRI, mt:8}, extra||{})); };
+  var note = function(){ return B('input', {label:'', placeholder:'Magst du uns kurz mehr dazu sagen?', inputType:'textarea', key:'Kommentar zum Grund', rows:5, required:false, mb:24}); };
+  var MUST = 'Wählen Sie mindestens eine Option', REQ = 'Feld ist erforderlich';
 
-  var pGoogle = P('Finish Bewertung', [hero(), heart,
+  var pGoogle = P('Finish Bewertung', [img(c.img.google, c.heroRatio, c.pos.google), heart(),
     h('Würdest du uns eine positive Bewertung auf Google dalassen?', {size:24}),
-    B('text', {text:'Das würde uns als familiengeführtes Unternehmen sehr weiterhelfen!', align:'center', mb:28}),
-    btn('Jetzt auf Google bewerten', {action:'url', url:'https://www.google.com/search?q=K%C3%B6lner+Zoo+Rezensionen', full:true})], {allowBack:false, submitOnEnter:true, autoButton:false});
-  var pDankeNein = P('Finish NEIN', [hero(), heart,
+    B('text', {text:c.googleText || 'Das würde uns als familiengeführtes Unternehmen sehr weiterhelfen!', align:'center', mb:28}),
+    btn('Jetzt auf Google bewerten', {action:'url', url:c.googleUrl, full:true})], {opStep:9, allowBack:false, submitOnEnter:true, autoButton:false});
+  var pDankeNein = P('Finish NEIN', [img(c.img.nein, c.heroRatio, c.pos.nein), heart(),
     h('Danke für dein ehrliches Feedback 🙌', {size:24}),
     B('text', {text:'Auch anonymes Feedback hilft uns dabei, besser zu werden und Probleme schneller zu erkennen.', align:'center', mb:16}),
-    B('text', {text:'Als kleines Dankeschön, dass du Dir die Zeit für das ehrliche Feedback genommen hast, findest du **hier** einen Gutschein für deinen nächsten Besuch. Vielleicht können wir es ja dann wieder gut machen :)', align:'center'})], {allowBack:false, submitOnEnter:true, autoButton:false});
-  var pDankeJa = P('Finish', [hero(), heart,
-    h('Vielen Dank für dein ehrliches Feedback – wir kümmern uns sofort darum!', {size:24})], {allowBack:false, submitOnEnter:true, autoButton:false});
+    B('text', {text:'Als kleines Dankeschön, dass du dir die Zeit für das ehrliche Feedback genommen hast, findest du '+(c.voucherUrl ? '[hier]('+c.voucherUrl+')' : '**hier**')+' einen Gutschein für deinen nächsten Besuch. Vielleicht können wir es ja dann wieder gut machen :)', align:'center'})], {opStep:8, allowBack:false, submitOnEnter:true, autoButton:false});
+  var pDankeJa = P('Finish', [img(c.img.finish, c.heroRatio, c.pos.finish), heart(),
+    h('Vielen Dank für dein ehrliches Feedback - wir kümmern uns sofort darum!', {size:24})], {opStep:7, allowBack:false, submitOnEnter:true, autoButton:false});
   var pKontakt = P('Kontakt ja', [
-    B('image', {src:A+'kontakt.jpg', radius:16, ratio:'3:2', mb:32}),
+    img(c.img.kontakt, '3:2', c.pos.kontakt, {mb:32}),
     h('Hinterlasse uns bitte kurz deine Kontaktdaten und wir melden uns bei dir.'),
-    B('text', {text:'🔒 Deine Daten werden **ausschließlich** zur Kontaktaufnahme bezüglich deines Feedbacks verwendet.', align:'center', mb:32}),
-    B('input', {label:'', placeholder:'Vorname', key:'vorname', required:true, half:true, mb:12}),
-    B('input', {label:'', placeholder:'Nachname (optional)', key:'nachname', required:false, half:true, mb:12}),
-    B('input', {label:'', placeholder:'Deine E-Mail Adresse', inputType:'email', key:'email', required:true, mb:20}),
-    B('checkbox', {text:'Ich stimme zu, dass der Kölner Zoo mich zu meinem Feedback per E-Mail schriftlich kontaktieren darf.', key:'einwilligung', required:true, mb:24}),
-    btn('Mein Feedback absenden', {action:'page', target:pDankeJa.id})]);
+    B('text', {text:'🔒 Deine Daten werden ***ausschließlich*** zur Kontaktaufnahme bezüglich deines Feedbacks verwendet.', align:'center', mb:32}),
+    B('input', {label:'', placeholder:'Vorname', key:'name.firstName', required:true, errorText:REQ, half:true, mb:12}),
+    B('input', {label:'', placeholder:'Nachname (optional)', key:'name.lastName', required:false, half:true, mb:12}),
+    B('input', {label:'', placeholder:'Deine E-Mail Adresse', inputType:'email', key:'email-adresse', required:true, errorText:REQ, mb:20}),
+    B('checkbox', {text:c.consent, key:'zustimmung', oid:c.ids.consent, required:true, errorText:MUST, mb:24}),
+    btn('Mein Feedback absenden', {action:'page', target:pDankeJa.id})], {opStep:6});
   var pWunsch = P('Kontakt gewünscht', [badge('NUR NOCH 1 SCHRITT'),
     h('Wir würden das gerne wieder gut machen.'),
     B('text', {text:'Dürfen wir uns **per Email** persönlich bei dir melden und eine Lösung finden?', align:'center', mb:32}),
-    B('choice', {question:'', key:'kontaktwunsch', layout:'image', ratio:'4:3', required:true, options:[
-      O('Ja, gerne!', '', {img:A+'kontakt-ja.jpg', pos:'50% 15%', sub:'Du kannst auswählen, in welcher Form wir Dich kontaktieren dürfen.', goto:pKontakt.id}),
-      O('Nein, das passt schon...', '', {img:A+'kontakt-nein.jpg', pos:'50% 39%', goto:pDankeNein.id})]})]);
+    B('choice', {question:'', key:'Kontaktwunsch', layout:'image', ratio:'4:3', required:false, autoNext:true, options:[
+      O('Ja, gerne!', '', {oid:c.ids.ja, odesc:'Du kannst Auswählen in welcher Form wir Dich kontaktieren dürfen.', img:A+c.img.ja, pos:c.pos.ja, sub:'Du kannst Auswählen in welcher Form wir Dich kontaktieren dürfen.', goto:pKontakt.id}),
+      O('Nein, das passt schon...', '', {oid:c.ids.nein, img:A+c.img.nein2, pos:c.pos.nein2, goto:pDankeNein.id})]})], {opStep:4});
   var pGut = P('Was hat gut gefallen', [
     h('😊 Das freut uns sehr!\nWas hat dir besonders gut gefallen?', {mb:32}),
-    B('choice', {question:'', key:'lob', layout:'checklist', multi:true, autoNext:false, required:true, mb:16, options:check(['Tieranlagen','Sauberkeit','Gastronomie','Freundlichkeit der Mitarbeiter','Atmosphäre','Spielplätze','Organisation',['Sonstiges','Bitte gehe unten weiter darauf ein.']])}),
-    Object.assign(note(), {props:Object.assign(note().props, {key:'kommentar_lob'})}),
-    btn('Weiter geht’s')], {next:pGoogle.id});
+    B('choice', {question:'', key:'lob', layout:'checklist', multi:true, autoNext:false, required:true, errorText:MUST, mb:16, options:opts(c.lob)}),
+    note(),
+    btn('Weiter geht\'s')], {opStep:3, next:pGoogle.id});
   var pProblem = P('Problem', [
     h('😲\nSchade, dass nicht alles perfekt lief.', {mb:4}),
     B('text', {text:'Was können wir verbessern?', align:'center', mb:32}),
-    B('choice', {question:'', key:'problemgrund', layout:'checklist', multi:true, autoNext:false, required:true, mb:16, options:check(['Wartezeiten','Sauberkeit','Gastronomie','Preise','Tierbereiche','Freundlichkeit','Orientierung im Zoo','Toiletten',['Sonstiges','Bitte gehe unten weiter darauf ein.']])}),
-    Object.assign(note(), {props:Object.assign(note().props, {key:'kommentar_problem'})}),
-    btn('Weiter geht’s')], {next:pWunsch.id});
-  var pStart = P('Grundstimmung', [badge('ES DAUERT NUR 2 MINUTEN'), hero(),
-    h('🦁\nWie hat Dir __Dein Besuch__ im Kölner Zoo gefallen?', {mb:8}),
-    B('text', {text:'Dein Feedback hilft uns dabei, den Zoo für alle Besucher noch schöner zu machen.', align:'center', size:13, mb:36}),
-    B('rating', {label:'', style:'emoji', max:5, emojis:'😥 🙁 😐 🙂 😀', key:'grundstimmung', autoNext:true, required:true, align:'left', minLabel:'nicht so gut', maxLabel:'mega zufrieden',
-      routes:[{min:1, max:3, goto:pProblem.id}, {min:4, max:5, goto:pGut.id}]})]);
+    B('choice', {question:'', key:'Problemgrund', layout:'checklist', multi:true, autoNext:false, required:true, errorText:MUST, mb:16, options:opts(c.problem)}),
+    note(),
+    btn('Weiter geht\'s')], {opStep:2, next:pWunsch.id});
+  var pStart = P('Grundstimmung', [badge('Es dauert nur 2 minuten'), img(c.img.start, c.startRatio, null),
+    h(c.start.head, {mb:8}),
+    B('text', {text:c.start.sub, align:'center', size:13, mb:36}),
+    B('rating', {label:'', style:'emoji', max:5, emojis:'😥 🙁 😐 🙂 😀', key:'Grundstimmung', autoNext:true, required:true, align:'left', minLabel:'nicht so gut', maxLabel:'mega zufrieden',
+      routes:[{min:1, max:3, goto:pProblem.id}, {min:4, max:5, goto:pGut.id}]})], {opStep:1});
 
   var css = [
     '.fp.prog-top .fp-top{padding-top:56px}',
@@ -519,7 +524,7 @@ function tZoo(){
     '.fp-txt{font-size:16px;line-height:1.5;color:var(--tx)}',
     '.fp-badge{border-radius:6px;padding:5px 12px;font-weight:inherit;letter-spacing:0;text-transform:uppercase}',
     '.fp-ul .fp-ulsv{color:var(--p)}',
-    '.fp-emo{gap:12px}.fp-emo button{border-radius:6px;background:rgba(43,42,43,.05);height:50px;font-size:24px}',
+    '.fp-emo{gap:12px}.fp-emo button{border-radius:6px;background:rgba(43,42,43,.05);box-shadow:inset 0 0 0 1px rgba(43,42,43,.1);height:50px;font-size:24px}',
     '.fp-rlab{font-size:13.5px;color:var(--tx);margin-top:8px}',
     '.fp-opts.checklist{gap:12px}',
     '.fp-opts.checklist .fp-opt{min-height:40px;padding:0 12px;font-size:13px;border:1px solid rgba(43,42,43,.08);background:#f8f9f9}',
@@ -538,11 +543,33 @@ function tZoo(){
     '@container (min-width:640px){.fp-body{max-width:599px}.fp .fp-top{max-width:1198px}.fp.prog-top .fp-top{padding-top:114px}.fp.prog-top .fp-prog{margin-bottom:34px}}'
   ].join('\n');
 
-  return {name:'Feedback-Funnel Kölner Zoo', desc:'Smiley-Bewertung mit Weiterleitung: Zufriedene zu Google, Unzufriedene zu Kontakt oder Gutschein.', cats:['Feedback'],
-    theme:theme('clean', {primary:'#0d5b43', primaryText:'#ffffff', bg:'#ffffff', surface:'#f4f4f4', text:'#2b2a2b', muted:'#6f6e6f', font:'Inter Tight', headingFont:'Onest', radius:6, btnRadius:4,
-      headingWeight:700, headingLs:0, lineHeight:1.5, logoImg:A+'logo.png', logoH:35, progress:'bar', progressTop:true, backButton:false, animation:'slide', pad:24, btnPad:7, btnWeight:600, customCss:css}),
-    settings:{currency:'EUR', basePrice:0},
+  return {name:c.name, desc:c.desc, cats:['Feedback'],
+    theme:theme('clean', {primary:PRI, primaryText:'#ffffff', bg:'#ffffff', surface:'#f4f4f4', text:'#2b2a2b', muted:'#6f6e6f', font:'Inter Tight', headingFont:'Onest', radius:6, btnRadius:4,
+      headingWeight:700, headingLs:0, lineHeight:1.5, logoImg:A+'logo.png', logoH:c.logoH, progress:'bar', progressTop:true, backButton:false, animation:'slide', pad:24, btnPad:7, btnWeight:600, customCss:css}),
+    settings:{currency:'EUR', basePrice:0, address:'du', webhookFormat:'onepage', onepageForm:c.form, onepageFormId:c.formId, onepageSiteId:'7e7ce4b6-1606-4c36-9ae6-58d3b6f1b8e2'},
     pages:[pStart, pProblem, pGut, pWunsch, pKontakt, pDankeJa, pDankeNein, pGoogle]};
+}
+/* Google-Link des Kölner Zoos aus dem Onepage-Original. Beim Schwimmbad: echten Bewertungslink im Editor eintragen (Button auf der Seite „Finish Bewertung“). */
+var OP_GOOGLE_ZOO = 'https://www.google.com/search?sa=X&sca_esv=78c86333cbc36880&rlz=1C5CHFA_enDE1140DE1141&sxsrf=ANbL-n7VOuwxj2R-8ihUcZUnmF8av9fj5Q:1779285917503&q=K%C3%B6lner+Zoo+Rezensionen&rflfq=1&num=20&stick=H4sIAAAAAAAAAONgkxI2M7Q0MTEzMjAzMrMwMjY0szA23MDI-IpR3Pvwtpy81CKFqPx8haDUqtS84sz8vNS8Ray4ZABYOw3mTgAAAA&rldimm=6194462062682316831&tbm=lcl&hl=de-DE&ved=2ahUKEwjz6MPIhMiUAxU2BdsEHZ6YLaQQ9fQKegQIZxAG&biw=2465&bih=1265&dpr=1#lkt=LocalPoiReviews&lrd=0x47bf25931b47f54b:0x55f7266d24d0201f,3,,,,';
+function tZoo(){
+  return tFeedbackOp({name:'Feedback-Funnel Kölner Zoo', desc:'Smiley-Bewertung mit Weiterleitung: Zufriedene zu Google, Unzufriedene zu Kontakt oder Gutschein. 1:1 aus Onepage inklusive Webhook-Feldern.',
+    assets:'/assets/koelner-zoo/', primary:'#0d5b43', logoH:35, form:'Kölner Zoo', formId:'r3e9cvLW6ncc3pGPglgba', startRatio:'7:3', heroRatio:'7:3', googleUrl:OP_GOOGLE_ZOO, consent:'Ich stimme zu, dass der Kölner Zoo mich zu meinem Feedback per E-Mail schriftlich kontaktieren darf.',
+    start:{head:'🦁\nWie hat Dir __Dein Besuch__ im Kölner Zoo gefallen?', sub:'Dein Feedback hilft uns dabei, den Zoo für alle Besucher\nnoch schöner zu machen.'},
+    img:{start:'tiere.jpg', finish:'tiere.jpg', nein:'tiere.jpg', google:'tiere.jpg', kontakt:'kontakt.jpg', ja:'kontakt-ja.jpg', nein2:'kontakt-nein.jpg'},
+    pos:{finish:'50% 50%', nein:'50% 50%', google:'50% 41%', kontakt:'50% 50%', ja:'50% 15%', nein2:'50% 39%'},
+    ids:{ja:'aH8NL8THqR6sj28wqLkCV', nein:'FmSogJroNt0EVbJcFdfpG', consent:'aNrA32aDYh9x0YLhFgU5e'},
+    problem:[['Wartezeiten','qIA6vcKO7As6aC516PK4p',''],['Sauberkeit','8IJs3ZIaAES_5S_uDSziU'],['Gastronomie','WnGOck3diP5eNtnkwBoHP'],['Preise','FdRVShKXQ_I5miMvPpwq4'],['Tierbereiche','tFoowdcg6_peHGriJuI_0'],['Freundlichkeit','cPYcb7HJnGtjUgm9in_U_',''],['Orientierung im Zoo','a2a8c89e-4994-4e55-b101-4e25fdaa813f',''],['Toiletten','ba0ff39b-8055-4f93-8bbd-e6b3585e5a44'],['Sonstiges','b5eec26a-8d69-494a-b9a8-c7371d29bbda','Bitte gehe unten weiter darauf ein.']],
+    lob:[['Tieranlagen','PZElkO1Fbms9pfNPCC5Ge',''],['Sauberkeit','-lGeNXUJFuKC6nVJc1YBA'],['Gastronomie','8-Dlsij4H3h44SPNnuhc-'],['Freundlichkeit der Mitarbeiter','oaukBRtdjmoLq7O1uSRIU',''],['Atmosphäre','b8beca56-90d1-4b38-b27b-dfda9d382d4e'],['Spielplätze','d0a9759a-8b0a-434c-897c-cee6a389d907'],['Organisation','50941cf0-cc9d-4c0c-ae07-86d5ecd06fe2'],['Sonstiges','297363f3-7cfa-4d96-a9a4-e96ce2f9aa2d','Bitte gehe unten weiter darauf ein.']]});
+}
+function tSchwimmbad(){
+  return tFeedbackOp({name:'Feedback-Funnel Schwimmbad', desc:'Smiley-Bewertung mit Weiterleitung: Zufriedene zu Google, Unzufriedene zu Kontakt oder Gutschein. 1:1 aus Onepage inklusive Webhook-Feldern.',
+    assets:'/assets/schwimmbad/', primary:'#ca0333', logoH:24, form:'Schwimmbad', formId:'jpn8z5DyLFT7AN9gATQsZ', startRatio:'2:1', heroRatio:'7:3', googleUrl:'https://www.google.com/maps/search/Schwimmbad', consent:'Ich stimme zu, dass das Schwimmbad mich zu meinem Feedback per E-Mail schriftlich kontaktieren darf.',
+    start:{head:'🏊‍♂️\nWie hat Dir __Dein Besuch__ heute gefallen?', sub:'Ihr Feedback hilft uns, unser Schwimmbad weiter zu verbessern.'},
+    img:{start:'start.jpg', finish:'finish.jpg', nein:'finish-nein.jpg', google:'finish-google.jpg', kontakt:'kontakt.jpg', ja:'kontakt-ja.jpg', nein2:'kontakt-nein.jpg'},
+    pos:{finish:'50% 50%', nein:'37% 62%', google:'50% 41%', kontakt:'50% 50%', ja:'50% 15%', nein2:'50% 50%'},
+    ids:{ja:'0gLuIqUWYVO0BR1XNw_E0', nein:'rrWKbtcXQ4X8KykDNfxa0', consent:'i0cc6l6lp_gQ8uNghK-Pu'},
+    problem:[['Sauberkeit','eaiKE4Y6PeYclgMvzPfv_'],['Wasser-/Temperatur','G6M7YontboiAHFW8ieDdy'],['Wartezeiten','dhDtlCkYabDupkhEugKBE'],['Personal','PodE58WyHEU511hHCFi0Q'],['Umkleiden/Duschen','JfiJHMXG19xk7wHdH6RZp',''],['Gastronomie','KjutYn9xgv75vwvqPqBZi',''],['zu voll','WP1WaA41iHn6XYpJPUKKa'],['Technik/Defekte','6eA5EQp3yKnjym6ACgK5q',''],['Sonstiges','86ad8893-ac98-459f-9348-f4bc9d3dca67','Bitte gehe näher darauf ein']],
+    lob:[['Sauberkeit','mcPHxpYjilVdRLJc6d4k2'],['Freundliches Personal','f5ncr4lxDuBXZqJsty5jo'],['Familienfreundlich','UAvbtdONpX7IVyFRqD96x',''],['Rutschen/Attraktionen','-B7rpccsdSzC30uZSz_Rd'],['Ruhe/Entspannung','WCWY0VMnxQdVSG25DSOIy'],['Gastronomie','m1K39SEqS56O0HqUJhgVe'],['Preis/Leistung','fQe9Xdsn4Jr2Q5sLq8LyG',''],['Allgemeine Atmosphäre','d92f38c5-38a7-413f-9554-daff490ad583']]});
 }
 
 /* Feedback-Funnel Holz Gehlen – 1:1 nach taptell.de/gehlen (Onepage).
@@ -654,7 +681,7 @@ function tBlank(){
 }
 
 var TEMPLATES = [
-  {id:'gehlen-tisch', make:tGehlen}, {id:'gehlen-feedback', make:tGehlenFeedback}, {id:'koelner-zoo', make:tZoo}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
+  {id:'gehlen-tisch', make:tGehlen}, {id:'gehlen-feedback', make:tGehlenFeedback}, {id:'koelner-zoo', make:tZoo}, {id:'schwimmbad', make:tSchwimmbad}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
   {id:'montage', make:tMontage}, {id:'recruiting', make:tRecruiting}, {id:'quiz', make:tQuiz}, {id:'feedback', make:tFeedback}, {id:'abnahme', make:tAbnahme},
   {id:'freebie', make:tFreebie}, {id:'blank', make:tBlank}
 ];
