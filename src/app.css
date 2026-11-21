@@ -805,3 +805,8 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
 @media (hover:hover) and (pointer:fine){.emopop button:hover{background:var(--hover)}}
 @keyframes emoIn{from{opacity:0;transform:scale(.96)}}
 @media (prefers-reduced-motion:reduce){.emopop{animation:emoFade var(--dur-pop) ease}@keyframes emoFade{from{opacity:0}}}
+
+/* Hinweis-Pfeil im Editor: gestrichelter Rahmen, solange markiert */
+#scr .fp-b.sel[data-type=arrow]{outline:0 !important;box-shadow:none !important}
+#scr .fp-b.sel[data-type=arrow] .fp-arw,#scr .fp-arw.dragging{outline:1.5px dashed var(--acc);outline-offset:6px;border-radius:var(--r-md)}
+@media (hover:hover) and (pointer:fine){#scr .fp-arw:hover{outline:1px dashed var(--n300);outline-offset:6px;border-radius:var(--r-md)}}

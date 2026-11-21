@@ -686,3 +686,22 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .l3-stack i{position:absolute;inset:0;border-radius:.7em;background:linear-gradient(135deg,color-mix(in srgb,var(--p) calc(45% + var(--k) * 25%),#fff),var(--p));box-shadow:inset 0 0 0 .07em rgba(255,255,255,.4),0 0 2em -.4em color-mix(in srgb,var(--p) 60%,transparent);opacity:calc(.55 + var(--k) * .2);transform:translateZ(calc(var(--k) * 1em));animation:l3stack 2.4s ease-in-out infinite;animation-delay:calc(var(--k) * -.25s)}
 @keyframes l3stack{50%{transform:translateZ(calc(var(--k) * 1.7em))}}
 @media (prefers-reduced-motion:reduce){.l3 *,.l3sh{animation-play-state:paused !important}}
+
+/* ---- Hinweis-Pfeil ---- */
+.fp-b[data-type=arrow]{height:0;margin:0 !important;padding:0 !important;z-index:7}
+.fp-arw{position:absolute;left:50%;top:0;display:flex;flex-direction:column;align-items:center;gap:2px;transform:translate(calc(-50% + var(--ax,0px)),var(--ay,0px));color:var(--ac,var(--p));pointer-events:none;width:max-content;max-width:min(280px,80vw)}
+.fp-arw .at{font:600 calc(15px*var(--sc,1))/1.15 var(--ff);text-align:center;white-space:pre-line}
+.fp-arw .at.hand{font:700 calc(var(--asz,90px) * .27 + 4px)/1 'Caveat',cursive;transform:rotate(-4deg)}
+.fp-arw .ar{display:block;line-height:0}
+.fp-arw svg{display:block;overflow:visible}
+.fp-arw path{fill:none;stroke:currentColor;stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round}
+.fp-arw.a-bounce svg{animation:fpArwB 1.5s ease-in-out infinite}
+.fp-arw.a-wiggle svg{animation:fpArwW 1.8s ease-in-out infinite;transform-origin:30% 10%}
+@keyframes fpArwB{50%{transform:translateY(7%)}}
+@keyframes fpArwW{25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+.fp:not(.is-edit) .fp-arw.a-draw .ap{stroke-dasharray:1;stroke-dashoffset:1;animation:fpArwD 700ms var(--ease-out) 350ms forwards}
+.fp:not(.is-edit) .fp-arw.a-draw .ah{stroke-dasharray:1;stroke-dashoffset:1;animation:fpArwD 260ms var(--ease-out) 1000ms forwards}
+.fp:not(.is-edit) .fp-arw.a-draw .at{animation:fpFadeOnly 400ms ease 200ms both}
+@keyframes fpArwD{to{stroke-dashoffset:0}}
+.fp.is-edit .fp-b[data-type=arrow] .fp-arw{pointer-events:auto;cursor:move;touch-action:none}
+@media (prefers-reduced-motion:reduce){.fp-arw svg{animation:none !important}.fp:not(.is-edit) .fp-arw.a-draw :is(.ap,.ah){animation:none;stroke-dashoffset:0}}
