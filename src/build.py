@@ -9,12 +9,13 @@ def page(config_tag):
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TapTell – Mobile Funnels</title>
+<script>try{{var t=localStorage.getItem('tt-theme');document.documentElement.setAttribute('data-theme',t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))}}catch(e){{}}</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c2e3d'/%3E%3Ctext x='32' y='44' font-family='Arial' font-weight='800' font-size='30' fill='white' text-anchor='middle'%3ETT%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style id="player-css">
 {r('player.css')}
 </style>
@@ -49,7 +50,7 @@ dep = d/'deploy'; dep.mkdir(exist_ok=True)
 <title>Funnel</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
-html,body{{margin:0;min-height:100%}}#funnel{{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}}#funnel>.fp{{flex:1}}.tt-msg{{font:15px/1.5 system-ui,sans-serif;color:#6b7280;text-align:center;padding:90px 24px}}
+html,body{{margin:0;min-height:100%}}html{{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}}#funnel{{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}}#funnel>.fp{{flex:1}}.tt-msg{{font:15px/1.5 system-ui,sans-serif;color:#6b7280;text-align:center;padding:90px 24px}}
 {r('player.css')}
 </style>
 <script src="/config.js"></script>

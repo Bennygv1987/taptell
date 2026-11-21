@@ -463,8 +463,11 @@ FP.renderShell = function(f, idx, inner, opts){
   var top = (head || prog) ? '<div class="fp-top">'+(t.progressTop?prog+head:head+prog)+'</div>' : '<div style="height:10px"></div>';
   var foot = t.footer ? '<div class="fp-foot">'+md(t.footer)+'</div>' : '';
   var cls = 'fp'+(opts.edit?' is-edit':'')+(page.wide?' wide':'')+(t.inputStyle&&t.inputStyle!=='outline'?' in-'+t.inputStyle:'')+(t.optStyle&&t.optStyle!=='filled'?' opt-'+t.optStyle:'')+(t.progressTop?' prog-top':'');
-  var css = t.customCss ? '<style>'+String(t.customCss).replace(/<\/style/gi,'')+'</style>' : '';
-  return '<div class="'+cls+'" style="'+style+'">'+css+ov+top+'<div class="fp-body">'+inner+'</div>'+foot+'</div>';
+  /* Eigenes CSS: im Live-Funnel global; in Vorschauen (mehrere Funnels auf einer Seite) auf diesen Funnel begrenzt */
+  var fsid = opts.scope ? String(f.id || 'f').replace(/[^\w-]/g,'') : '';
+  var raw = t.customCss ? String(t.customCss).replace(/<\/style/gi,'') : '';
+  var css = raw ? '<style>'+(fsid ? '@scope ([data-fs="'+fsid+'"]) {\n'+raw+'\n}' : raw)+'</style>' : '';
+  return '<div class="'+cls+'"'+(fsid?' data-fs="'+fsid+'"':'')+' style="'+style+'">'+css+ov+top+'<div class="fp-body">'+inner+'</div>'+foot+'</div>';
 };
 
 FP.renderPage = function(f, idx, ctx){
@@ -482,7 +485,7 @@ FP.renderPage = function(f, idx, ctx){
   if(ctx.edit && !(page.blocks||[]).length) inner = '<div class="fp-empty-drop">Elemente hierher ziehen</div>' + inner;
   var anim = ctx.edit || ctx.noAnim ? '' : (t.animation === 'none' ? '' : ' fp-anim-' + (t.animation||'slide') + (ctx.dir==='back'?' back':''));
   var body = '<div class="fp-page'+(page.vcenter?' v-center':'')+anim+'" data-page="'+page.id+'">'+inner+'</div>';
-  return FP.renderShell(f, idx, body, {edit:ctx.edit, back:ctx.back});
+  return FP.renderShell(f, idx, body, {edit:ctx.edit, back:ctx.back, scope:ctx.scope});
 };
 
 /* ---------- interactive runtime ---------- */
@@ -503,7 +506,7 @@ FP.mount = function(root, f, opts){
     var page = pages[st.i];
     page.blocks.forEach(function(b){ if(b.type === 'slider' && st.answers[keyOf(b)] == null) st.answers[keyOf(b)] = +(b.props.def != null ? b.props.def : b.props.min); });
     var sc = stay ? scroller() : null, top = sc ? sc.scrollTop : 0;
-    root.innerHTML = FP.renderPage(f, st.i, {answers:st.answers, errors:st.errors, dir:st.dir, live:opts.live, noAnim:!!stay, back: st.hist.length>0 && !st.done && page.allowBack!==false && (f.theme||{}).backButton!==false, startedAt:st.startedAt});
+    root.innerHTML = FP.renderPage(f, st.i, {answers:st.answers, errors:st.errors, dir:st.dir, live:opts.live, noAnim:!!stay || !!opts.still, scope:!!opts.scope, back: st.hist.length>0 && !st.done && page.allowBack!==false && (f.theme||{}).backButton!==false, startedAt:st.startedAt});
     if(sc) sc.scrollTop = top;
     initSignatures(); initCountdown();
   }

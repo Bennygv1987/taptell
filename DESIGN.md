@@ -6,26 +6,27 @@ Alle Werte liegen als CSS-Variablen in `:root` am Anfang von `src/app.css`. **Ke
 
 ## Grundsätze
 
-- **Ruhig statt bunt.** Fast alles ist Grau. Das Marken-Navy (`--a`) markiert nur die wichtigste Aktion eines Bildschirms und den aktiven Zustand.
-- **Farbe heißt Bedeutung.** Grün = live/erfolgreich, Gelb = Hinweis, Rot = Fehler/Löschen, Blau = Logik/Verzweigung. Nie zur Dekoration.
+- **Ruhig statt kastig.** Struktur entsteht über Abstand, Schriftgröße und Haarlinien, nicht über viele Kästen. Kennzahlen stehen in einer gemeinsamen Leiste.
+- **Eine Akzentfarbe.** Fast alles ist neutrales Zink-Grau. Primäre Aktionen sind fast schwarz (im Dunkelmodus fast weiß), der blaue Akzent (`--acc`) markiert Fokus, Auswahl, eingeschaltete Schalter und Diagramme.
+- **Farbe heißt Bedeutung.** Grün = live/erfolgreich, Gelb = Hinweis, Rot = Fehler/Löschen, Violett = Angebot. Status als Punkt mit Text, nicht als bunte Fläche.
+- **Hell und dunkel.** Jede Farbe kommt aus einem Token; `data-theme` auf `<html>` schaltet um (folgt dem System, Wahl wird gemerkt). Kein festes `#fff` für Flächen – nur Funnel-Vorschauen, QR-Codes und Schalter-Knöpfe bleiben bewusst weiß.
 - **Keine Emojis in der Oberfläche.** Icons kommen aus dem Icon-Set in `app.js` (`I('name')`).
 - **Texte:** kurz, konkret, per Du. Sagen, was passiert und was der Nutzer davon hat.
 - **Jeder Bildschirm braucht** einen leeren Zustand mit Nutzen-Satz und nächster Aktion.
+- **Handy:** Kopfzeile oben, Tab-Leiste unten (Safe Area beachten), Raster immer mit `minmax(0,1fr)`.
 
 ## Farben
 
-| Token | Wert | Einsatz |
+| Token | Hell / Dunkel | Einsatz |
 |---|---|---|
-| `--n0` … `--n900` | Weiß bis fast Schwarz | Neutrale Stufen (25, 50, 100, 150, 200, 300, 400, 500, 700, 900) |
-| `--bg` | `--n50` | Seitenhintergrund |
-| `--card` | `--n0` | Karten, Panels, Modals |
-| `--line` / `--line2` | `--n150` / `--n100` | Rahmen / feine Trennlinien |
-| `--ink` / `--ink2` / `--mut` | `--n900` / `--n700` / `--n500` | Text: Haupt, Sekundär, Hinweis |
-| `--a` / `--a2` / `--aS` / `--aL` | Navy, dunkler, sehr hell, hell | Primäraktion, Hover, aktive Hintergründe, aktive Rahmen |
-| `--ok` `--okS` `--okT` | Grün: Fläche / Hintergrund / Text | Live, Erfolg |
-| `--warn` `--warnS` `--warnT` | Gelb | Hinweise |
-| `--bad` `--badS` `--badT` | Rot | Fehler, Löschen |
-| `--info` `--infoS` `--infoT` | Blau | Logik, Verzweigungen, „Neu“ |
+| `--n0` … `--n900` | Zink, im Dunkelmodus umgekehrt | Neutrale Stufen |
+| `--bg` / `--side` / `--card` / `--raise` | Hintergrund / Seitenleiste / Karten / schwebende Flächen | Flächen |
+| `--hover` / `--press` | transparente Überlagerung | Hover- und Druckzustände |
+| `--line` / `--line2` | Haarlinien | Rahmen / feine Trennlinien |
+| `--ink` / `--ink2` / `--mut` | Text: Haupt, Sekundär, Hinweis | Schrift |
+| `--a` / `--a2` / `--pt` | fast schwarz (dunkel: fast weiß) / Hover / Schrift darauf | Primärbutton, aktive Nummern |
+| `--acc` / `--accS` / `--accL` (`--aS`, `--aL`) | Blau / sehr hell / Rahmen | Fokus, Auswahl, Schalter, Diagramme |
+| `--ok` `--warn` `--bad` `--info` `--pur` (+ `S` Fläche, `T` Text) | Status | Live, Hinweis, Fehler, Logik, Angebot |
 
 ## Schrift
 

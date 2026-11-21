@@ -6,6 +6,7 @@ var $$ = function(s, r){ return Array.prototype.slice.call((r||document).querySe
 
 /* ---------- icons ---------- */
 var IP = {
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', moon:'<path d="M20.5 14.5A8.5 8.5 0 019.5 3.5a8.5 8.5 0 1011 11z"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 4.5a3.5 3.5 0 010 7M21.5 20a6.5 6.5 0 00-4-6"/>',
   chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
@@ -188,7 +189,7 @@ function fmtNum(n){ return (n||0).toLocaleString('de-DE'); }
 function fmtRel(ts){ var d = (Date.now()-ts)/1000; if(d < 60) return 'gerade eben'; if(d < 3600) return 'vor '+Math.floor(d/60)+' Min.'; if(d < 86400) return 'vor '+Math.floor(d/3600)+' Std.'; if(d < 86400*7) return 'vor '+Math.floor(d/86400)+' Tag'+(d>=172800?'en':''); return new Date(ts).toLocaleDateString('de-DE'); }
 function fmtDT(ts){ return new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 var AVC = [['#e3e9ef','#1c2e3d'],['#e2eef6','#1f5c86'],['#e4f1ec','#2a6b52'],['#f4ede2','#7a5424'],['#f3e6e6','#8a3a3a'],['#ebe8f3','#4f437f'],['#f1e7ee','#7d3d66'],['#e3eff0','#2c6467']];
-function avatar(name){ var n = name || '?', h = 0; for(var i=0;i<n.length;i++) h = (h*31 + n.charCodeAt(i))>>>0; return '<span class="avc" style="background:'+AVC[h%AVC.length][0]+';color:'+AVC[h%AVC.length][1]+'">'+esc(n.split(' ').map(function(s){return s[0]||'';}).join('').slice(0,2).toUpperCase())+'</span>'; }
+function avatar(name){ var n = name || '?', h = 0; for(var i=0;i<n.length;i++) h = (h*31 + n.charCodeAt(i))>>>0; return '<span class="avc" style="--h:'+AVC[h%AVC.length][1]+'">'+esc(n.split(' ').map(function(s){return s[0]||'';}).join('').slice(0,2).toUpperCase())+'</span>'; }
 function conv(f){ var v = f.stats.views || 0; return v ? (f.stats.completes / v * 100) : 0; }
 function leadsOf(fid){ return db.leads.filter(function(l){ return l.funnelId === fid; }); }
 function readImage(file, maxW, cb){
@@ -200,7 +201,7 @@ function readImage(file, maxW, cb){
   };
   rd.readAsDataURL(file);
 }
-function mini(f, idx){ return '<div class="mini">'+FP.renderPage(f, idx||0, {noAnim:true})+'</div>'; }
+function mini(f, idx){ return '<div class="mini">'+FP.renderPage(f, idx||0, {noAnim:true, scope:true})+'</div>'; }
 
 /* ---------- routing ---------- */
 function go(view, fid){
@@ -233,12 +234,16 @@ function render(){
     ? [['§','Arbeitsbereich'],['funnels','Funnels','funnel',vf.length],['contacts','Kontakte','users',nLeadsNew],['analytics','Analytics','chart'],['§','Verwaltung'],['customers','Kunden','folder',(db.clients||[]).length],['templates','Vorlagen','layout'],['settings','Einstellungen','settings']]
     : [['funnels','Übersicht','grid',vf.length],['contacts','Kontakte','users',nLeadsNew],['analytics','Analytics','chart']];
   var brand = cl ? '<div class="brand">'+(cl.logo?'<div class="lg" style="background:#fff center/contain no-repeat url(&quot;'+esc(cl.logo)+'&quot;);box-shadow:0 0 0 1px var(--line)"></div>':'<div class="lg">'+I('layers')+'</div>')+'<div>'+esc(cl.name)+'<small>Kundenportal · TapTell</small></div></div>'
-    : '<div class="brand tt"><img src="'+TT_LOGO+'" alt="TapTell"><small>'+(REMOTE?'Admin':'Admin · Demo-Modus')+'</small></div>';
+    : '<div class="brand tt"><img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true"><small>'+(REMOTE?'Admin':'Admin · Demo-Modus')+'</small></div>';
   var html = '<div class="shell"><aside class="side">' + brand
     + (isAdmin() ? (function(){ var s = scopeId(), c = s && s !== '-' ? clientById(s) : null; return '<button class="scope" data-a="scope" title="Arbeitsbereich wechseln"><span class="sav">'+(c && c.logo ? '<i style="background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;)"></i>' : I(!s?'grid':s==='-'?'layers':'folder',14))+'</span><span class="stx"><small>Arbeitsbereich</small><b>'+esc(scopeLabel())+'</b></span>'+I('chevDown',14)+'</button>'; })() : '')
     + nav.map(function(n){ if(n[0] === '§') return '<div class="sec">'+n[1]+'</div>'; return '<button class="nav'+(S.view===n[0]?' on':'')+'" data-a="nav" data-v="'+n[0]+'">'+I(n[2])+n[1]+(n[3]?'<span class="ct">'+n[3]+'</span>':'')+'</button>'; }).join('')
     + (isAdmin() && vf.length ? '<div class="sec">Zuletzt bearbeitet</div>' + vf.slice().sort(function(a,b){ return (b.updatedAt||0)-(a.updatedAt||0); }).slice(0,5).map(function(f){ return '<button class="nav" data-a="edit" data-id="'+f.id+'"><span style="width:7px;height:7px;border-radius:50%;background:'+(f.status==='live'?'var(--ok)':'var(--n300)')+';margin:0 4px 0 5px;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</span></button>'; }).join('') : '')
-    + '<div class="foot"><div class="av">'+esc((S.user.name||S.user.email||'?')[0].toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="color:var(--ink);font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(S.user.name||S.user.email)+'</div><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(S.user.role==='admin'?'Administrator':'Kunde')+'</div></div><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',15)+'</button></div></aside><main class="main" id="main"></main></div>';
+    + '<div class="foot"><div class="av">'+esc((S.user.name||S.user.email||'?')[0].toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="color:var(--ink);font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(S.user.name||S.user.email)+'</div><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(S.user.role==='admin'?'Administrator':'Kunde')+'</div></div><button class="btn ghost sm ic" data-a="theme" title="Hell oder dunkel">'+I(document.documentElement.getAttribute('data-theme')==='dark'?'sun':'moon',15)+'</button><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',15)+'</button></div></aside>'
+    /* Handy: Kopfzeile + Tab-Leiste unten (die Seitenleiste ist dort ausgeblendet) */
+    + '<header class="mtop">'+(cl ? '<b>'+esc(cl.name)+'</b>' : '<img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true">')+'<span style="flex:1"></span><button class="btn ghost sm ic" data-a="theme" title="Hell oder dunkel">'+I(document.documentElement.getAttribute('data-theme')==='dark'?'sun':'moon',16)+'</button><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',16)+'</button></header>'
+    + '<main class="main" id="main"></main>'
+    + '<nav class="tabbar" aria-label="Navigation">' + nav.filter(function(n){ return n[0] !== '§' && n[0] !== 'templates'; }).slice(0,5).map(function(n){ return '<button class="'+(S.view===n[0]?'on':'')+'" data-a="nav" data-v="'+n[0]+'">'+I(n[2],20)+'<span>'+n[1]+'</span></button>'; }).join('') + '</nav></div>';
   $('#app').innerHTML = html;
   var m = $('#main');
   var banner = S.as ? '<div class="asbar">'+I('eye',15)+'<span>Du siehst das Portal so, wie <b>'+esc((clientById(S.as)||{}).name||'der Kunde')+'</b> es sieht.</span><span style="flex:1"></span><button class="btn sm" data-a="endAs">Zurück zur Admin-Ansicht</button></div>' : '';
@@ -259,25 +264,33 @@ function viewFunnels(){
   var live = SF.filter(function(f){ return f.status === 'live'; }).length;
   var h = '<div class="page"><div class="ph"><div><h1>Funnels</h1><p>'+(scopeId()?'Funnels von <b>'+esc(scopeLabel())+'</b>.':'Erstelle, gestalte und verwalte deine mobilen Funnels.')+'</p></div><div class="sp"></div><button class="btn pri" data-a="newFunnel">'+I('plus')+'Neuer Funnel</button></div>';
   h += '<div class="kpis">'
-    + kpi('Aktive Funnels', live + ' / ' + SF.length, 'live geschaltet', 'funnel')
-    + kpi('Aufrufe', fmtNum(views), 'gesamt', 'eye')
-    + kpi('Leads', fmtNum(leads), '<b>+'+week+'</b> in den letzten 7 Tagen', 'inbox')
-    + kpi('Ø Conversion', (views ? (comp/views*100) : 0).toFixed(1).replace('.',',') + ' %', 'Aufruf → Abschluss', 'percent') + '</div>';
+    + kpi('Aktive Funnels', live + ' / ' + SF.length, 'live geschaltet', 'funnel', SF.length ? live / SF.length * 100 : 0)
+    + kpi('Aufrufe', fmtNum(views), 'gesamt', 'eye', series14(SF, 'v'))
+    + kpi('Leads', fmtNum(leads), '<b>+'+week+'</b> in den letzten 7 Tagen', 'inbox', series14(SF, 'l'))
+    + kpi('Ø Conversion', (views ? (comp/views*100) : 0).toFixed(1).replace('.',',') + ' %', 'Aufruf → Abschluss', 'percent', (function(){ var v = series14(SF, 'v'), l = series14(SF, 'l'); return v.map(function(x, i){ return x ? l[i] / x * 100 : 0; }); })()) + '</div>';
   h += '<div class="toolbar"><div class="seg">'+[['all','Alle'],['live','Live'],['draft','Entwurf']].map(function(x){ return '<button class="'+(S.filter===x[0]?'on':'')+'" data-a="ffilter" data-v="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div><div style="flex:1"></div>'+(scopeId()?'':'<select class="inp" id="fcl" style="width:210px;height:36px"><option value="">Alle Kunden</option><option value="-"'+(S.fclient==='-'?' selected':'')+'>Ohne Kunde (intern)</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(S.fclient===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select>')+'<label class="search">'+I('search')+'<input id="fq" placeholder="Funnels durchsuchen …" value="'+esc(S.q)+'"></label></div>';
   h += '<div class="grid">';
   fs.forEach(function(f){
     var lc = leadsOf(f.id).length;
     h += '<div class="fcard" data-a="edit" data-id="'+f.id+'"><div class="menu"><button class="btn sm ic" data-a="fmenu" data-id="'+f.id+'">'+I('more')+'</button></div><div class="thumb">'+mini(f)+'</div>'
       + '<div class="meta"><div class="nm"><span>'+esc(f.name)+'</span><span class="pill '+(f.status==='live'?'live':'draft')+'" style="flex:none">'+(f.status==='live'?'Live':'Entwurf')+'</span></div>'
-      + '<div class="st"><span><b>'+fmtNum(f.stats.views)+'</b>Aufrufe</span><span><b>'+lc+'</b>Leads</span><span><b>'+conv(f).toFixed(1).replace('.',',')+'%</b>CR</span></div>'
-      + '<div class="st" style="margin-top:4px">'+f.pages.length+' Seiten · bearbeitet '+fmtRel(f.updatedAt)+'</div>'
-      + '<div class="cchip">'+(f.clientId && clientById(f.clientId) ? I('folder',12)+'<span>'+esc(clientById(f.clientId).name)+'</span>'+(f.shared?'<span class="pill live nos" style="margin-left:auto">'+I('eye',11)+' freigeschaltet</span>':'<span class="pill draft nos" style="margin-left:auto">nicht freigeschaltet</span>') : '<span style="color:var(--mut)">Intern · keinem Kunden zugeordnet</span>')+'</div></div></div>';
+      + '<div class="who">'+(f.clientId && clientById(f.clientId) ? I('folder',12)+'<span>'+esc(clientById(f.clientId).name)+'</span>'+(f.shared?'<span class="sh" title="Für den Kunden freigeschaltet">'+I('eye',12)+'</span>':'') : '<span>Intern</span>')+'<span class="dt">· '+fmtRel(f.updatedAt)+'</span></div>'
+      + '<div class="fst"><div><b>'+fmtNum(f.stats.views)+'</b><small>Aufrufe</small></div><div><b>'+lc+'</b><small>Leads</small></div><div><b>'+conv(f).toFixed(1).replace('.',',')+' %</b><small>Conversion</small></div></div></div></div>';
   });
   h += '<button class="newcard" data-a="newFunnel"><div class="pl">'+I('plus',20)+'</div><b style="color:var(--ink)">Neuer Funnel</b><span style="font-size:var(--fs-13)">Aus Vorlage oder leer starten</span></button></div>';
   if(!fs.length && S.q) h += '<div class="empty" style="margin-top:16px">Keine Funnels gefunden.</div>';
   return h + '</div>';
 }
-function kpi(l, v, d, ic){ return '<div class="kpi"><div class="l">'+I(ic,14)+l+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div></div>'; }
+/* Kennzahl: Label, Wert, Hinweis, optional Verlaufskurve (Zahlenreihe) */
+function kpi(l, v, d, ic, series){ var vis = typeof series === 'number' ? '<div class="kbar"><i style="width:'+Math.max(0, Math.min(100, series))+'%"></i></div>' : (series && series.length > 1 ? spark(series) : ''); return '<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div>'+vis+'</div>'; }
+function spark(vals){
+  var w = 200, h = 30, mn = Math.min.apply(0, vals), mx = Math.max.apply(0, vals), rg = (mx - mn) || 1;
+  var d = vals.map(function(x, i){ return (i ? 'L' : 'M') + (i / (vals.length - 1) * w).toFixed(1) + ' ' + (h - 3 - (x - mn) / rg * (h - 6)).toFixed(1); }).join(' ');
+  var id = 'sp' + uid().slice(0,5);
+  return '<svg class="spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".16"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+w+' '+h+' L0 '+h+'Z" fill="url(#'+id+')"/><path d="'+d+'" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+}
+/* 14-Tage-Reihen aus den Tagesstatistiken mehrerer Funnels */
+function series14(fs, key){ var out = []; for(var i = 13; i >= 0; i--){ var k = dayKey(Date.now() - i*864e5), t = 0; fs.forEach(function(f){ t += ((f.stats.daily||{})[k]||{})[key] || 0; }); out.push(t); } return out; }
 
 function templateGallery(){
   var list = T.TEMPLATES.map(function(t){ var d = t.make(); return {id:t.id, d:d}; });
@@ -387,16 +400,16 @@ function viewAnalytics(){
   var days = []; for(var i=13;i>=0;i--){ var k = dayKey(Date.now()-i*864e5); days.push({k:k, v:(st.daily[k]||{}).v||0, l:(st.daily[k]||{}).l||0}); }
   var mx = Math.max.apply(null, days.map(function(d){ return d.v; }).concat([5]));
   var W = 640, H = 220, pad = 28, bw = (W - pad) / days.length;
-  var svg = '<svg viewBox="0 0 '+W+' '+(H+24)+'" style="width:100%;height:auto;display:block">';
-  [0,.5,1].forEach(function(g){ var y = 10 + (H-20)*(1-g); svg += '<line x1="'+pad+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="#eef0f3"/><text x="'+(pad-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="#9aa0ad">'+Math.round(mx*g)+'</text>'; });
+  var svg = '<svg class="chart" viewBox="0 0 '+W+' '+(H+24)+'" style="width:100%;height:auto;display:block">';
+  [0,.5,1].forEach(function(g){ var y = 10 + (H-20)*(1-g); svg += '<line x1="'+pad+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" class="cg"/><text class="ctx" x="'+(pad-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10">'+Math.round(mx*g)+'</text>'; });
   days.forEach(function(d, ix){
     var x = pad + ix*bw + bw*0.18, w = bw*0.64, vh = (H-20) * d.v / mx, lh = (H-20) * d.l / mx;
-    svg += '<rect x="'+x+'" y="'+(H-10-vh)+'" width="'+w+'" height="'+Math.max(vh,0)+'" rx="4" fill="#d9e1e8"><title>'+d.k+': '+d.v+' Aufrufe</title></rect>';
-    svg += '<rect x="'+(x+w*0.2)+'" y="'+(H-10-lh)+'" width="'+(w*0.6)+'" height="'+Math.max(lh,0)+'" rx="3" fill="#1c2e3d"><title>'+d.k+': '+d.l+' Leads</title></rect>';
-    if(ix % 2 === 0) svg += '<text x="'+(x+w/2)+'" y="'+(H+12)+'" text-anchor="middle" font-size="10" fill="#9aa0ad">'+d.k.slice(8)+'.'+d.k.slice(5,7)+'.</text>';
+    svg += '<rect x="'+x+'" y="'+(H-10-vh)+'" width="'+w+'" height="'+Math.max(vh,0)+'" rx="4" class="cv"><title>'+d.k+': '+d.v+' Aufrufe</title></rect>';
+    svg += '<rect x="'+(x+w*0.2)+'" y="'+(H-10-lh)+'" width="'+(w*0.6)+'" height="'+Math.max(lh,0)+'" rx="3" class="cl"><title>'+d.k+': '+d.l+' Leads</title></rect>';
+    if(ix % 2 === 0) svg += '<text x="'+(x+w/2)+'" y="'+(H+12)+'" text-anchor="middle" font-size="10" class="ctx">'+d.k.slice(8)+'.'+d.k.slice(5,7)+'.</text>';
   });
   svg += '</svg>';
-  h += '<div class="charts"><div class="card"><div class="ch"><h3>Letzte 14 Tage</h3><span style="flex:1"></span><div class="legend"><span><i style="background:#d9e1e8"></i>Aufrufe</span><span><i style="background:#1c2e3d"></i>Leads</span></div></div><div class="cb">'+svg+'</div></div>';
+  h += '<div class="charts"><div class="card"><div class="ch"><h3>Letzte 14 Tage</h3><span style="flex:1"></span><div class="legend"><span><i class="lv"></i>Aufrufe</span><span><i class="ll"></i>Leads</span></div></div><div class="cb">'+svg+'</div></div>';
   // dropoff
   var first = st.pages[f.pages[0].id] || st.views || 0;
   h += '<div class="card"><div class="ch"><h3>Funnel-Verlauf</h3><p>Besucher pro Seite</p></div><div class="cb bars">';
@@ -858,7 +871,7 @@ function exportHtml(f){
     + ' onEvent:function(t,d){if(F.settings.trackEvents)send("event",{event:t,data:d});}\n'
     + '});';
   return '<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<title>' + esc(f.name) + '</title>\n<meta name="theme-color" content="' + esc(f.theme.bg) + '">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' + fontLinks + '\n'
-    + '<style>html,body{margin:0;min-height:100%;background:' + esc(f.theme.bg) + '}#funnel{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding-top:env(safe-area-inset-top)}#funnel>.fp{flex:1}\n' + css + '</style>\n' + pixel + '\n</head>\n<body>\n<div id="funnel"></div>\n<script>\n' + js + '\n<\/script>\n<script>\n' + init + '\n<\/script>\n</body>\n</html>';
+    + '<style>html,body{margin:0;min-height:100%;background:' + esc(f.theme.bg) + '}html{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}#funnel{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding-top:env(safe-area-inset-top)}#funnel>.fp{flex:1}\n' + css + '</style>\n' + pixel + '\n</head>\n<body>\n<div id="funnel"></div>\n<script>\n' + js + '\n<\/script>\n<script>\n' + init + '\n<\/script>\n</body>\n</html>';
 }
 /* ---- Funnel anlegen: Assistent (Vorlage → Details) ---- */
 function uniqueName(n){ var names = db.funnels.map(function(f){ return f.name; }); if(names.indexOf(n) < 0) return n; for(var i = 2; ; i++){ var c = n + ' (' + i + ')'; if(names.indexOf(c) < 0) return c; } }
@@ -1502,6 +1515,7 @@ window.addEventListener('beforeunload', function(e){ if(REMOTE && (syncing || sa
 /* ================= EVENTS ================= */
 var ACT = {
   logout:function(){ logout(); },
+  theme:function(){ var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); try{ localStorage.setItem('tt-theme', t); }catch(e){} render(); },
   demoLogin:function(el){ var u = (db.users||[]).filter(function(x){ return x.id === el.getAttribute('data-id'); })[0]; if(u) loginLocal(u); },
   forgot:function(){ promptBox('Passwort zurücksetzen','Deine E-Mail-Adresse', ($('#lmail')||{}).value || '', function(v){ sb.auth.resetPasswordForEmail(v, {redirectTo:location.origin + location.pathname}).then(function(r){ toast(r.error ? r.error.message : 'Falls ein Zugang existiert, ist der Link unterwegs.'); }); }); },
   endAs:function(){ S.as = null; S.view = 'customers'; render(); },
