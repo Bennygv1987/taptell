@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <style>
+    /* Erfolgs-Haken (Nachbau der Onepage-Lottie „Success“): Kreis erscheint, Haken zeichnet sich, Strahlen gehen nach außen */
+    .c{transform-origin:60px 60px;transform:scale(.6);opacity:0;animation:pop 420ms cubic-bezier(.23,1,.32,1) 80ms forwards}
+    .k{stroke-dasharray:40;stroke-dashoffset:40;animation:draw 360ms cubic-bezier(.77,0,.175,1) 380ms forwards}
+    .r{transform-origin:60px 60px;opacity:0;animation:burst 700ms cubic-bezier(.23,1,.32,1) 300ms forwards}
+    @keyframes pop{to{transform:scale(1);opacity:1}}
+    @keyframes draw{to{stroke-dashoffset:0}}
+    @keyframes burst{0%{opacity:0;transform:scale(.7)}40%{opacity:1}100%{opacity:1;transform:scale(1)}}
+    @media (prefers-reduced-motion:reduce){.c,.k,.r{animation:none;transform:none;opacity:1;stroke-dashoffset:0}}
+  </style>
+  <g class="r" stroke="#3db54a" stroke-width="2.4" stroke-linecap="round">
+    <path d="M60 10v6M60 104v6M10 60h6M104 60h6M24.6 24.6l4.3 4.3M91.1 91.1l4.3 4.3M24.6 95.4l4.3-4.3M91.1 28.9l4.3-4.3"/>
+    <path d="M40.9 13.8l1.6 3.7M77.5 102.5l1.6 3.7M13.8 79.1l3.7-1.6M102.5 42.5l3.7-1.6M79.1 13.8l-1.6 3.7M42.5 102.5l-1.6 3.7M13.8 40.9l3.7 1.6M102.5 77.5l3.7 1.6" stroke-width="1.8" opacity=".7"/>
+  </g>
+  <g class="c">
+    <circle cx="60" cy="60" r="30" fill="#3db54a"/>
+    <circle cx="60" cy="60" r="21" fill="none" stroke="#fff" stroke-width="2.6" opacity=".95"/>
+    <path class="k" d="M51 60.5l6.5 6.5L70 54.5" fill="none" stroke="#fff" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
