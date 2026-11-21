@@ -385,6 +385,15 @@ pre.code,textarea.code{background:var(--n900);color:#d6d9e4;border-radius:var(--
 .preset .sw{height:30px;border-radius:var(--r-sm);display:flex;align-items:flex-end;padding:4px;gap:3px}
 .preset .sw i{width:12px;height:12px;border-radius:var(--r-xs);display:block}
 .preset span{display:block;font-size:var(--fs-12);font-weight:600;margin-top:6px}
+/* Hervorhebung: Vorschau mit den Klassen des Funnel-Players */
+.hlstyles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.hlw{appearance:none;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;color:var(--ink2);font:550 var(--fs-11) var(--ui);transition:transform var(--dur-press) var(--ease-out),border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.hlw:active{transform:scale(.97)}
+.hlw.on{border-color:var(--ink);color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+@media (hover:hover) and (pointer:fine){.hlw:not(.on):hover{border-color:var(--n300);color:var(--ink)}}
+.hlw:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.hlp{--p:var(--acc);--pt:#fff;height:30px;display:flex;align-items:center;font:700 var(--fs-14)/1.2 var(--ui);color:var(--ink)}
+.kbd-h{font:500 var(--fs-11) var(--mono,ui-monospace),monospace;color:var(--mut);margin-left:4px}
 /* Seitenübergänge: Mini-Seite spielt den echten Übergang beim Überfahren */
 .anims{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 .anw{appearance:none;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);padding:6px 4px 5px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:var(--ink2);font:550 var(--fs-11) var(--ui);transition:transform var(--dur-press) var(--ease-out),border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}

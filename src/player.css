@@ -9,6 +9,10 @@
 .fp-back svg{width:20px;height:20px}
 .fp-logo{font-family:var(--hf);font-weight:700;font-size:16px;letter-spacing:-.01em}
 .fp-logo img{max-height:28px;max-width:150px;display:block}
+.fp-logo-l{appearance:none;background:none;border:0;padding:4px;margin:-4px;border-radius:8px;color:inherit;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform 160ms var(--ease-out),opacity 150ms ease}
+.fp-logo-l:active{transform:scale(.97)}
+.fp-logo-l:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+@media (hover:hover) and (pointer:fine){.fp-logo-l:hover{opacity:.8}}
 .fp-prog{height:5px;background:color-mix(in srgb,var(--tx) 9%,transparent);border-radius:9px;overflow:hidden;margin-top:var(--hg,12px)}
 .fp-prog i{display:block;height:100%;background:var(--p);border-radius:9px;transition:width 400ms var(--ease-in-out)}
 .fp-steps{display:flex;gap:5px;margin-top:var(--hg,12px)}
@@ -245,8 +249,36 @@ textarea.fp-in{min-height:110px;resize:vertical}
 @container (max-width:639px){.fp-vis-desktop{display:none}}
 .fp.is-edit .fp-vis-mobile,.fp.is-edit .fp-vis-desktop{display:block!important;opacity:.4}
 
-.fp-ul{position:relative;white-space:nowrap;display:inline-block}
-.fp-ulsv{position:absolute;left:-2%;width:104%;bottom:-.26em;height:.36em;color:var(--p);overflow:visible;pointer-events:none}
+.fp-ul{position:relative;white-space:nowrap;display:inline-block;z-index:0}
+.fp-ulsv{position:absolute;display:none;overflow:visible;pointer-events:none;color:var(--p);z-index:-1}
+.fp-ulsv path{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:max(2px,.08em)}
+/* Schwung – wie im Onepage-Original: flacher Bogen unter dem ganzen Ausdruck */
+.hl-swoosh .fp-ulsv.u{display:block;left:0;width:100%;bottom:-.04em;height:.26em}
+/* Kreis – handgezeichnete Ellipse um das Wort */
+.hl-circle .fp-ul{padding:0 .1em}
+.hl-circle .fp-ulsv.c{display:block;left:-.28em;width:calc(100% + .56em);top:-.1em;height:calc(100% + .2em)}
+.hl-circle .fp-ulsv.c path{stroke-width:max(2px,.065em)}
+/* Linie – gerade, kräftige Unterstreichung */
+.hl-line .fp-ul{background:linear-gradient(var(--p),var(--p)) 0 92%/100% .1em no-repeat;padding-bottom:.06em}
+/* Marker – Fläche mit runden Ecken */
+.hl-marker .fp-ul{background:color-mix(in srgb,var(--p) 22%,transparent);border-radius:.3em;padding:0 .22em;margin:0 -.04em}
+/* Textmarker – untere Hälfte wie mit dem Stift markiert */
+.hl-half .fp-ul{background:linear-gradient(color-mix(in srgb,var(--p) 42%,transparent),color-mix(in srgb,var(--p) 42%,transparent)) 0 86%/100% .48em no-repeat;padding:0 .1em;border-radius:.12em}
+/* Fläche – volle Farbe, Text in Kontrastfarbe */
+.hl-pill .fp-ul{background:var(--p);color:var(--pt);border-radius:.3em;padding:0 .24em;margin:0 .02em}
+/* Rahmen – Kontur mit runden Ecken */
+.hl-stroke .fp-ul{box-shadow:inset 0 0 0 max(2px,.06em) var(--p);border-radius:.32em;padding:0 .22em}
+/* Farbe – nur in der Akzentfarbe */
+.hl-color .fp-ul{color:var(--p)}
+/* Beim Öffnen einer Seite zeichnet sich die Hervorhebung einmal ein (nicht im Editor, nicht bei reduzierter Bewegung) */
+@keyframes fpHlDraw{from{clip-path:inset(-20% 100% -20% 0)}to{clip-path:inset(-20% 0 -20% 0)}}
+@keyframes fpHlGrow{from{background-size:0 var(--hlh,100%)}}
+@keyframes fpHlPop{from{opacity:0;transform:scale(.94)}}
+@media (prefers-reduced-motion:no-preference){
+  .fp-page:is([class*="fp-anim-"],.chat-in) :is(.hl-swoosh .fp-ulsv.u,.hl-circle .fp-ulsv.c){animation:fpHlDraw 620ms var(--ease-out) 260ms both}
+  .fp-page:is([class*="fp-anim-"],.chat-in) .hl-line .fp-ul{--hlh:.1em;animation:fpHlGrow 520ms var(--ease-out) 260ms both}
+  .fp-page:is([class*="fp-anim-"],.chat-in) .hl-half .fp-ul{--hlh:.48em;animation:fpHlGrow 560ms var(--ease-out) 260ms both}
+}
 .fp-mk{background:linear-gradient(transparent 58%,color-mix(in srgb,var(--p) 38%,transparent) 58%);color:inherit;padding:0 .08em}
 .fp-badge.filled{background:var(--p);color:var(--pt)}
 .fp-badge.outline{background:transparent;color:var(--tx);box-shadow:inset 0 0 0 1.5px var(--p);padding:9px 16px;border-radius:12px;font-size:calc(14px*var(--sc,1))}
@@ -414,7 +446,6 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp-page.chat .fp-b.bot[data-type=badge]{background:none;padding:0}
 .fp-page.chat .fp-b.bot:is([data-type=image],[data-type=video]){padding:4px;width:min(280px,calc(100% - 44px))}
 .fp-page.chat .fp-b.bot .fp-img{border-radius:14px !important;height:auto !important;aspect-ratio:4/3;width:100%}
-.fp-page.chat .fp-b.bot .fp-ulsv{display:none}
 .fp-chist{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
 .fp-chist .q{align-self:flex-start;margin-left:40px;max-width:calc(100% - 64px);padding:8px 12px;border-radius:16px 16px 16px 6px;background:var(--sf);color:var(--mt);font-size:13.5px;line-height:1.4}
 .fp-chist .a{align-self:flex-end;max-width:80%;padding:8px 12px;border-radius:16px 16px 6px 16px;background:var(--p);color:var(--pt);font-size:14px;font-weight:500;line-height:1.4;margin-bottom:4px}

@@ -2,9 +2,13 @@
 "use strict";
 var FP = {};
 var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
-var UL = '<svg class="fp-ulsv" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8.5C20 4 38 3 56 4.6S84 8 98 4" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>';
+/* Hervorhebung __Wort__: Schwung (wie Onepage: flacher Bogen, feine Linie) und Kreis als SVG; Marker, Fläche, Rahmen usw. per CSS (Klasse hl-* am Element) */
+var UL = '<svg class="fp-ulsv u" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 0,30 q 50,-35 100,0"/></svg><svg class="fp-ulsv c" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 54,4 C 82,3 99,10 98,21 C 97,33 74,38 48,37 C 20,36 2,30 3,19 C 4,9 22,3 44,4 C 50,4 57,6 62,8"/></svg>';
 var md = function(s){ return esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>'); };
 FP.esc = esc; FP.md = md;
+/* Stile für die Hervorhebung __Wort__ (Design-Tab und pro Überschrift) */
+FP.HL_STYLES = [['swoosh','Schwung'],['line','Linie'],['marker','Marker'],['half','Textmarker'],['pill','Fläche'],['stroke','Rahmen'],['circle','Kreis'],['color','Farbe']];
+
 
 var IC = {
   check:'<svg viewBox="0 0 24 24" fill="none" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -441,6 +445,7 @@ FP.renderBlock = function(b, ctx){
     default: h = '';
   }
   var t0 = (ctx.f && ctx.f.theme) || {}, cl0 = '';
+  if(b.type === 'heading' || b.type === 'text') cl0 += ' hl-' + (p.hl || t0.hlStyle || 'swoosh');
   var st = 'text-align:'+(p.align||'left')+';margin-top:'+(+p.mt||0)+'px;margin-bottom:'+(p.mb!=null&&p.mb!==''?+p.mb+'px':'var(--bk,16px)')+';';
   if(p.ff) st += '--ff:'+FP.fontStack(p.ff)+';--hf:'+FP.fontStack(p.ff)+';font-family:var(--ff);';
   if(p.fw) st += '--hw:'+p.fw+';--tw:'+p.fw+';--bw:'+p.fw+';font-weight:'+p.fw+';';
@@ -457,7 +462,7 @@ FP.renderBlock = function(b, ctx){
   if(boxed || (p.brad !== undefined && p.brad !== '')) st += 'border-radius:'+(p.brad !== undefined && p.brad !== '' ? p.brad+'px' : 'var(--r)')+';';
   if(+p.bwid) st += 'border:'+p.bwid+'px solid '+(p.bc||'color-mix(in srgb,var(--tx) 14%,transparent)')+';';
   if(p.shd) st += 'box-shadow:'+({sm:'0 1px 3px rgba(0,0,0,.08)',md:'0 8px 24px -8px rgba(0,0,0,.18)',lg:'0 20px 50px -14px rgba(0,0,0,.3)'}[p.shd]||'none')+';';
-  if(ctx.chat){ if(FP.CHAT_BOT[b.type]){ cl0 = ' bot'; st += '--d:'+(ctx.chat.i++)+';'; } else cl0 = ' ans'; }
+  if(ctx.chat){ if(FP.CHAT_BOT[b.type]){ cl0 += ' bot'; st += '--d:'+(ctx.chat.i++)+';'; } else cl0 += ' ans'; }
   var cl = 'fp-b'+cl0+(err?' fp-err':'')+(b.type==='summary'&&p.sticky&&!ctx.edit?' fp-stk':'')+(p.half?' half':'')+(p.vis&&p.vis!=='all'?' fp-vis-'+p.vis:'');
   if(p.anim && p.anim !== 'none' && !ctx.edit && !ctx.noAnim){ cl += ' fp-ea-'+p.anim; if(+p.delay) st += 'animation-delay:'+p.delay+'ms;'; }
   return '<div class="'+cl+'" data-bid="'+b.id+'" data-type="'+b.type+'" style="'+st+'"'+(ctx.edit?' draggable="true"':'')+'>'+h+(err?'<div class="fp-errmsg">'+esc(err)+'</div>':'')+'</div>';
@@ -485,7 +490,11 @@ FP.renderShell = function(f, idx, inner, opts){
     if(t.progress === 'steps'){ prog = '<div class="fp-steps">'; for(var i=0;i<n;i++) prog += '<i class="'+(i<=idx?'on':'')+'"></i>'; prog += '</div>'; }
     else prog = '<div class="fp-prog"><i style="width:'+Math.max(pct,4)+'%"></i></div>';
   }
-  var logo = t.logoImg ? '<div class="fp-logo"><img src="'+t.logoImg+'" alt=""'+(+t.logoH?' style="max-height:'+(+t.logoH)+'px;max-width:'+(+t.logoH*5)+'px"':'')+'></div>' : t.logoText ? '<div class="fp-logo">'+esc(t.logoText)+'</div>' : '';
+  var logoIn = t.logoImg ? '<img src="'+t.logoImg+'" alt="'+esc(t.logoText||'Logo')+'"'+(+t.logoH?' style="max-height:'+(+t.logoH)+'px;max-width:'+(+t.logoH*5)+'px"':'')+'>' : t.logoText ? esc(t.logoText) : '';
+  /* Klick aufs Logo: zur ersten Seite des Funnels oder zu einer Adresse (z. B. Website des Betriebs) */
+  var logo = !logoIn ? '' : opts.edit || !t.logoLink ? '<div class="fp-logo">'+logoIn+'</div>'
+    : t.logoLink === 'url' && t.logoUrl ? '<a class="fp-logo fp-logo-l" href="'+esc(t.logoUrl)+'"'+(t.logoNewTab?' target="_blank" rel="noopener"':'')+'>'+logoIn+'</a>'
+    : t.logoLink === 'start' ? '<button type="button" class="fp-logo fp-logo-l" data-act="logo" aria-label="Zur Startseite">'+logoIn+'</button>' : '<div class="fp-logo">'+logoIn+'</div>';
   if(t.chat){
     var cav = t.chatAvatar ? 'background-image:url(&quot;'+esc(t.chatAvatar)+'&quot;)' : '';
     logo = '<div class="fp-chathd"><span class="av" style="'+cav+'">'+(t.chatAvatar ? '' : esc(FP.chatIni(t.chatName)))+'</span><span class="nm"><b>'+esc(t.chatName || t.logoText || 'Dein Team')+'</b><small>'+esc(t.chatRole || 'Antwortet in der Regel sofort')+'</small></span></div>';
@@ -686,6 +695,7 @@ FP.mount = function(root, f, opts){
     var tid = resolveTarget(target), ni = tid ? pages.map(function(p){return p.id;}).indexOf(tid) : st.i + 1;
     if(ni < 0 || ni >= pages.length){ if(!st.done && !hasSubmit) submit(); return true; }
     st.hist.push(st.i); st.i = ni; st.dir = 'fwd';
+    pushHist();
     emit('page', {pageId:pages[ni].id, index:ni});
     if((ni === pages.length-1 || pages[ni].submitOnEnter) && !st.done) submit(true);
     var mo = morphFrom(ni);
@@ -700,7 +710,7 @@ FP.mount = function(root, f, opts){
       mo.style.viewTransitionName = 'fp-hero';
       var vt = document.startViewTransition(function(){ paint(); var hi = root.querySelector('.fp-img'); if(hi) hi.style.viewTransitionName = 'fp-hero'; });
       var clr = function(){ var hi = root.querySelector('.fp-img'); if(hi) hi.style.viewTransitionName = ''; };
-      vt.finished.then(clr, clr);
+      vt.finished.then(clr, clr); if(vt.ready) vt.ready.catch(function(){}); if(vt.updateCallbackDone) vt.updateCallbackDone.catch(function(){});
     } else paint();
     return true;
   }
@@ -722,7 +732,23 @@ FP.mount = function(root, f, opts){
     var src = root.querySelector('.fp-opt.sel .im'); if(!src || !src.style.backgroundImage) return null;
     return (pages[ni].blocks || []).some(function(b){ return b.type === 'image' && b.props && b.props.src; }) ? src : null;
   }
-  function back(){ if(!st.hist.length) return; st.i = st.hist.pop(); st.dir = 'back'; st.errors = {}; render(); }
+  function back(){ if(!st.hist.length) return; if(opts.history && history.state && history.state.fpD === st.hist.length){ history.back(); return; } st.i = st.hist.pop(); st.dir = 'back'; st.errors = {}; render(); }
+  /* Zur ersten Seite (Logo-Klick): Antworten bleiben, „Zurück“ führt wieder hierher */
+  function toStart(){ if(st.i === 0) return; clearTimeout(timer); st.hist.push(st.i); st.i = 0; st.dir = 'back'; st.errors = {}; pushHist(); emit('page', {pageId:pages[0].id, index:0}); render(); var sc = scroller(); if(sc && !opts.inline) sc.scrollTop = 0; }
+  /* Browser-Zurück: jede Funnel-Seite ist ein Eintrag im Verlauf (nur auf der eigenen Funnel-Seite, nicht bei Einbettung auf fremden Websites) */
+  function pushHist(){ if(!opts.history) return; try{ history.pushState(Object.assign({}, history.state, {fpI:st.i, fpD:st.hist.length}), ''); }catch(e){} }
+  if(opts.history){
+    try{ history.replaceState(Object.assign({}, history.state, {fpI:0, fpD:0}), ''); }catch(e){}
+    window.addEventListener('popstate', function(e){
+      var s0 = e.state; if(!s0 || s0.fpI == null || !root.isConnected) return;
+      clearTimeout(timer); st.errors = {};
+      if(s0.fpD < st.hist.length){ while(st.hist.length > s0.fpD) st.i = st.hist.pop(); st.dir = 'back'; }
+      else if(s0.fpD > st.hist.length && pages[s0.fpI]){ st.hist.push(st.i); st.i = s0.fpI; st.dir = 'fwd'; }
+      else return;
+      emit('page', {pageId:pages[st.i].id, index:st.i}); render();
+      var sc = scroller(); if(sc) sc.scrollTop = 0;
+    });
+  }
 
   function submit(silent){
     if(st.done) return;
@@ -773,10 +799,11 @@ FP.mount = function(root, f, opts){
     var el = e.target.closest('[data-act]'); if(!el || !root.contains(el)) return;
     var act = el.getAttribute('data-act'), b = blockById(el.getAttribute('data-bid'));
     if(act === 'consent') return; /* eigener Handler unten */
-    if(!b && act !== 'next' && act !== 'back') return; /* Element gehört nicht (mehr) zu diesem Funnel */
+    if(!b && act !== 'next' && act !== 'back' && act !== 'logo') return; /* Element gehört nicht (mehr) zu diesem Funnel */
     if(act !== 'sigclr') e.preventDefault();
     if(act === 'next') go();
     else if(act === 'back') back();
+    else if(act === 'logo') toStart();
     else if(act === 'btn'){
       var p = b.props, a = p.action || 'next';
       if(a === 'url'){ if(opts.onUrl) opts.onUrl(p.url); else window.location.href = p.url; }

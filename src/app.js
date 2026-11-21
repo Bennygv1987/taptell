@@ -491,8 +491,8 @@ function toHex(v){ v = String(v||''); if(/^#[0-9a-f]{6}$/i.test(v)) return v; if
 
 /* ================= EDITOR ================= */
 var FIELDS = {
-  heading:[['text','textarea','Text','**fett** · ==Akzentfarbe== · __handgezeichnet unterstrichen__ · [[Marker]] · Variablen: {{name}}'],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['size','num','Schriftgröße (px, optional)']],
-  text:[['text','textarea','Text','**fett** · ==Akzent== · __unterstrichen__ · [[Marker]] · {{name}}, {{total}}'],['size','num','Schriftgröße (px, optional)']],
+  heading:[['text','textarea','Text','**fett** · __Hervorhebung__ (Stil im Design-Tab) · ==Akzentfarbe== · [[Marker]] · Variablen: {{name}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['size','num','Schriftgröße (px, optional)']],
+  text:[['text','textarea','Text','**fett** · __Hervorhebung__ · ==Akzent== · [[Marker]] · {{name}}, {{total}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['size','num','Schriftgröße (px, optional)']],
   badge:[['text','text','Text'],['variant','seg','Stil',[['','Soft'],['filled','Gefüllt'],['outline','Rahmen'],['grey','Grau']]],['upper','toggle','Großbuchstaben']],
   compare:[['before','image','Vorher-Bild (links)'],['after','image','Nachher-Bild (rechts)'],['row2','row',[['labelBefore','text','Text links'],['labelAfter','text','Text rechts']]],['ratio','select','Seitenverhältnis',[['4:3','4:3'],['1:1','1:1'],['16:9','16:9'],['3:4','3:4 (hoch)']]],['start','range','Startposition',[5,95,1,'%']],['radius','range','Ecken',[0,40,1]]],
   image:[['src','image','Bild'],['ratio','select','Seitenverhältnis',[['','Feste Höhe'],['2:1','2:1'],['16:9','16:9'],['4:3','4:3'],['1:1','1:1'],['auto','Original']]],['height','range','Höhe',[80,420,10],function(p){ return !p.ratio; }],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text']],
@@ -779,6 +779,12 @@ function animPicker(v, chat){
     + PAGE_ANIMS.map(function(o){ return '<button class="anw'+(v===o[0]?' on':'')+'" role="radio" aria-checked="'+(v===o[0])+'" data-a="pageAnim" data-v="'+o[0]+'"><span class="anp"><span class="fp-anim-'+o[0]+'"><i></i><i></i><i></i></span></span><span class="anl">'+o[1]+'</span></button>'; }).join('')
     + '</div><div class="hint">'+(chat ? 'Im Chat-Modus erscheinen Seiten als Nachrichten, der Übergang gilt dann nur für Seiten ohne Text. ' : '')+'Klick zeigt den Übergang direkt im Handy. Wer am Gerät weniger Bewegung eingestellt hat, sieht immer eine sanfte Einblendung.</div></div>';
 }
+/* Hervorhebung __Wort__: Kacheln mit echter Vorschau (gleiche Klassen wie im Funnel) */
+function hlPicker(v){
+  return '<div class="fld"><label>Hervorhebung <span class="kbd-h">__Wort__</span></label><div class="hlstyles" role="radiogroup" aria-label="Stil der Hervorhebung">'
+    + FP.HL_STYLES.map(function(o){ return '<button class="hlw'+(v===o[0]?' on':'')+'" role="radio" aria-checked="'+(v===o[0])+'" data-a="seg" data-scope="t" data-k="hlStyle" data-v="'+o[0]+'" data-t="string"><span class="hlp hl-'+o[0]+'">'+FP.md('__Wort__')+'</span><span class="hll">'+o[1]+'</span></button>'; }).join('')
+    + '</div><div class="hint">Gilt für alle Überschriften und Texte. Pro Element unter „Stil der Hervorhebung“ änderbar.</div></div>';
+}
 function panelDesign(){
   var t = F().theme;
   var seg = function(k, l, opts){ return field([k,'seg',l,opts], t, 't'); };
@@ -798,7 +804,7 @@ function panelDesign(){
     + rng('scale','Schriftgröße gesamt',[80,125,5,'%',100])
     + seg('headingWeight','Stärke Überschriften',[[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']])
     + '<div class="row2">' + rng('headingLs','Laufweite Überschr.',[-6,10,1,'',-2]) + rng('lineHeight','Zeilenhöhe Text',[1.2,2,0.05,'',1.55]) + '</div>'
-    + tgl('headingUpper','Überschriften in Großbuchstaben') + '</div>';
+    + tgl('headingUpper','Überschriften in Großbuchstaben') + hlPicker(t.hlStyle || 'swoosh') + '</div>';
   h += '<div class="psec"><h5>Buttons</h5>' + field(['btnVariant','select','Standard-Stil',[['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen']]], t, 't')
     + '<div class="row2">' + rng('btnPad','Innen oben/unten',[4,28,1,'px',16]) + rng('btnPadX','Innen links/rechts',[8,48,1,'px',22]) + '</div>'
     + rng('btnRadius','Ecken',[0,40,1,'px',12])
@@ -809,6 +815,9 @@ function panelDesign(){
     + optStylePicker(t.optStyle || 'filled') + '</div>';
   h += '<div class="psec"><h5>Header & Navigation</h5><div class="fld"><label>Logo-Text</label><input class="inp" data-t="logoText" value="'+esc(t.logoText)+'" placeholder="Firmenname"></div>' + field(['logoImg','image','Logo (Bild, ersetzt Text)'], t, 't')
     + seg('logoAlign','Logo-Position',[['center','Mitte'],['left','Links']])
+    + field(['logoLink','select','Klick aufs Logo',[['','Nichts'],['start','Zur ersten Seite des Funnels'],['url','Link öffnen (z. B. Website)']]], t, 't')
+    + (t.logoLink === 'url' ? '<div class="fld"><label>Adresse</label><input class="inp" data-t="logoUrl" value="'+esc(t.logoUrl||'')+'" placeholder="https://www.firma.de" inputmode="url" spellcheck="false"></div>' + tgl('logoNewTab','In neuem Tab öffnen','Sonst verlässt der Besucher den Funnel.') : '')
+    + (t.logoLink === 'start' ? '<div class="hint" style="margin:-4px 0 12px">Bereits gegebene Antworten bleiben erhalten.</div>' : '')
     + (t.logoImg ? rng('logoH','Logo-Höhe',[20,80,1,'px',28]) : '')
     + seg('progress','Fortschritt',[['bar','Balken'],['steps','Schritte'],['none','Aus']])
     + tgl('progressTop','Fortschrittsbalken ganz oben (über dem Logo)')
@@ -994,7 +1003,7 @@ function exportHtml(f){
     + 'var W=F.settings.webhook||"";\n'
     + 'var Q={};try{new URLSearchParams(location.search).forEach(function(v,k){Q[k]=v;});}catch(e){}\n'
     + 'function send(type,payload){if(!W)return;try{fetch(W,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(Object.assign({type:type,funnelId:F.id,funnel:F.name,ts:new Date().toISOString(),url:location.href,utm:Q},payload||{}))}).catch(function(){});}catch(e){}}\n'
-    + 'FP.mount(document.getElementById("funnel"),F,{live:true,\n'
+    + 'FP.mount(document.getElementById("funnel"),F,{live:true,history:true,\n'
     + ' onConsent:function(v){if(v&&v.mkt&&window.__ttPixel)window.__ttPixel();},\n'
     + ' onSubmit:function(lead){if(FP.consentOn(F))lead.consent=FP.getConsent(F);if(lead.onepage){if(W){try{fetch(W,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(lead.onepage)}).catch(function(){});}catch(e){}}}else send("lead",{lead:lead});if(window.fbq)fbq("track","Lead",{value:lead.total||0,currency:F.settings.currency||"EUR"});if(F.settings.redirect)setTimeout(function(){location.href=F.settings.redirect;},1200);},\n'
     + ' onEvent:function(t,d){if(F.settings.trackEvents)send("event",{event:t,data:d});}\n'
