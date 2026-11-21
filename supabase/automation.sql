@@ -90,7 +90,7 @@ create or replace function public.notify_new_lead() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   secret text;
-  base   text := 'https://jxmxbqbustezeyqnxeei.supabase.co';
+  base   text := 'https://ounjoeqznxlnnvcvyaoj.supabase.co';
 begin
   select decrypted_secret into secret from vault.decrypted_secrets where name = 'lead_notify_secret' limit 1;
   if secret is null then return new; end if; -- noch nicht eingerichtet: still überspringen

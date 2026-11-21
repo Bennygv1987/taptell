@@ -841,7 +841,10 @@ window.FP = FP;
   }
   function rpc(C, fn, args){
     if(!C.supabaseUrl) return Promise.resolve(null);
-    return fetch(C.supabaseUrl.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, {method:'POST', headers:{'Content-Type':'application/json', apikey:C.supabaseAnonKey, Authorization:'Bearer ' + C.supabaseAnonKey}, body:JSON.stringify(args)})
+    /* Publishable keys (sb_publishable_…) sind keine JWTs: nur im apikey-Header senden. Alte anon-Keys (JWT) zusätzlich als Bearer. */
+    var h = {'Content-Type':'application/json', apikey:C.supabaseAnonKey};
+    if(/^eyJ/.test(C.supabaseAnonKey || '')) h.Authorization = 'Bearer ' + C.supabaseAnonKey;
+    return fetch(C.supabaseUrl.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, {method:'POST', headers:h, body:JSON.stringify(args)})
       .then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
   }
   var fontsDone = {};

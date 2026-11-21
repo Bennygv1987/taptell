@@ -23,7 +23,7 @@ TapTell ist eine **statische Web-App** (Dashboard `app.html`, Funnel-Laufzeit `f
 | 1.2 | **Domain-Aufteilung festlegen:** `taptell.de` = Landingpage + kurze Funnel-Links (`taptell.de/gehlen`), `app.taptell.de` = Dashboard | 👤 entscheidet |
 | 1.3 | ✅ Erledigt: `/` zeigt auf `taptell.de` die Landingpage. Weil auf Vercel eine vorhandene Datei Vorrang vor Rewrites hat, wird das Dashboard als `app.html` deployt. `index.html` gibt es nur noch lokal (gitignored, in `.vercelignore`). Nach dem ersten Deploy auf einer Preview prüfen, dass die Host-Regeln greifen | 🤖 |
 | 1.4 | ✅ Erledigt: Reservierte Adressen (`RESERVED_SLUGS` in `src/app.js`, u. a. `app`, `api`, `login`, `embed`, `config`, `impressum`, `datenschutz`) lassen sich im Dashboard nicht vergeben. `build.py` überträgt dieselbe Liste in den Slug-Rewrite von `vercel.json`. Offen: dieselbe Sperre zusätzlich in der Datenbank (Check-Constraint), falls Funnels je per API angelegt werden | 🤖 |
-| 1.5 | `config.js` für Produktion füllen: `supabaseUrl: 'https://jxmxbqbustezeyqnxeei.supabase.co'`, `supabaseAnonKey` (öffentlicher anon/publishable key), `publicUrl: 'https://taptell.de'`. Den anon-Key darfst du mir geben, er ist öffentlich. **Nie den service_role-Key** | 👤 Key · 🤖 eintragen |
+| 1.5 | `config.js` für Produktion füllen: `supabaseUrl: 'https://ounjoeqznxlnnvcvyaoj.supabase.co'`, `supabaseAnonKey` (öffentlicher anon/publishable key), `publicUrl: 'https://taptell.de'`. Den anon-Key darfst du mir geben, er ist öffentlich. **Nie den service_role-Key** | 👤 Key · 🤖 eintragen |
 | 1.6 | ✅ Erledigt: `.vercelignore` schließt Quellen, Build-Skript, `design/`, `docs/`, `supabase/`, `.claude/` und die lokale `index.html` aus | 🤖 |
 | 1.7 | ✅ Erledigt: supabase-js fest auf `2.119.0` mit Integritäts-Hash (SRI), in `f.html` und im Dashboard. Zum Aktualisieren URL und Hash in `src/app.js` tauschen, `build.py` übernimmt sie für `f.html` | 🤖 |
 
@@ -31,7 +31,7 @@ TapTell ist eine **statische Web-App** (Dashboard `app.html`, Funnel-Laufzeit `f
 
 ---
 
-## 2. Supabase (Projekt `jxmxbqbustezeyqnxeei`, eu-west-1)
+## 2. Supabase (Projekt „TapTell“ `ounjoeqznxlnnvcvyaoj`)
 
 Die SQL-Dateien liegen bewusst **außerhalb** von `supabase/migrations/`, damit die GitHub-Integration nichts automatisch einspielt.
 
@@ -52,7 +52,7 @@ Die SQL-Dateien liegen bewusst **außerhalb** von `supabase/migrations/`, damit 
 | 2.2.3 | Authentication → URL Configuration: Site URL `https://app.taptell.de`, Redirect-URLs inkl. Vercel-Vorschau | 👤 |
 | 2.2.4 | E-Mail-Vorlagen (Einladung, Passwort) auf Deutsch anpassen, Absender über SMTP (Resend) statt Supabase-Standard (der ist stark limitiert) | 👤 |
 
-### 2.3 Edge Functions (Supabase CLI: `supabase login`, `supabase link --project-ref jxmxbqbustezeyqnxeei`)
+### 2.3 Edge Functions (Supabase CLI: `supabase login`, `supabase link --project-ref ounjoeqznxlnnvcvyaoj`)
 | Function | Deploy | Zweck |
 |---|---|---|
 | `lead-notify` | `supabase functions deploy lead-notify --no-verify-jwt` | E-Mails bei neuem Lead, Bestätigung, Regeln, **Webhooks (inkl. Onepage-Format, server-seitig)** |
