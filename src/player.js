@@ -592,7 +592,10 @@ FP.mount = function(root, f, opts){
     st.hist.push(st.i); st.i = ni; st.dir = 'fwd';
     emit('page', {pageId:pages[ni].id, index:ni});
     if((ni === pages.length-1 || pages[ni].submitOnEnter) && !st.done) submit(true);
-    render(); var sc = scroller(); if(sc) sc.scrollTop = 0;
+    render();
+    /* Eingebettet (inline): nur bis zum Funnel-Anfang scrollen, nie die ganze Seite nach oben */
+    if(opts.inline){ var rt = root.getBoundingClientRect(); if(rt.top < 0) window.scrollTo({top: window.scrollY + rt.top - (opts.scrollOffset || 16), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
+    else { var sc = scroller(); if(sc) sc.scrollTop = 0; }
     return true;
   }
   function back(){ if(!st.hist.length) return; st.i = st.hist.pop(); st.dir = 'back'; st.errors = {}; render(); }

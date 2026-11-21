@@ -50,7 +50,7 @@ dep = d/'deploy'; dep.mkdir(exist_ok=True)
 <title>Funnel</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
-html,body{{margin:0;min-height:100%}}html{{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}}#funnel{{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}}#funnel>.fp{{flex:1}}.tt-msg{{font:15px/1.5 system-ui,sans-serif;color:#6b7280;text-align:center;padding:90px 24px}}
+html,body{{margin:0;min-height:100%}}html{{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}}.tt-embed #funnel{{min-height:0!important}}#funnel{{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}}#funnel>.fp{{flex:1}}.tt-msg{{font:15px/1.5 system-ui,sans-serif;color:#6b7280;text-align:center;padding:90px 24px}}
 {r('player.css')}
 </style>
 <script src="/config.js"></script>
@@ -70,3 +70,9 @@ html,body{{margin:0;min-height:100%}}html{{-webkit-text-size-adjust:100%;overscr
 # fertige Dateien zusätzlich ins Projekt-Root kopieren (dort liegt die deploybare App)
 for n in ('index.html', 'f.html'): shutil.copyfile(dep/n, d.parent/n)
 print('built', (d/'funnel-studio.html').stat().st_size//1024, 'KB')
+
+# ---- embed.js: Einbetten auf Kunden-Websites (Player + CSS + Laufzeit in einer Datei) ----
+import json as _json
+(d.parent/'embed.js').write_text('/* TapTell Embed – automatisch erzeugt aus src/embed.runtime.js, src/player.js, src/player.css */\n'
+  + 'window.__TT_PLAYER_CSS=' + _json.dumps(r('player.css')) + ';\n'
+  + r('player.js') + '\n' + r('embed.runtime.js'))

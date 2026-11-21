@@ -1,1 +1,11 @@
-{ "rewrites": [ { "source": "/f/:slug", "destination": "/f.html" } ] }
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/f/:slug", "destination": "/f.html" },
+    { "source": "/:slug((?!index$|f$|src$|assets$|landing$|design$|supabase$)[a-z0-9][a-z0-9-]*)", "destination": "/f.html" }
+  ],
+  "headers": [
+    { "source": "/embed.js", "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }, { "key": "Cache-Control", "value": "public, max-age=300" }] },
+    { "source": "/config.js", "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }] }
+  ]
+}

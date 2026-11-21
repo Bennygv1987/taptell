@@ -1,7 +1,14 @@
 (function(){
   var C = window.FS_CONFIG || {}, el = document.getElementById('funnel');
   var qs = new URLSearchParams(location.search);
-  var slug = qs.get('s') || (location.pathname.match(/\/f\/([^\/?#]+)/) || [])[1];
+  /* Link-Formen: taptell.de/funnelname · taptell.de/f/funnelname · f.html?s=funnelname */
+  var slug = qs.get('s') || (location.pathname.match(/\/f\/([^\/?#]+)/) || [])[1] || (location.pathname.match(/^\/([a-z0-9][a-z0-9-]*)\/?$/) || [])[1];
+  /* Eingebettet als iFrame: Höhe an die Website melden, damit kein innerer Scrollbalken entsteht */
+  if(qs.get('embed') === '1' || window.parent !== window){
+    document.documentElement.classList.add('tt-embed');
+    var post = function(){ try{ window.parent.postMessage({taptell:'height', h:document.documentElement.scrollHeight}, '*'); }catch(e){} };
+    if(window.ResizeObserver) new ResizeObserver(post).observe(document.documentElement); window.addEventListener('load', post);
+  }
   var msg = function(t){ el.innerHTML = '<div class="tt-msg">' + t + '</div>'; };
   if(!C.supabaseUrl || !window.supabase){ msg('Dieser Funnel ist nicht verfügbar.'); return; }
   var sb = window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey, {auth:{persistSession:false, autoRefreshToken:false}});

@@ -645,3 +645,47 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
   .ph{flex-wrap:wrap}.ph .sp{display:none}.ph>.btn.pri{width:100%;justify-content:center}
 }
 @media (prefers-reduced-motion:reduce){.tabbar button:active{transform:none}}
+
+/* ---- Veröffentlichen → Teilen ---- */
+.sharetabs{margin-bottom:12px;max-width:100%;overflow-x:auto;scrollbar-width:none}.sharetabs::-webkit-scrollbar{display:none}.sharetabs button{flex:none}
+.optcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.optc{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)}
+.optc b{display:flex;align-items:center;gap:7px;font-size:var(--fs-14)}
+.optc span{font-size:var(--fs-13);color:var(--mut);line-height:1.5;flex:1}
+.optc code,.share code{font:500 12px var(--mono);background:var(--hover);padding:1px 5px;border-radius:5px}
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mode{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);transition:border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.mode:active{transform:scale(.98)}
+.mode b{font-size:var(--fs-13);font-weight:600;color:var(--ink)}
+.mode span{font-size:var(--fs-12);color:var(--mut);line-height:1.45}
+.mode.on{border-color:var(--accL);box-shadow:var(--ring)}
+.mode:focus-visible{outline:none;box-shadow:var(--ring)}
+@media (hover:hover) and (pointer:fine){.mode:not(.on):hover{border-color:var(--n300)}}
+@media (max-width:640px){.optcards,.modes{grid-template-columns:minmax(0,1fr)}}
+
+.trend .spark{display:block;width:120px;height:24px;color:var(--acc)}
+
+/* ---- E-Mail-Editor ---- */
+.rte{border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);box-shadow:var(--sh);transition:border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease}
+.rte:focus-within{border-color:var(--accL);box-shadow:var(--ring)}
+.rte-tb{display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:4px;border-bottom:1px solid var(--line2)}
+.rtb{all:unset;box-sizing:border-box;cursor:pointer;height:28px;min-width:28px;padding:0 7px;border-radius:var(--r-sm);display:inline-flex;align-items:center;justify-content:center;gap:5px;font:500 var(--fs-13)/1 var(--ui);color:var(--ink2);transition:background-color var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.rtb:active{transform:scale(.94)}
+.rtb.var{margin-left:auto;font-size:var(--fs-12);color:var(--acc)}
+.rtb.emo{font-size:15px}
+@media (hover:hover) and (pointer:fine){.rtb:hover{background:var(--hover);color:var(--ink)}}
+.rsep{width:1px;height:16px;background:var(--line);margin:0 4px}
+.rte-ed{min-height:150px;max-height:340px;overflow:auto;padding:12px 14px;font-size:var(--fs-14);line-height:1.6;color:var(--ink);outline:none}
+.rte-ed:empty:before{content:"Schreib deine Nachricht …";color:var(--n400)}
+.rte-ed p{margin:0 0 8px}.rte-ed h2{font-size:var(--fs-18);margin:4px 0 8px;letter-spacing:-.01em}.rte-ed h3{font-size:var(--fs-16);margin:4px 0 6px}
+.rte-ed ul,.rte-ed ol{margin:0 0 8px;padding-left:22px}
+.rte-ed a{color:var(--acc)}
+.rte-ed a[data-btn]{display:inline-block;background:var(--a);color:var(--pt);text-decoration:none;font-weight:600;font-size:var(--fs-13);padding:8px 14px;border-radius:var(--r-md);margin:2px 0}
+.rte-ed hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+.rte-ed .rv{display:inline-flex;align-items:center;padding:0 7px;margin:0 1px;border-radius:var(--r-pill);background:var(--accS);color:var(--acc);font-size:.92em;font-weight:500;line-height:1.6;user-select:all;-webkit-user-select:all}
+.emopop{position:fixed;z-index:400;display:grid;grid-template-columns:repeat(8,34px);gap:2px;padding:6px;background:var(--raise);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);animation:emoIn var(--dur-pop) var(--ease-out)}
+.emopop button{all:unset;cursor:pointer;width:34px;height:34px;border-radius:var(--r-sm);display:grid;place-items:center;font-size:19px;transition:background-color var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.emopop button:active{transform:scale(.9)}
+@media (hover:hover) and (pointer:fine){.emopop button:hover{background:var(--hover)}}
+@keyframes emoIn{from{opacity:0;transform:scale(.96)}}
+@media (prefers-reduced-motion:reduce){.emopop{animation:emoFade var(--dur-pop) ease}@keyframes emoFade{from{opacity:0}}}

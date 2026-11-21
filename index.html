@@ -957,6 +957,50 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
 }
 @media (prefers-reduced-motion:reduce){.tabbar button:active{transform:none}}
 
+/* ---- Veröffentlichen → Teilen ---- */
+.sharetabs{margin-bottom:12px;max-width:100%;overflow-x:auto;scrollbar-width:none}.sharetabs::-webkit-scrollbar{display:none}.sharetabs button{flex:none}
+.optcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.optc{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)}
+.optc b{display:flex;align-items:center;gap:7px;font-size:var(--fs-14)}
+.optc span{font-size:var(--fs-13);color:var(--mut);line-height:1.5;flex:1}
+.optc code,.share code{font:500 12px var(--mono);background:var(--hover);padding:1px 5px;border-radius:5px}
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mode{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);transition:border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.mode:active{transform:scale(.98)}
+.mode b{font-size:var(--fs-13);font-weight:600;color:var(--ink)}
+.mode span{font-size:var(--fs-12);color:var(--mut);line-height:1.45}
+.mode.on{border-color:var(--accL);box-shadow:var(--ring)}
+.mode:focus-visible{outline:none;box-shadow:var(--ring)}
+@media (hover:hover) and (pointer:fine){.mode:not(.on):hover{border-color:var(--n300)}}
+@media (max-width:640px){.optcards,.modes{grid-template-columns:minmax(0,1fr)}}
+
+.trend .spark{display:block;width:120px;height:24px;color:var(--acc)}
+
+/* ---- E-Mail-Editor ---- */
+.rte{border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);box-shadow:var(--sh);transition:border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease}
+.rte:focus-within{border-color:var(--accL);box-shadow:var(--ring)}
+.rte-tb{display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:4px;border-bottom:1px solid var(--line2)}
+.rtb{all:unset;box-sizing:border-box;cursor:pointer;height:28px;min-width:28px;padding:0 7px;border-radius:var(--r-sm);display:inline-flex;align-items:center;justify-content:center;gap:5px;font:500 var(--fs-13)/1 var(--ui);color:var(--ink2);transition:background-color var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.rtb:active{transform:scale(.94)}
+.rtb.var{margin-left:auto;font-size:var(--fs-12);color:var(--acc)}
+.rtb.emo{font-size:15px}
+@media (hover:hover) and (pointer:fine){.rtb:hover{background:var(--hover);color:var(--ink)}}
+.rsep{width:1px;height:16px;background:var(--line);margin:0 4px}
+.rte-ed{min-height:150px;max-height:340px;overflow:auto;padding:12px 14px;font-size:var(--fs-14);line-height:1.6;color:var(--ink);outline:none}
+.rte-ed:empty:before{content:"Schreib deine Nachricht …";color:var(--n400)}
+.rte-ed p{margin:0 0 8px}.rte-ed h2{font-size:var(--fs-18);margin:4px 0 8px;letter-spacing:-.01em}.rte-ed h3{font-size:var(--fs-16);margin:4px 0 6px}
+.rte-ed ul,.rte-ed ol{margin:0 0 8px;padding-left:22px}
+.rte-ed a{color:var(--acc)}
+.rte-ed a[data-btn]{display:inline-block;background:var(--a);color:var(--pt);text-decoration:none;font-weight:600;font-size:var(--fs-13);padding:8px 14px;border-radius:var(--r-md);margin:2px 0}
+.rte-ed hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+.rte-ed .rv{display:inline-flex;align-items:center;padding:0 7px;margin:0 1px;border-radius:var(--r-pill);background:var(--accS);color:var(--acc);font-size:.92em;font-weight:500;line-height:1.6;user-select:all;-webkit-user-select:all}
+.emopop{position:fixed;z-index:400;display:grid;grid-template-columns:repeat(8,34px);gap:2px;padding:6px;background:var(--raise);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);animation:emoIn var(--dur-pop) var(--ease-out)}
+.emopop button{all:unset;cursor:pointer;width:34px;height:34px;border-radius:var(--r-sm);display:grid;place-items:center;font-size:19px;transition:background-color var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.emopop button:active{transform:scale(.9)}
+@media (hover:hover) and (pointer:fine){.emopop button:hover{background:var(--hover)}}
+@keyframes emoIn{from{opacity:0;transform:scale(.96)}}
+@media (prefers-reduced-motion:reduce){.emopop{animation:emoFade var(--dur-pop) ease}@keyframes emoFade{from{opacity:0}}}
+
 </style>
 <script src="config.js"></script>
 </head>
@@ -1557,7 +1601,10 @@ FP.mount = function(root, f, opts){
     st.hist.push(st.i); st.i = ni; st.dir = 'fwd';
     emit('page', {pageId:pages[ni].id, index:ni});
     if((ni === pages.length-1 || pages[ni].submitOnEnter) && !st.done) submit(true);
-    render(); var sc = scroller(); if(sc) sc.scrollTop = 0;
+    render();
+    /* Eingebettet (inline): nur bis zum Funnel-Anfang scrollen, nie die ganze Seite nach oben */
+    if(opts.inline){ var rt = root.getBoundingClientRect(); if(rt.top < 0) window.scrollTo({top: window.scrollY + rt.top - (opts.scrollOffset || 16), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
+    else { var sc = scroller(); if(sc) sc.scrollTop = 0; }
     return true;
   }
   function back(){ if(!st.hist.length) return; st.i = st.hist.pop(); st.dir = 'back'; st.errors = {}; render(); }
@@ -2533,6 +2580,7 @@ function copyText(text, msg){
   function fallback(){ var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(x){ toast('Kopieren nicht möglich – bitte manuell markieren'); } ta.remove(); }
 }
 function fmtNum(n){ return (n||0).toLocaleString('de-DE'); }
+function fmtMoney(n){ return FP.money(Math.round(n||0), 'EUR'); }
 function fmtRel(ts){ var d = (Date.now()-ts)/1000; if(d < 60) return 'gerade eben'; if(d < 3600) return 'vor '+Math.floor(d/60)+' Min.'; if(d < 86400) return 'vor '+Math.floor(d/3600)+' Std.'; if(d < 86400*7) return 'vor '+Math.floor(d/86400)+' Tag'+(d>=172800?'en':''); return new Date(ts).toLocaleDateString('de-DE'); }
 function fmtDT(ts){ return new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 var AVC = [['#e3e9ef','#1c2e3d'],['#e2eef6','#1f5c86'],['#e4f1ec','#2a6b52'],['#f4ede2','#7a5424'],['#f3e6e6','#8a3a3a'],['#ebe8f3','#4f437f'],['#f1e7ee','#7d3d66'],['#e3eff0','#2c6467']];
@@ -2733,18 +2781,8 @@ function leadsCsv(){
 }
 
 /* ---------- views: analytics ---------- */
-function viewAnalytics(){
-  var VF = scopedFunnels();
-  if(!S.afid || VF.map(function(x){ return x.id; }).indexOf(S.afid) < 0) S.afid = (VF.filter(function(f){ return f.stats.views; })[0] || VF[0] || {}).id;
-  var f = getF(S.afid);
-  var h = '<div class="page"><div class="ph"><div><h1>Analytics</h1><p>Performance, Drop-off und Antwortverteilung pro Funnel.</p></div><div class="sp"></div><select class="inp" style="width:240px;height:36px" id="afun">'+VF.map(function(x){ return '<option value="'+x.id+'"'+(x.id===S.afid?' selected':'')+'>'+esc(x.name)+'</option>'; }).join('')+'</select></div>';
-  if(!f) return h + '<div class="empty">Noch keine Funnels vorhanden.</div></div>';
-  var ls = leadsOf(f.id), st = f.stats;
-  var avg = ls.length ? ls.reduce(function(a,l){ return a + (l.total||0); }, 0) / ls.length : 0;
-  if(f.demo) h += '<div style="margin:-8px 0 16px"><span class="demo-note">'+I('info',13)+'Dieser Funnel enthält Demo-Daten zur Veranschaulichung.</span></div>';
-  h += '<div class="kpis" style="grid-template-columns:repeat(5,1fr)">'+kpi('Aufrufe', fmtNum(st.views), 'Funnel geöffnet', 'eye')+kpi('Starts', fmtNum(st.starts), (st.views?Math.round(st.starts/st.views*100):0)+' % Start-Rate', 'play')+kpi('Abschlüsse', fmtNum(st.completes), 'Formular abgesendet', 'check')+kpi('Conversion', conv(f).toFixed(1).replace('.',',')+' %', 'Aufruf → Abschluss', 'percent')+kpi('Ø Anfragewert', avg?FP.money(avg):'–', ls.length+' Leads', 'euro')+'</div>';
-  // daily chart
-  var days = []; for(var i=13;i>=0;i--){ var k = dayKey(Date.now()-i*864e5); days.push({k:k, v:(st.daily[k]||{}).v||0, l:(st.daily[k]||{}).l||0}); }
+/* 14-Tage-Balkendiagramm (Aufrufe hell, Leads kräftig) */
+function chart14(days){
   var mx = Math.max.apply(null, days.map(function(d){ return d.v; }).concat([5]));
   var W = 640, H = 220, pad = 28, bw = (W - pad) / days.length;
   var svg = '<svg class="chart" viewBox="0 0 '+W+' '+(H+24)+'" style="width:100%;height:auto;display:block">';
@@ -2755,7 +2793,38 @@ function viewAnalytics(){
     svg += '<rect x="'+(x+w*0.2)+'" y="'+(H-10-lh)+'" width="'+(w*0.6)+'" height="'+Math.max(lh,0)+'" rx="3" class="cl"><title>'+d.k+': '+d.l+' Leads</title></rect>';
     if(ix % 2 === 0) svg += '<text x="'+(x+w/2)+'" y="'+(H+12)+'" text-anchor="middle" font-size="10" class="ctx">'+d.k.slice(8)+'.'+d.k.slice(5,7)+'.</text>';
   });
-  svg += '</svg>';
+  return svg + '</svg>';
+}
+/* Gesamtansicht: alle Funnels des Arbeitsbereichs bzw. des Kunden zusammen */
+function analyticsAll(VF, h){
+  var t = {v:0, s:0, c:0}, rows = [], allLeads = [];
+  VF.forEach(function(f){ var ls = leadsOf(f.id); t.v += f.stats.views; t.s += f.stats.starts; t.c += f.stats.completes; allLeads = allLeads.concat(ls); rows.push({f:f, ls:ls, val:ls.reduce(function(a,l){ return a + (l.total||0); }, 0)}); });
+  var avg = allLeads.length ? allLeads.reduce(function(a,l){ return a + (l.total||0); }, 0) / allLeads.length : 0;
+  h += '<div class="kpis" style="grid-template-columns:repeat(5,minmax(0,1fr))">'+kpi('Aufrufe', fmtNum(t.v), VF.length+' Funnels zusammen', 'eye', series14(VF,'v'))+kpi('Starts', fmtNum(t.s), (t.v?Math.round(t.s/t.v*100):0)+' % Start-Rate', 'play')+kpi('Leads', fmtNum(allLeads.length), 'alle Funnels', 'inbox', series14(VF,'l'))+kpi('Conversion', (t.v?(t.c/t.v*100):0).toFixed(1).replace('.',',')+' %', 'Aufruf → Abschluss', 'percent')+kpi('Ø Anfragewert', fmtMoney(avg), fmtMoney(allLeads.reduce(function(a,l){ return a + (l.total||0); }, 0))+' gesamt', 'receipt')+'</div>';
+  var days = []; for(var i=13;i>=0;i--){ var k = dayKey(Date.now()-i*864e5), dv = 0, dl = 0; VF.forEach(function(f){ var x = (f.stats.daily||{})[k] || {}; dv += x.v || 0; dl += x.l || 0; }); days.push({k:k, v:dv, l:dl}); }
+  h += '<div class="card" style="margin-bottom:16px"><div class="ch"><h3>Letzte 14 Tage</h3><p>alle Funnels</p><span style="flex:1"></span><div class="legend"><span><i class="lv"></i>Aufrufe</span><span><i class="ll"></i>Leads</span></div></div><div class="cb">'+chart14(days)+'</div></div>';
+  rows.sort(function(a, b){ return b.ls.length - a.ls.length || b.f.stats.views - a.f.stats.views; });
+  h += '<div class="card" style="overflow:auto"><div class="ch"><h3>Funnels im Vergleich</h3><p>Klick öffnet die Details</p></div><table class="t"><thead><tr><th>Funnel</th><th>Aufrufe</th><th>Starts</th><th>Leads</th><th>Conversion</th><th>Ø Wert</th><th style="width:140px">Trend (14 T.)</th></tr></thead><tbody>'
+    + rows.map(function(r){ var f = r.f, cv = f.stats.views ? f.stats.completes / f.stats.views * 100 : 0; return '<tr data-a="afid" data-id="'+f.id+'"><td><div class="nm">'+esc(f.name)+'</div><div class="sub">'+(f.status==='live'?'<span class="pill live" style="background:none;padding:0">Live</span>':'Entwurf')+(f.clientId && isAdmin() && !scopeId() && clientById(f.clientId) ? ' · '+esc(clientById(f.clientId).name) : '')+'</div></td><td>'+fmtNum(f.stats.views)+'</td><td>'+fmtNum(f.stats.starts)+'</td><td><b>'+r.ls.length+'</b></td><td>'+cv.toFixed(1).replace('.',',')+' %</td><td>'+(r.ls.length ? fmtMoney(r.val / r.ls.length) : '–')+'</td><td class="trend">'+spark(series14([f],'v'))+'</td></tr>'; }).join('')
+    + '</tbody></table></div>';
+  return h + '</div>';
+}
+function viewAnalytics(){
+  var VF = scopedFunnels(), multi = VF.length > 1;
+  if(S.afid === 'all' && !multi) S.afid = null;
+  if(S.afid !== 'all' && (!S.afid || VF.map(function(x){ return x.id; }).indexOf(S.afid) < 0)) S.afid = multi ? 'all' : (VF[0] || {}).id;
+  var f = S.afid === 'all' ? null : getF(S.afid);
+  var who = isAdmin() && scopeId() ? scopeLabel() : '';
+  var h = '<div class="page"><div class="ph"><div><h1>Analytics'+(who?' <span style="color:var(--mut);font-weight:500">· '+esc(who)+'</span>':'')+'</h1><p>'+(S.afid==='all' ? 'Alle Funnels'+(who?' von '+esc(who):'')+' zusammen – und im Vergleich.' : 'Performance, Drop-off und Antwortverteilung pro Funnel.')+'</p></div><div class="sp"></div><select class="inp" style="width:240px;height:36px" id="afun">'+(multi?'<option value="all"'+(S.afid==='all'?' selected':'')+'>Alle Funnels ('+VF.length+')</option>':'')+VF.map(function(x){ return '<option value="'+x.id+'"'+(x.id===S.afid?' selected':'')+'>'+esc(x.name)+'</option>'; }).join('')+'</select></div>';
+  if(!VF.length) return h + '<div class="empty">Noch keine Funnels vorhanden.</div></div>';
+  if(S.afid === 'all') return analyticsAll(VF, h);
+  var ls = leadsOf(f.id), st = f.stats;
+  var avg = ls.length ? ls.reduce(function(a,l){ return a + (l.total||0); }, 0) / ls.length : 0;
+  if(f.demo) h += '<div style="margin:-8px 0 16px"><span class="demo-note">'+I('info',13)+'Dieser Funnel enthält Demo-Daten zur Veranschaulichung.</span></div>';
+  h += '<div class="kpis" style="grid-template-columns:repeat(5,1fr)">'+kpi('Aufrufe', fmtNum(st.views), 'Funnel geöffnet', 'eye')+kpi('Starts', fmtNum(st.starts), (st.views?Math.round(st.starts/st.views*100):0)+' % Start-Rate', 'play')+kpi('Abschlüsse', fmtNum(st.completes), 'Formular abgesendet', 'check')+kpi('Conversion', conv(f).toFixed(1).replace('.',',')+' %', 'Aufruf → Abschluss', 'percent')+kpi('Ø Anfragewert', avg?FP.money(avg):'–', ls.length+' Leads', 'euro')+'</div>';
+  // daily chart
+  var days = []; for(var i=13;i>=0;i--){ var k = dayKey(Date.now()-i*864e5); days.push({k:k, v:(st.daily[k]||{}).v||0, l:(st.daily[k]||{}).l||0}); }
+  var svg = chart14(days);
   h += '<div class="charts"><div class="card"><div class="ch"><h3>Letzte 14 Tage</h3><span style="flex:1"></span><div class="legend"><span><i class="lv"></i>Aufrufe</span><span><i class="ll"></i>Leads</span></div></div><div class="cb">'+svg+'</div></div>';
   // dropoff
   var first = st.pages[f.pages[0].id] || st.views || 0;
@@ -3071,7 +3140,7 @@ function panelSettings(){
   var keys = []; FP.allBlocks(f).forEach(function(b){ if(['choice','input','slider','rating','calendar','checkbox','upload','signature'].indexOf(b.type) >= 0 && b.props.key) keys.push(b.props.key); });
   ensureSlug(f);
   var h = '<div class="psec"><h5>Allgemein</h5><div class="fld"><label>Funnel-Name</label><input class="inp" data-fn value="'+esc(f.name)+'"></div>'
-    + '<div class="fld"><label>Link-Adresse</label><div class="slugf"><span>/f/</span><input data-fslug value="'+esc(f.slug)+'" spellcheck="false"></div><div class="hint" id="fslugh">'+esc(publicUrl(f))+'</div></div>'
+    + '<div class="fld"><label>Link-Adresse</label><div class="slugf"><span>/</span><input data-fslug value="'+esc(f.slug)+'" spellcheck="false"></div><div class="hint" id="fslugh">'+esc(publicUrl(f))+'</div></div>'
     + '<div class="fld"><label>Status</label><div class="segf"><button data-a="fstatus" data-v="draft" class="'+(f.status!=='live'?'on':'')+'">Entwurf</button><button data-a="fstatus" data-v="live" class="'+(f.status==='live'?'on':'')+'">Live</button></div></div></div>';
   h += '<div class="psec"><h5>'+I('folder',13)+'Kunde & Freigabe</h5><div class="fld"><label>Kunde</label><select class="inp" data-fclient>'+'<option value="">– Intern (kein Kunde) –</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(f.clientId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select></div>'
     + (f.clientId ? '<label class="tgl"><span>Für den Kunden freigeschaltet</span><input type="checkbox" data-fshare'+(f.shared?' checked':'')+'><span class="sw"></span></label><div class="hint">Freigeschaltet sieht der Kunde in seinem Login den Funnel, alle Kontakte und die Analytics. Bearbeiten kannst nur du.</div>' : '<div class="hint">Ordne den Funnel einem Kunden zu, um ihn für dessen Login freizuschalten.</div>') + '</div>';
@@ -3376,10 +3445,33 @@ function funnelChecks(f){
   return out;
 }
 function publishModal(f){
-  var adv = REMOTE ? 'qr' : 'html', open = false;
+  var adv = REMOTE ? 'qr' : 'html', open = false, share = 'link', em = {mode:'inline', width:'', offset:'', label:'Jetzt starten'};
+  /* Einbetten-Code: Container + Skript – der Funnel erscheint direkt im Seiteninhalt (Shadow DOM, kein iFrame) */
+  var embedCode = function(){
+    var at = em.mode === 'popup' ? ' data-mode="popup" data-label="'+esc(em.label||'Jetzt starten')+'"' : em.mode === 'iframe' ? ' data-mode="iframe"' : '';
+    if(em.mode !== 'popup' && +em.width) at += ' data-max-width="'+(+em.width)+'"';
+    if(em.mode === 'inline' && +em.offset) at += ' data-offset="'+(+em.offset)+'"';
+    return '<div data-taptell="'+(f.slug||slug(f.name))+'"'+at+'></div>\n<script src="'+linkBase()+'/embed.js" async><\/script>';
+  };
+  var shareBody = function(){
+    var tabs = '<div class="seg sharetabs">'+[['link','TapTell-Link','link'],['domain','Kundendomain','globe'],['embed','Auf Website einbinden','code']].map(function(x){ return '<button class="'+(share===x[0]?'on':'')+'" data-share="'+x[0]+'">'+I(x[2],13)+x[1]+'</button>'; }).join('')+'</div>';
+    var url = publicUrl(f), t = '';
+    if(share === 'link'){
+      t = '<div class="share"><div class="slugf ro"><span>'+esc(url)+'</span></div><button class="btn sm" data-copyurl>'+I('copy',13)+'Kopieren</button>'+(REMOTE?'<a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener">'+I('ext',13)+'Öffnen</a>':'')+'</div>'
+        + '<p class="hint">Kurzer Link für WhatsApp, E-Mail, Social Ads und QR-Codes. Die Adresse änderst du unter <b>Funnel → Link-Adresse</b>.'+(REMOTE?'':' Im Demo-Modus ist der Link noch nicht erreichbar.')+'</p>';
+    } else if(share === 'domain'){
+      t = '<div class="optcards"><div class="optc"><b>'+I('globe',14)+'Eigene Subdomain</b><span>z. B. <code>konfigurator.kunde.de</code> – der Funnel läuft unter der Adresse des Kunden, inklusive SSL. Der Kunde setzt einmal einen DNS-Eintrag (CNAME).</span><button class="btn sm" data-share-domain>'+I('settings',13)+'Domain verbinden</button></div>'
+        + '<div class="optc"><b>'+I('link',14)+'Pfad auf der Kunden-Website</b><span>z. B. <code>kunde.de/konfigurator</code> – dafür den Funnel auf dieser Seite <b>einbinden</b> oder die Seite auf den TapTell-Link weiterleiten.</span><button class="btn sm" data-share="embed">'+I('code',13)+'Einbinden</button></div></div>';
+    } else {
+      t = '<div class="modes">'+[['inline','Im Seiteninhalt','Fügt sich nahtlos in die Website ein – wie bei Tischtrend. Empfohlen.'],['popup','Button mit Popup','Ein Button öffnet den Funnel als Fenster, auf dem Handy als Vollbild.'],['iframe','iFrame','Klassisch, passt die Höhe automatisch an. Für Baukästen ohne Skripte.']].map(function(x){ return '<button class="mode'+(em.mode===x[0]?' on':'')+'" data-emode="'+x[0]+'"><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>'
+        + '<div class="row3" style="margin-top:12px">'+(em.mode==='popup' ? '<div class="fld" style="grid-column:1/-1"><label>Button-Text</label><input class="inp" data-em="label" value="'+esc(em.label)+'"></div>' : '<div class="fld"><label>Max. Breite (px)</label><input class="inp" type="number" data-em="width" value="'+esc(em.width)+'" placeholder="volle Breite"></div>'+(em.mode==='inline'?'<div class="fld"><label>Abstand oben (px)</label><input class="inp" type="number" data-em="offset" value="'+esc(em.offset)+'" placeholder="16"><div class="hint">Höhe einer fixen Kopfzeile</div></div>':''))+'</div>'
+        + '<textarea class="code" readonly id="embcode" style="height:74px">'+esc(embedCode())+'</textarea><div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span class="hint" style="margin:0;flex:1">WordPress: Block „Individuelles HTML“ · Wix/Jimdo: Element „HTML/Code einbetten“.</span><button class="btn sm" data-embcopy>'+I('copy',13)+'Code kopieren</button></div>';
+    }
+    return tabs + '<div id="shareb">' + t + '</div>';
+  };
   var advBody = function(){
     var html = exportHtml(f), kb = Math.round(html.length/1024);
-    var t = '<div class="tabs2"><button class="'+(adv==='qr'?'on':'')+'" data-pt="qr">QR-Code</button><button class="'+(adv==='html'?'on':'')+'" data-pt="html">Eigene Domain (HTML)</button><button class="'+(adv==='embed'?'on':'')+'" data-pt="embed">Einbetten</button><button class="'+(adv==='hook'?'on':'')+'" data-pt="hook">Webhook-Daten</button><button class="'+(adv==='json'?'on':'')+'" data-pt="json">JSON</button></div>';
+    var t = '<div class="tabs2"><button class="'+(adv==='qr'?'on':'')+'" data-pt="qr">QR-Code</button><button class="'+(adv==='html'?'on':'')+'" data-pt="html">Eigene Domain (HTML)</button><button class="'+(adv==='hook'?'on':'')+'" data-pt="hook">Webhook-Daten</button><button class="'+(adv==='json'?'on':'')+'" data-pt="json">JSON</button></div>';
     if(adv === 'qr'){ var qu = REMOTE ? publicUrl(f) : (f.settings.hostedUrl || ''); t += '<div class="qrwrap"><div id="qrbox" class="qrbox">'+(qu?'':'<span>Link eingeben</span>')+'</div><div style="flex:1"><div class="fld"><label>Ziel-URL</label><input class="inp" id="qrurl" value="'+esc(qu)+'" placeholder="https://funnels.deine-domain.de/f/…"'+(REMOTE?' readonly':'')+'><div class="hint">'+(REMOTE?'Der QR-Code führt direkt zum Live-Funnel.':'Im Demo-Modus: die Adresse, unter der du die exportierte HTML-Datei hostest.')+'</div></div><p class="hint">Ideal für Flyer, Rechnungen, Aufsteller oder NFC-Tags. Tipp: Hänge <code>?utm_source=flyer</code> an, um Quellen zu unterscheiden.</p><div id="qrdl"></div></div></div>'; }
     else if(adv === 'html') t += '<div class="callout">'+I('info')+'<div>Eigenständige Datei ('+kb+' KB) mit Design, Logik und Preisberechnung. Als <b>index.html</b> auf Netlify, Vercel, Cloudflare Pages oder deinen Webspace legen. '+(f.settings.webhook?'Anfragen gehen an deinen Webhook.':'<b>Tipp:</b> Hinterlege unter „Funnel → Integrationen“ einen Webhook, damit Anfragen ankommen.')+'</div></div><textarea class="code" readonly id="pubcode" style="height:200px">'+esc(html)+'</textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn sm" data-pcopy>'+I('copy',13)+'HTML kopieren</button></div>';
     else if(adv === 'embed'){ var eu = REMOTE ? publicUrl(f) : 'https://deine-domain.de/'+slug(f.name)+'/'; t += '<p style="margin:0 0 10px;color:var(--ink2)">Per iFrame in eine bestehende Website einbinden:</p><textarea class="code" readonly id="pubcode" style="height:90px">&lt;iframe src="'+esc(eu)+'" style="width:100%;height:100vh;border:0" allow="fullscreen"&gt;&lt;/iframe&gt;</textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn sm" data-pcopy>'+I('copy',13)+'Code kopieren</button></div>'; }
@@ -3399,20 +3491,25 @@ function publishModal(f){
       + '<div class="golive '+(live?'on':'')+'">'+(live
         ? '<span class="dot"></span><div style="flex:1"><b>Live</b><span>Seit dem Live-Schalten werden Aufrufe und Anfragen gezählt.</span></div><button class="btn sm" data-ps="draft">Offline nehmen</button>'
         : '<div style="flex:1"><b>Entwurf</b><span>'+(errs?'Behebe zuerst die markierten Probleme.':'Bereit zum Veröffentlichen.')+'</span></div><button class="btn pri" data-ps="live"'+(errs?' disabled':'')+'>'+I('rocket',14)+'Jetzt live schalten</button>')+'</div></div>';
-    h += '<div class="pubstep"><div class="psh"><span class="pn'+(live?' ok':'')+'">3</span><div><b>Teilen</b><span>'+(REMOTE?'Link, QR-Code oder Einbettung.':'Im Demo-Modus als HTML-Datei auf deiner Domain hosten.')+'</span></div></div>';
-    if(REMOTE){ var url = publicUrl(f); h += '<div class="share"><div class="slugf ro"><span>'+esc(url)+'</span></div><button class="btn sm" data-copyurl>'+I('copy',13)+'Kopieren</button><a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener">'+I('ext',13)+'Öffnen</a></div>'+(live?'':'<div class="hint" style="margin-top:6px">Der Link funktioniert, sobald der Funnel live ist.</div>'); }
-    h += '<details class="advx"'+(open?' open':'')+'><summary>'+I('code',13)+'Erweitert: '+(REMOTE?'QR-Code, ':'QR-Code, ')+'HTML-Export, Einbetten, Webhook, JSON</summary><div id="advb">'+advBody()+'</div></details></div>';
+    h += '<div class="pubstep"><div class="psh"><span class="pn'+(live?' ok':'')+'">3</span><div><b>Teilen</b><span>Per Link, unter der Domain des Kunden oder direkt auf seiner Website.</span></div></div>';
+    h += '<div id="sharewrap">' + shareBody() + '</div>' + (REMOTE && !live ? '<div class="hint" style="margin-top:6px">Link und Einbindung funktionieren, sobald der Funnel live ist.</div>' : '');
+    h += '<details class="advx"'+(open?' open':'')+'><summary>'+I('code',13)+'Erweitert: '+(REMOTE?'QR-Code, ':'QR-Code, ')+'HTML-Export, Webhook, JSON</summary><div id="advb">'+advBody()+'</div></details></div>';
     return h;
   };
   var m = modal({title:'Veröffentlichen', sub:'„'+f.name+'“ prüfen, live schalten und teilen.', size:'mid', body:'<div id="pubb">'+body()+'</div>', foot:'<button class="btn" data-close>Fertig</button>',
     onOpen:function(el, close){
       var rerender = function(){ el.querySelector('#pubb').innerHTML = body(); if(open && adv === 'qr') drawQR(el.querySelector('#qrurl') && el.querySelector('#qrurl').value); };
       el.addEventListener('toggle', function(e){ if(e.target.classList && e.target.classList.contains('advx')){ open = e.target.open; if(open && adv === 'qr') drawQR(el.querySelector('#qrurl').value); } }, true);
+      el.addEventListener('input', function(e){ var k = e.target.getAttribute && e.target.getAttribute('data-em'); if(k){ em[k] = e.target.value; var c = el.querySelector('#embcode'); if(c) c.value = embedCode(); } });
       el.addEventListener('click', function(e){
         var pt = e.target.closest('[data-pt]'); if(pt){ adv = pt.getAttribute('data-pt'); el.querySelector('#advb').innerHTML = advBody(); if(adv === 'qr') drawQR(el.querySelector('#qrurl').value); return; }
         var ps = e.target.closest('[data-ps]'); if(ps){ f.status = ps.getAttribute('data-ps'); save(); if(S.view === 'editor'){ var pill = $('.etop .pill'); if(pill){ pill.className = 'pill '+(f.status==='live'?'live':'draft'); pill.textContent = f.status==='live'?'Live':'Entwurf'; } } toast(f.status==='live'?'Funnel ist live':'Funnel ist wieder ein Entwurf'); rerender(); return; }
         var g = e.target.closest('[data-goto]'); if(g){ close(); if(S.view === 'editor' && S.fid === f.id){ selectPage(+g.getAttribute('data-goto')); } else { go('editor', f.id); S.pi = +g.getAttribute('data-goto'); renderEditor(); } return; }
         var gt = e.target.closest('[data-gotab]'); if(gt){ close(); if(!(S.view === 'editor' && S.fid === f.id)) go('editor', f.id); S.rtab = 'set'; renderRight(); return; }
+        var sh = e.target.closest('[data-share]'); if(sh){ share = sh.getAttribute('data-share'); el.querySelector('#sharewrap').innerHTML = shareBody(); return; }
+        var emb = e.target.closest('[data-emode]'); if(emb){ em.mode = emb.getAttribute('data-emode'); el.querySelector('#sharewrap').innerHTML = shareBody(); return; }
+        if(e.target.closest('[data-embcopy]')){ copyText(embedCode(), 'Einbinde-Code kopiert'); return; }
+        if(e.target.closest('[data-share-domain]')){ close(); autoModal(f, 'domain'); return; }
         if(e.target.closest('[data-copyurl]')) copyText(publicUrl(f), 'Link kopiert');
         if(e.target.closest('[data-pcopy]')) copyText(el.querySelector('#pubcode').value, adv==='html'?'HTML kopiert – als index.html speichern':'Kopiert');
       });
@@ -3456,19 +3553,109 @@ function sampleVars(f){
   return v;
 }
 function renderTpl(t, v){ return String(t||'').replace(/\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g, function(m, k, fb){ return v[k] ? v[k] : (fb||'').trim(); }); }
+/* ================= E-MAIL-EDITOR (formatierbar, Emojis, Platzhalter) =================
+   Gespeichert wird bereinigtes HTML mit {{platzhalter}} (Positivliste: p, br, b/strong, i/em, u, a, ul/ol/li, h2/h3, hr).
+   mailRender() macht daraus E-Mail-taugliches HTML mit Inline-Styles – identisch in der Edge Function. */
+var MAIL_EMOJI = ['😊','🙌','🎉','✅','👍','🙏','👋','⭐','💚','❤️','🔥','🚀','✨','💡','👉','📞','📧','💬','📅','⏰','📍','🏠','🛠️','🪵','🌿','☀️','💶','📝','🤝','📎','🎁','🏆'];
+function mailVars(f){
+  var out = [{key:'vorname', label:'Vorname'},{key:'name', label:'Name'},{key:'email', label:'E-Mail'},{key:'telefon', label:'Telefon'},{key:'funnel', label:'Funnel-Name'},{key:'total', label:'Preis'},{key:'datum', label:'Datum'},{key:'link', label:'Link zum Dashboard'}];
+  FP.vars(f).forEach(function(v){ if(v.type !== 'calc' && !out.some(function(x){ return x.key === v.key; })) out.push({key:v.key, label:v.label}); });
+  return out;
+}
+function mailSanitize(html){
+  var box = document.createElement('div'); box.innerHTML = html || '';
+  var ok = {P:1, BR:1, B:1, STRONG:1, I:1, EM:1, U:1, A:1, UL:1, OL:1, LI:1, H2:1, H3:1, HR:1};
+  (function walk(n){ Array.prototype.slice.call(n.childNodes).forEach(function(c){
+    if(c.nodeType === 3) return;
+    if(c.nodeType !== 1){ c.remove(); return; }
+    walk(c);
+    var tag = c.tagName;
+    if(tag === 'DIV'){ var pp = document.createElement('p'); while(c.firstChild) pp.appendChild(c.firstChild); c.replaceWith(pp); return; }
+    if(!ok[tag]){ while(c.firstChild) c.parentNode.insertBefore(c.firstChild, c); c.remove(); return; }
+    Array.prototype.slice.call(c.attributes).forEach(function(at){ if(!(tag === 'A' && (at.name === 'href' || at.name === 'data-btn'))) c.removeAttribute(at.name); });
+    if(tag === 'A' && !/^(https?:|mailto:|tel:|\{\{)/i.test(c.getAttribute('href') || '')) c.removeAttribute('href');
+  }); })(box);
+  return box.innerHTML.replace(/<p><br><\/p>$/,'').trim();
+}
+/* {{schluessel}} im Text als nicht editierbaren Chip anzeigen */
+function mailToEditor(html, f){
+  var labels = {}; mailVars(f).forEach(function(v){ labels[v.key] = v.label; });
+  var box = document.createElement('div'); box.innerHTML = html || '';
+  var re = /\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g;
+  (function walk(n){ Array.prototype.slice.call(n.childNodes).forEach(function(c){
+    if(c.nodeType === 1){ walk(c); return; }
+    if(c.nodeType !== 3 || !re.test(c.nodeValue)) return; re.lastIndex = 0;
+    var frag = document.createDocumentFragment(), txt = c.nodeValue, last = 0, m;
+    while((m = re.exec(txt))){ frag.appendChild(document.createTextNode(txt.slice(last, m.index))); var sp = document.createElement('span'); sp.className = 'rv'; sp.contentEditable = 'false'; sp.setAttribute('data-v', m[1] + (m[2] != null ? '|' + m[2] : '')); sp.textContent = labels[m[1]] || m[1]; frag.appendChild(sp); last = m.index + m[0].length; }
+    frag.appendChild(document.createTextNode(txt.slice(last))); c.replaceWith(frag);
+  }); })(box);
+  return box.innerHTML;
+}
+function mailFromEditor(ed){
+  var box = ed.cloneNode(true);
+  box.querySelectorAll('span.rv').forEach(function(sp){ sp.replaceWith(document.createTextNode('{{' + sp.getAttribute('data-v') + '}}')); });
+  return mailSanitize(box.innerHTML);
+}
+function mailRender(html, v, primary){
+  var P = primary || '#18181b';
+  var out = String(html || '').replace(/\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g, function(m, k, fb){ return esc(v[k] ? v[k] : (fb || '').trim()); });
+  return out
+    .replace(/<p>/g, '<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#3d424d">')
+    .replace(/<h2>/g, '<h2 style="margin:0 0 10px;font-size:20px;line-height:1.3;color:#12141a">')
+    .replace(/<h3>/g, '<h3 style="margin:0 0 8px;font-size:17px;line-height:1.35;color:#12141a">')
+    .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 12px;padding-left:22px;font-size:15px;line-height:1.6;color:#3d424d">')
+    .replace(/<hr>/g, '<hr style="border:0;border-top:1px solid #e6e8ec;margin:18px 0">')
+    .replace(/<a data-btn="[^"]*" href="([^"]*)">|<a href="([^"]*)" data-btn="[^"]*">/g, function(m, h1, h2){ return '<a href="' + (h1 || h2) + '" style="display:inline-block;background:' + P + ';color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 18px;border-radius:8px;margin:4px 0 12px">'; })
+    .replace(/<a href="([^"]*)">/g, '<a href="$1" style="color:' + P + '">');
+}
+function plainToMail(t){ return t ? '<p>' + esc(t).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>') + '</p>' : ''; }
+function rte(path, html, f){
+  var b = function(cmd, ic, title, extra){ return '<button type="button" class="rtb'+(extra||'')+'" data-rc="'+cmd+'" title="'+title+'" tabindex="-1">'+ic+'</button>'; };
+  return '<div class="rte" data-rte="'+path+'"><div class="rte-tb">'
+    + b('bold','<b>B</b>','Fett (⌘B)') + b('italic','<i>I</i>','Kursiv (⌘I)') + b('underline','<u>U</u>','Unterstrichen') + '<span class="rsep"></span>'
+    + b('h2','<b>Ü</b>','Überschrift') + b('ul',I('list',14),'Liste') + b('ol','1.','Nummerierte Liste') + '<span class="rsep"></span>'
+    + b('link',I('link',14),'Link') + b('btn',I('pointer',14),'Button einfügen') + b('hr',I('minus',14),'Trennlinie') + '<span class="rsep"></span>'
+    + b('emoji','😊','Emoji', ' emo') + b('var',I('user',13)+'<span>Platzhalter</span>','Eingabe des Interessenten einfügen', ' var')
+    + '</div><div class="rte-ed" contenteditable="true" spellcheck="true">'+mailToEditor(html, f)+'</div></div>';
+}
+function saveSel(ed){ var sl = window.getSelection(); if(!sl.rangeCount) return null; var rg = sl.getRangeAt(0); return ed && !ed.contains(rg.commonAncestorContainer) ? null : rg.cloneRange(); }
+function restoreSel(rg){ if(!rg) return; var sl = window.getSelection(); sl.removeAllRanges(); sl.addRange(rg); }
+/* Emoji-Auswahl: wächst aus dem Knopf, schließt bei Klick daneben oder Esc */
+function emojiPop(btn, fn){
+  var old = document.querySelector('.emopop'); if(old){ old.remove(); if(old._for === btn) return; }
+  var p = document.createElement('div'); p.className = 'emopop'; p._for = btn;
+  p.innerHTML = MAIL_EMOJI.map(function(e){ return '<button type="button" data-em="'+e+'">'+e+'</button>'; }).join('');
+  document.body.appendChild(p);
+  var r = btn.getBoundingClientRect(), w = p.offsetWidth, x = Math.min(Math.max(8, r.left), innerWidth - w - 8), up = r.bottom + p.offsetHeight + 12 > innerHeight;
+  p.style.left = x + 'px'; p.style.top = (up ? r.top - p.offsetHeight - 6 : r.bottom + 6) + 'px';
+  p.style.transformOrigin = (r.left + r.width/2 - x) + 'px ' + (up ? '100%' : '0');
+  var close = function(){ p.remove(); document.removeEventListener('mousedown', out, true); document.removeEventListener('keydown', esc_); };
+  var out = function(e){ if(!p.contains(e.target) && e.target !== btn && !btn.contains(e.target)) close(); };
+  var esc_ = function(e){ if(e.key === 'Escape') close(); };
+  p.addEventListener('mousedown', function(e){ e.preventDefault(); });
+  p.addEventListener('click', function(e){ var b = e.target.closest('[data-em]'); if(b){ fn(b.getAttribute('data-em')); close(); } });
+  setTimeout(function(){ document.addEventListener('mousedown', out, true); document.addEventListener('keydown', esc_); }, 0);
+}
+function btnBox(cb){
+  modal({title:'Button einfügen', sub:'Erscheint in der Mail als farbiger Button in deiner Funnel-Farbe.', body:'<div class="fld"><label>Beschriftung</label><input class="inp" id="bbl" placeholder="Zu unserer Website"></div><div class="fld"><label>Ziel-Adresse</label><input class="inp" id="bbu" placeholder="https://… , mailto:… oder tel:…"></div>',
+    foot:'<button class="btn" data-close>Abbrechen</button><button class="btn pri" data-bbok>Einfügen</button>',
+    onOpen:function(el, close){ setTimeout(function(){ el.querySelector('#bbl').focus(); }, 30); el.querySelector('[data-bbok]').onclick = function(){ var l = el.querySelector('#bbl').value.trim(), u = el.querySelector('#bbu').value.trim(); if(!l || !u) return toast('Bitte Beschriftung und Adresse eingeben'); if(!/^(https?:|mailto:|tel:)/i.test(u)) u = 'https://' + u; close(); cb(l, u); }; }});
+}
 function emailPreview(f, kind){
   var a = auto(f), v = sampleVars(f), t = f.theme || {}, p = t.primary || '#1c2e3d';
   var c = kind === 'confirm' ? a.confirm : a.notify;
-  var subject = renderTpl(c.subject, v), intro = renderTpl(c.body, v);
+  var subject = renderTpl(c.subject, v), intro = renderTpl(c.body, v), introHtml = mailRender(c.html || plainToMail(c.body), v, p);
   var rows = FP.vars(f).filter(function(x){ return x.type !== 'calc' && (kind !== 'confirm' || ['email','telefon'].indexOf(x.key) < 0); }).slice(0, 8).map(function(x){ return '<tr><td style="padding:9px 0;border-bottom:1px solid #eef0f3;color:#737985;font-size:13px;width:42%">'+esc(x.label)+'</td><td style="padding:9px 0;border-bottom:1px solid #eef0f3;font-size:14px;color:#12141a">'+esc(v[x.key])+'</td></tr>'; }).join('');
+  if(c.fields === false) rows = '';
   var logo = t.logoImg && !/^data:/.test(t.logoImg) ? t.logoImg : (t.logoImg || '');
-  return {subject:subject, html:'<!doctype html><html><body style="margin:0;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif"><div style="padding:24px 12px"><div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6e8ec"><div style="height:4px;background:'+esc(p)+'"></div><div style="padding:24px 28px 6px">'+(logo?'<img src="'+esc(logo)+'" style="height:32px;display:block;margin-bottom:18px" alt="">':'')+'<h1 style="margin:0 0 8px;font-size:19px;line-height:1.3;color:#12141a">'+esc(subject)+'</h1><p style="margin:0;font-size:14.5px;line-height:1.55;color:#3d424d;white-space:pre-line">'+esc(intro)+'</p></div>'+(rows?'<div style="padding:12px 28px 0"><table style="width:100%;border-collapse:collapse">'+rows+'</table></div>':'')+'<div style="padding:12px 28px 0"><div style="background:#f5f6f8;border-radius:8px;padding:11px 13px;font-size:14px;color:#3d424d">Gesamt: <b style="color:#12141a">'+esc(v.total)+'</b></div></div>'+(kind!=='confirm'?'<div style="padding:20px 28px 0"><span style="display:inline-block;background:'+esc(p)+';color:#fff;font-weight:600;font-size:14px;padding:11px 16px;border-radius:8px">Im Dashboard öffnen</span></div>':'')+'<div style="padding:24px 28px;font-size:12px;color:#9aa0ab">'+(kind==='confirm'?esc(f.name):'Gesendet mit TapTell')+'</div></div></div></body></html>'};
+  return {subject:subject, html:'<!doctype html><html><body style="margin:0;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif"><div style="padding:24px 12px"><div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6e8ec"><div style="height:4px;background:'+esc(p)+'"></div><div style="padding:24px 28px 6px">'+(logo?'<img src="'+esc(logo)+'" style="height:32px;display:block;margin-bottom:18px" alt="">':'')+'<h1 style="margin:0 0 8px;font-size:19px;line-height:1.3;color:#12141a">'+esc(subject)+'</h1><div style="font-size:15px;line-height:1.6;color:#3d424d">'+introHtml+'</div></div>'+(rows?'<div style="padding:12px 28px 0"><table style="width:100%;border-collapse:collapse">'+rows+'</table></div>':'')+'<div style="padding:12px 28px 0"><div style="background:#f5f6f8;border-radius:8px;padding:11px 13px;font-size:14px;color:#3d424d">Gesamt: <b style="color:#12141a">'+esc(v.total)+'</b></div></div>'+(kind!=='confirm'?'<div style="padding:20px 28px 0"><span style="display:inline-block;background:'+esc(p)+';color:#fff;font-weight:600;font-size:14px;padding:11px 16px;border-radius:8px">Im Dashboard öffnen</span></div>':'')+'<div style="padding:24px 28px;font-size:12px;color:#9aa0ab">'+(kind==='confirm'?esc(f.name):'Gesendet mit TapTell')+'</div></div></div></body></html>'};
 }
 function autoModal(f, tab){
   tab = tab || 'notify';
   var a = auto(f);
   var fld = function(label, inner, hint){ return '<div class="fld"><label>'+label+'</label>'+inner+(hint?'<div class="hint">'+hint+'</div>':'')+'</div>'; };
   var fldv = function(label, inner, hint){ return '<div class="fld"><div class="flh"><label>'+label+'</label><button class="varbtn" data-a="insVar">'+I('user',12)+'Variable</button></div>'+inner+(hint?'<div class="hint">'+hint+'</div>':'')+'</div>'; };
+  var flds = function(label, inner){ return '<div class="fld"><div class="flh"><label>'+label+'</label><span style="display:flex;gap:4px"><button class="varbtn" data-subj-emoji title="Emoji einfügen">😊</button><button class="varbtn" data-a="insVar">'+I('user',12)+'Variable</button></span></div>'+inner+'</div>'; };
   var tgl = function(k, on, label){ return '<label class="tgl"><span>'+label+'</span><input type="checkbox" data-au="'+k+'" data-bool'+(on?' checked':'')+'><span class="sw"></span></label>'; };
   var listChips = function(sel, path){ return lists().length ? '<div class="chips-l">'+lists().map(function(l){ var on = (sel||[]).indexOf(l.id) >= 0; return '<button class="chip'+(on?' on':'')+'" data-a="auList" data-path="'+path+'" data-id="'+l.id+'">'+esc(l.name)+' <span style="opacity:.6">('+l.emails.length+')</span></button>'; }).join('')+'</div>' : '<div class="hint" style="margin:0">Noch keine Listen. Lege sie unter <b>Einstellungen → Empfängerlisten</b> an.</div>'; };
   var demoNote = REMOTE ? '' : '<div class="callout" style="margin-bottom:14px">'+I('info')+'<div><b>Demo-Modus:</b> Du kannst alles einrichten und als Vorschau ansehen. Echt versendet wird, sobald TapTell mit Supabase verbunden ist.</div></div>';
@@ -3478,14 +3665,16 @@ function autoModal(f, tab){
       h += '<div class="au2"><div>' + tgl('notify.enabled', a.notify.enabled, 'Bei jeder neuen Anfrage eine E-Mail senden')
         + fld('Empfänger', '<input class="inp" data-au="notify.to" value="'+esc(a.notify.to||'')+'" placeholder="info@firma.de, vertrieb@firma.de">', 'Mehrere Adressen mit Komma trennen.')
         + fld('Empfängerlisten', listChips(a.notify.lists, 'notify.lists'))
-        + fldv('Betreff', '<input class="inp" data-au="notify.subject" value="'+esc(a.notify.subject||'')+'">')
-        + fldv('Einleitung', '<textarea class="inp" rows="3" data-au="notify.body">'+esc(a.notify.body||'')+'</textarea>', 'Darunter folgen automatisch alle Antworten, bei Bildkarten mit Bild, sowie der Preis.')
+        + flds('Betreff', '<input class="inp" data-au="notify.subject" value="'+esc(a.notify.subject||'')+'">')
+        + '<div class="fld"><label>Nachricht</label>'+rte('notify', a.notify.html || plainToMail(a.notify.body), f)+'<div class="hint">Formatieren, Emojis und Platzhalter wie „Vorname“ – in der Mail steht der echte Wert.</div></div>'
+        + tgl('notify.fields', a.notify.fields !== false, 'Alle Antworten und den Preis darunter anhängen')
         + '<div style="display:flex;gap:8px"><button class="btn sm" data-a="auTest" data-k="email">'+I('send',13)+'Testmail an mich</button></div></div>'
         + '<div class="au-prev"><div class="au-subj">'+I('mail',13)+'<span>'+esc(emailPreview(f,'notify').subject)+'</span></div><iframe title="Vorschau" data-prev="notify"></iframe></div></div>';
     } else if(tab === 'confirm'){
       h += '<div class="au2"><div>' + tgl('confirm.enabled', a.confirm.enabled, 'Interessent erhält eine Bestätigung')
-        + fldv('Betreff', '<input class="inp" data-au="confirm.subject" value="'+esc(a.confirm.subject||'')+'">')
-        + fldv('Text', '<textarea class="inp" rows="4" data-au="confirm.body">'+esc(a.confirm.body||'')+'</textarea>', 'Darunter folgt eine Übersicht der Auswahl – ohne Kontaktdaten.')
+        + flds('Betreff', '<input class="inp" data-au="confirm.subject" value="'+esc(a.confirm.subject||'')+'">')
+        + '<div class="fld"><label>Nachricht</label>'+rte('confirm', a.confirm.html || plainToMail(a.confirm.body), f)+'<div class="hint">Persönlich mit „Vorname“, Emojis und eigenem Button, z. B. zu deiner Website oder WhatsApp.</div></div>'
+        + tgl('confirm.fields', a.confirm.fields !== false, 'Übersicht der Auswahl anhängen (ohne Kontaktdaten)')
         + fld('Antworten gehen an', '<input class="inp" data-au="confirm.replyTo" value="'+esc(a.confirm.replyTo||'')+'" placeholder="info@firma.de">', 'Wenn der Interessent auf die Mail antwortet.')
         + '<div class="hint">Wird nur verschickt, wenn im Funnel ein E-Mail-Feld ausgefüllt wurde.</div>'
         + '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" data-a="auTest" data-k="confirm">'+I('send',13)+'Testmail an mich</button></div></div>'
@@ -3527,8 +3716,34 @@ function autoModal(f, tab){
       var setPath = function(path, val){ var p = path.split('.'), o = a; for(var i=0;i<p.length-1;i++) o = o[p[i]]; o[p[p.length-1]] = val; };
       var changed = function(full){ touch(); if(S.view === 'editor') renderRight(); if(full) rerender(); else paint(); };
       paint();
+      /* Editor: speichern, Werkzeugleiste, Emojis, Platzhalter */
+      var rteSave = function(ed){ var k = ed.closest('[data-rte]').getAttribute('data-rte'); a[k].html = mailFromEditor(ed); a[k].body = ed.innerText.trim(); changed(false); };
+      var lastInp = null;
+      el.addEventListener('focusin', function(e){ if(e.target.classList && e.target.classList.contains('rte-ed')){ try{ document.execCommand('defaultParagraphSeparator', false, 'p'); }catch(x){} } if(e.target.matches && e.target.matches('input.inp')) lastInp = e.target; });
+      el.addEventListener('mousedown', function(e){ if(e.target.closest('.rtb') || e.target.closest('.emopop')) e.preventDefault(); });
+      el.addEventListener('keydown', function(e){ if(e.target.classList && e.target.classList.contains('rte-ed') && (e.metaKey || e.ctrlKey) && /^[biu]$/i.test(e.key)){ setTimeout(function(){ rteSave(e.target); }, 0); } });
+      el.addEventListener('click', function(e){
+        var sj = e.target.closest('[data-subj-emoji]');
+        if(sj){ e.stopPropagation(); var inp = sj.closest('.fld').querySelector('input.inp'); emojiPop(sj, function(em){ var st = inp.selectionStart != null ? inp.selectionStart : inp.value.length; inp.value = inp.value.slice(0, st) + em + inp.value.slice(inp.selectionEnd != null ? inp.selectionEnd : st); inp.focus(); inp.setSelectionRange(st + em.length, st + em.length); inp.dispatchEvent(new Event('input', {bubbles:true})); }); return; }
+        var rb = e.target.closest('[data-rc]'); if(!rb) return;
+        e.stopPropagation(); /* sonst schließt der Dokument-Klick das Platzhalter-Menü sofort wieder */
+        var ed = rb.closest('[data-rte]').querySelector('.rte-ed'), c = rb.getAttribute('data-rc'), r = saveSel(ed);
+        ed.focus(); restoreSel(r);
+        var ins = function(htm){ ed.focus(); restoreSel(r); document.execCommand('insertHTML', false, htm); rteSave(ed); };
+        if(c === 'bold' || c === 'italic' || c === 'underline') document.execCommand(c);
+        else if(c === 'h2'){ var blk = String(document.queryCommandValue('formatBlock') || ''); document.execCommand('formatBlock', false, /h2/i.test(blk) ? 'p' : 'h2'); }
+        else if(c === 'ul') document.execCommand('insertUnorderedList');
+        else if(c === 'ol') document.execCommand('insertOrderedList');
+        else if(c === 'hr') document.execCommand('insertHTML', false, '<hr><p><br></p>');
+        else if(c === 'link'){ var txt = r ? r.toString() : ''; promptBox('Link einfügen', 'Adresse (https://, mailto: oder tel:)', 'https://', function(u){ u = String(u||'').trim(); if(!u || u === 'https://') return; if(!/^(https?:|mailto:|tel:)/i.test(u)) u = 'https://' + u; if(txt){ ed.focus(); restoreSel(r); document.execCommand('createLink', false, u); rteSave(ed); } else ins('<a href="'+esc(u)+'">'+esc(u.replace(/^(https?:\/\/|mailto:|tel:)/,''))+'</a>&nbsp;'); }); return; }
+        else if(c === 'btn'){ btnBox(function(label, url){ ins('<p><a data-btn="1" href="'+esc(url)+'">'+esc(label)+'</a></p><p><br></p>'); }); return; }
+        else if(c === 'emoji'){ emojiPop(rb, function(em){ ed.focus(); restoreSel(r); document.execCommand('insertText', false, em); r = saveSel(ed); rteSave(ed); }); return; }
+        else if(c === 'var'){ dropdown(rb, mailVars(f).map(function(v){ return {k:v.key, ic:'user', l:v.label, fn:function(){ ins('<span class="rv" contenteditable="false" data-v="'+v.key+'">'+esc(v.label)+'</span>&nbsp;'); }}; })); return; }
+        rteSave(ed);
+      });
       el.addEventListener('input', function(e){
         var t = e.target;
+        if(t.classList && t.classList.contains('rte-ed')){ rteSave(t); return; }
         if(t.hasAttribute('data-au')){ setPath(t.getAttribute('data-au'), t.hasAttribute('data-bool') ? t.checked : t.value); changed(false); }
         else if(t.hasAttribute('data-ar')){ var r = a.rules[+t.getAttribute('data-ar')], rk = t.getAttribute('data-rk'); if(rk === 'list') r.lists = t.value ? [t.value] : []; else r[rk] = t.value; changed(rk === 'op'); }
         else if(t.hasAttribute('data-aw')){ var w = a.webhooks[+t.getAttribute('data-aw')], wk = t.getAttribute('data-wk'); w[wk] = t.hasAttribute('data-bool') ? t.checked : t.value.trim(); changed(false); if(wk === 'url'){ var tb = t.closest('.rule').querySelector('[data-a="auTest"]'); if(tb) tb.disabled = !w.url; } }
@@ -3626,7 +3841,9 @@ function scopeMenu(btn){
   dropdown(btn, items);
 }
 function visibleLeads(){ if(isAdmin()) return db.leads; var ids = visibleFunnels().map(function(f){ return f.id; }); return db.leads.filter(function(l){ return ids.indexOf(l.funnelId) >= 0; }); }
-function publicUrl(f){ var base = (CONFIG && CONFIG.publicUrl) || (location.origin + location.pathname.replace(/[^/]*$/, '')); return base.replace(/\/$/, '') + '/f/' + (f.slug || ''); }
+function linkBase(){ return ((CONFIG && CONFIG.publicUrl) || (location.origin + location.pathname.replace(/[^/]*$/, ''))).replace(/\/$/, ''); }
+/* Öffentlicher Link: kurz (taptell.de/funnelname); mit publicUrl in config.js die eigene Basis-Domain */
+function publicUrl(f){ return linkBase() + '/' + (f.slug || ''); }
 function ensureSlug(f){ if(!f.slug) f.slug = slug(f.name).slice(0, 40) + '-' + f.id.slice(0, 5); return f.slug; }
 
 /* ---------- login ---------- */
@@ -3700,13 +3917,21 @@ function viewCustomers(){
   var cs = db.clients || [];
   var h = '<div class="page"><div class="ph"><div><h1>Kunden</h1><p>Lege Kunden an, vergib Logins und schalte Funnels inkl. aller Daten frei.</p></div><div class="sp"></div><button class="btn pri" data-a="newClient">'+I('plus')+'Neuer Kunde</button></div>';
   if(!cs.length) return h + '<div class="empty">Noch keine Kunden. Lege deinen ersten Kunden an, um Funnels für ihn freizuschalten.</div></div>';
-  h += '<div class="card" style="overflow:auto"><table class="t"><thead><tr><th>Kunde</th><th>Funnels</th><th>Freigeschaltet</th><th>Logins</th><th>Anfragen</th><th>Seit</th><th></th></tr></thead><tbody>';
+  var since30 = Date.now() - 30*864e5, mrr = 0, liveC = 0, leads30 = 0;
+  cs.forEach(function(c){ mrr += +((c.data||{}).price) || 0; db.funnels.forEach(function(f){ if(f.clientId === c.id && f.status === 'live') liveC++; }); db.leads.forEach(function(l){ var f = getF(l.funnelId); if(f && f.clientId === c.id && l.createdAt > since30) leads30++; }); });
+  h += '<div class="kpis">' + kpi('Kunden', cs.length, cs.filter(function(c){ return (db.users||[]).some(function(u){ return u.clientId === c.id; }); }).length + ' mit eigenem Login', 'folder')
+    + kpi('Live-Funnels', liveC, 'für Kunden veröffentlicht', 'funnel')
+    + kpi('Anfragen', fmtNum(leads30), 'letzte 30 Tage', 'inbox')
+    + kpi('Umsatz / Monat', fmtNum(mrr) + ' €', 'aus hinterlegten Paketen', 'percent') + '</div>';
+  h += '<div class="card" style="overflow:auto"><table class="t"><thead><tr><th>Kunde</th><th>Paket</th><th>Funnels</th><th>Logins</th><th>Anfragen (30 T.)</th><th>Seit</th><th></th></tr></thead><tbody>';
   cs.forEach(function(c){
     var fs = db.funnels.filter(function(f){ return f.clientId === c.id; }), sh = fs.filter(function(f){ return f.shared; });
     var us = (db.users||[]).filter(function(u){ return u.clientId === c.id; });
     var ls = db.leads.filter(function(l){ return sh.some(function(f){ return f.id === l.funnelId; }); });
-    h += '<tr data-a="openClient" data-id="'+c.id+'"><td><div class="who">'+(c.logo?'<span class="avc" style="background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;);box-shadow:0 0 0 1px var(--line)"></span>':avatar(c.name))+'<div><div class="nm">'+esc(c.name)+'</div><div class="sub">'+esc(c.contact||'–')+'</div></div></div></td>'
-      + '<td>'+fs.length+'</td><td>'+(sh.length?'<span class="pill live nos">'+sh.length+'</span>':'<span class="sub">–</span>')+'</td><td>'+us.length+'</td><td>'+ls.length+'</td><td class="sub">'+new Date(c.createdAt||Date.now()).toLocaleDateString('de-DE')+'</td>'
+    var cd = c.data || {}, live = fs.filter(function(f){ return f.status === 'live'; }).length, l30 = db.leads.filter(function(l){ return l.createdAt > since30 && fs.some(function(f){ return f.id === l.funnelId; }); }).length;
+    h += '<tr data-a="openClient" data-id="'+c.id+'"><td><div class="who">'+(c.logo?'<span class="avc" style="background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;);box-shadow:0 0 0 1px var(--line)"></span>':avatar(c.name))+'<div><div class="nm">'+esc(c.name)+'</div><div class="sub">'+esc([cd.industry, cd.city].filter(Boolean).join(' · ') || c.contact || '–')+'</div></div></div></td>'
+      + '<td>'+(cd.plan || +cd.price ? '<div class="nm" style="font-weight:500">'+esc(cd.plan||'Individuell')+'</div><div class="sub">'+(+cd.price ? fmtNum(+cd.price)+' € / Monat' : '–')+'</div>' : '<span class="sub">–</span>')+'</td>'
+      + '<td>'+(fs.length ? '<span class="pill live nos">'+live+' live</span> <span class="sub">von '+fs.length+'</span>' : '<span class="sub">–</span>')+'</td><td>'+us.length+'</td><td>'+l30+'</td><td class="sub">'+new Date(cd.since || c.createdAt || Date.now()).toLocaleDateString('de-DE')+'</td>'
       + '<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-a="viewAs" data-id="'+c.id+'">'+I('eye',13)+'Portal ansehen</button></td></tr>';
   });
   return h + '</tbody></table></div><p class="hint" style="margin-top:12px">„Portal ansehen“ zeigt dir exakt, was der Kunde nach dem Login sieht.</p></div>';
@@ -3725,7 +3950,12 @@ function clientModal(id, tab){
       t += us.length ? us.map(function(u){ return '<div class="crow">'+avatar(u.name||u.email)+'<div style="flex:1;min-width:0"><b>'+esc(u.name||'–')+'</b><div class="sub">'+esc(u.email)+(REMOTE?'':' · Passwort: <code>'+esc(u.password)+'</code>')+'</div></div>'+(REMOTE?'<button class="btn sm" data-ureset="'+u.id+'">Passwort-Link senden</button>':'')+'<button class="ibtn" data-udel="'+u.id+'" title="Zugang löschen">'+I('trash')+'</button></div>'; }).join('') : '<p style="color:var(--mut);margin:0 0 12px">Noch keine Logins für diesen Kunden.</p>';
       t += '<div class="dsec">Neuen Login anlegen</div><div class="row2"><div class="fld"><label>Name</label><input class="inp" id="uname" placeholder="Max Mustermann"></div><div class="fld"><label>E-Mail</label><input class="inp" id="umail" type="email" placeholder="max@kunde.de"></div></div><button class="btn pri" data-uadd>'+I(REMOTE?'send':'plus',14)+(REMOTE?'Einladung senden':'Login anlegen')+'</button><p class="hint">'+(REMOTE?'Der Kunde erhält eine E-Mail und legt beim ersten Login sein Passwort fest.':'Demo-Modus: Es wird ein Passwort erzeugt, das du dem Kunden mitteilst.')+'</p>';
     } else {
-      t += '<div class="fld"><label>Firmenname</label><input class="inp" data-cf="name" value="'+esc(c.name)+'"></div><div class="fld"><label>Kontakt-E-Mail</label><input class="inp" data-cf="contact" value="'+esc(c.contact||'')+'"></div>'
+      var d = c.data || {}, fi = function(k, label, ph, type){ return '<div class="fld"><label>'+label+'</label><input class="inp" data-cd="'+k+'" value="'+esc(d[k]||'')+'" placeholder="'+esc(ph||'')+'"'+(type?' type="'+type+'"':'')+'></div>'; };
+      t += '<div class="dsec" style="margin-top:0">Firma</div><div class="row2"><div class="fld"><label>Firmenname</label><input class="inp" data-cf="name" value="'+esc(c.name)+'"></div><div class="fld"><label>Branche</label><select class="inp" data-cd="industry"><option value="">Bitte wählen</option>'+INDUSTRIES.map(function(x){ return '<option'+(d.industry===x?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></div></div>'
+        + '<div class="dsec">Kontakt</div><div class="row2">'+fi('person','Ansprechpartner','Max Mustermann')+'<div class="fld"><label>E-Mail</label><input class="inp" data-cf="contact" type="email" value="'+esc(c.contact||'')+'" placeholder="info@kunde.de"></div></div><div class="row2">'+fi('phone','Telefon','+49 …','tel')+fi('website','Website','https://kunde.de','url')+'</div>'
+        + '<div class="dsec">Anschrift</div>'+fi('street','Straße und Hausnummer','Musterstraße 1')+'<div class="row2" style="grid-template-columns:120px minmax(0,1fr)">'+fi('zip','PLZ','12345')+fi('city','Ort','Musterstadt')+'</div>'
+        + '<div class="dsec">Vertrag</div><div class="row3"><div class="fld"><label>Paket</label><select class="inp" data-cd="plan"><option value="">–</option>'+PLANS.map(function(x){ return '<option'+(d.plan===x?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></div>'+fi('price','Preis / Monat (€)','0','number')+fi('since','Vertragsbeginn','','date')+'</div>'
+        + '<div class="fld"><label>Notizen (nur für dich)</label><textarea class="inp" data-cd="notes" rows="3" placeholder="z. B. Ansprechpartner im Urlaub bis …">'+esc(d.notes||'')+'</textarea></div>'
         + '<div class="fld"><label>Logo (erscheint im Kundenportal)</label><div class="upl"><div class="pv" style="'+(c.logo?'background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;)':'')+'">'+(c.logo?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-clogo></label></div></div>'
         + '<div style="border-top:1px solid var(--line2);margin-top:18px;padding-top:14px;display:flex;justify-content:space-between;align-items:center"><span class="hint" style="margin:0">Funnels bleiben beim Löschen erhalten, die Zuordnung wird entfernt.</span><button class="btn sm danger" data-cdel>'+I('trash',13)+'Kunde löschen</button></div>';
     }
@@ -3752,11 +3982,20 @@ function clientModal(id, tab){
         if(x.hasAttribute('data-cshare')){ var f = getF(x.getAttribute('data-cshare')); f.shared = x.checked; save(); toast(f.shared ? 'Freigeschaltet' : 'Freigabe entfernt'); re(); }
         if(x.hasAttribute('data-clogo') && x.files[0]) readImage(x.files[0], 400, function(url){ c.logo = url; save(); re(); });
       });
-      el.addEventListener('input', function(e){ var x = e.target; if(x.hasAttribute('data-cf')){ c[x.getAttribute('data-cf')] = x.value; save(); } });
+      el.addEventListener('input', function(e){ var x = e.target; if(x.hasAttribute('data-cf')){ c[x.getAttribute('data-cf')] = x.value; save(); } else if(x.hasAttribute('data-cd')){ c.data = c.data || {}; c.data[x.getAttribute('data-cd')] = x.value; save(); } });
     }});
 }
+var INDUSTRIES = ['Schreinerei & Tischlerei','Bau & Ausbau','Garten- & Landschaftsbau','Solar & Energie','Sanitär, Heizung, Klima','Elektro','Möbel & Einrichtung','Immobilien','Gastronomie','Hotellerie','Freizeit & Tourismus','Einzelhandel','Gesundheit & Pflege','Beauty & Wellness','Fitness & Sport','Automobil','Dienstleistung','Agentur','Sonstige'];
+var PLANS = ['Starter','Business','Premium','Individuell'];
 function newClient(){
-  promptBox('Neuer Kunde','Firmenname','',function(v){ var c = {id:uid(), name:v, contact:'', logo:'', createdAt:Date.now()}; db.clients = (db.clients||[]).concat([c]); save(); render(); clientModal(c.id, 'funnels'); });
+  modal({title:'Neuer Kunde', sub:'Die übrigen Stammdaten kannst du danach ergänzen.', body:'<div class="fld"><label>Firmenname</label><input class="inp" id="ncn" placeholder="Holz Gehlen GmbH" autofocus></div><div class="fld"><label>Branche</label><select class="inp" id="nci"><option value="">Bitte wählen</option>'+INDUSTRIES.map(function(x){ return '<option>'+x+'</option>'; }).join('')+'</select></div><div class="fld"><label>E-Mail (optional)</label><input class="inp" id="ncm" type="email" placeholder="info@kunde.de"></div>',
+    foot:'<button class="btn" data-close>Abbrechen</button><button class="btn pri" data-ncok>'+I('plus',14)+'Kunde anlegen</button>',
+    onOpen:function(el, close){
+      var ok = function(){ var v = el.querySelector('#ncn').value.trim(); if(!v) return toast('Bitte einen Firmennamen eingeben'); var c = {id:uid(), name:v, contact:el.querySelector('#ncm').value.trim(), logo:'', data:{industry:el.querySelector('#nci').value}, createdAt:Date.now()}; db.clients = (db.clients||[]).concat([c]); save(); close(); render(); clientModal(c.id, 'data'); };
+      el.querySelector('[data-ncok]').onclick = ok;
+      el.querySelector('#ncn').onkeydown = function(e){ if(e.key === 'Enter') ok(); };
+      setTimeout(function(){ el.querySelector('#ncn').focus(); }, 30);
+    }});
 }
 function genPw(){ var a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = ''; for(var i=0;i<10;i++) s += a[Math.floor(Math.random()*a.length)]; return s; }
 function addUser(c, name, email, cb){
@@ -3784,8 +4023,8 @@ function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, status:r
 var LEAD_COLS = ['id','funnelId','funnelName','name','email','phone','total','status','notes','createdAt'];
 function leadToRow(l){ var data = {}; Object.keys(l).forEach(function(k){ if(LEAD_COLS.indexOf(k) < 0) data[k] = l[k]; }); return {id:l.id, funnel_id:l.funnelId || null, funnel_name:l.funnelName || '', name:l.name || null, email:l.email || null, phone:l.phone || null, total:l.total || 0, status:l.status || 'neu', notes:l.notes || '', data:data, created_at:new Date(l.createdAt||Date.now()).toISOString()}; }
 function rowToLead(r){ return Object.assign({}, r.data || {}, {id:r.id, funnelId:r.funnel_id, funnelName:r.funnel_name, name:r.name, email:r.email, phone:r.phone, total:+r.total || 0, status:r.status, notes:r.notes || '', createdAt:Date.parse(r.created_at)}); }
-function clientToRow(c){ return {id:c.id, name:c.name, logo:c.logo || null, contact:c.contact || null, created_at:new Date(c.createdAt||Date.now()).toISOString()}; }
-function rowToClient(r){ return {id:r.id, name:r.name, logo:r.logo || '', contact:r.contact || '', createdAt:Date.parse(r.created_at)}; }
+function clientToRow(c){ return {id:c.id, name:c.name, logo:c.logo || null, contact:c.contact || null, data:c.data || {}, created_at:new Date(c.createdAt||Date.now()).toISOString()}; }
+function rowToClient(r){ return {id:r.id, name:r.name, logo:r.logo || '', contact:r.contact || '', data:r.data || {}, createdAt:Date.parse(r.created_at)}; }
 function settingsPayload(){ return {brand:db.brand, defaults:db.defaults, fonts:db.fonts}; }
 
 async function afterLogin(u){
@@ -3862,6 +4101,7 @@ window.addEventListener('beforeunload', function(e){ if(REMOTE && (syncing || sa
 /* ================= EVENTS ================= */
 var ACT = {
   logout:function(){ logout(); },
+  afid:function(el){ S.afid = el.getAttribute('data-id'); render(); },
   theme:function(){ var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); try{ localStorage.setItem('tt-theme', t); }catch(e){} render(); },
   demoLogin:function(el){ var u = (db.users||[]).filter(function(x){ return x.id === el.getAttribute('data-id'); })[0]; if(u) loginLocal(u); },
   forgot:function(){ promptBox('Passwort zurücksetzen','Deine E-Mail-Adresse', ($('#lmail')||{}).value || '', function(v){ sb.auth.resetPasswordForEmail(v, {redirectTo:location.origin + location.pathname}).then(function(r){ toast(r.error ? r.error.message : 'Falls ein Zugang existiert, ist der Link unterwegs.'); }); }); },

@@ -7,7 +7,7 @@
 <title>Funnel</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
-html,body{margin:0;min-height:100%}html{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}#funnel{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}#funnel>.fp{flex:1}.tt-msg{font:15px/1.5 system-ui,sans-serif;color:#6b7280;text-align:center;padding:90px 24px}
+html,body{margin:0;min-height:100%}html{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}.tt-embed #funnel{min-height:0!important}#funnel{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}#funnel>.fp{flex:1}.tt-msg{font:15px/1.5 system-ui,sans-serif;color:#6b7280;text-align:center;padding:90px 24px}
 .fp{--ease-out:cubic-bezier(.23,1,.32,1);--ease-in-out:cubic-bezier(.77,0,.175,1);container-type:inline-size;--p:#4353ff;--pt:#fff;--bg:#fff;--sf:#f4f5f7;--tx:#111318;--mt:#6b7280;--r:14px;--br:12px;--ff:Inter,system-ui,sans-serif;--hf:var(--ff);font-family:var(--ff);color:var(--tx);background-color:var(--bg);background-size:cover;background-position:center;position:relative;min-height:100%;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;line-height:1.4}
 .fp *{box-sizing:border-box}
 .fp-ov{position:absolute;inset:0;pointer-events:none;z-index:0}
@@ -906,7 +906,10 @@ FP.mount = function(root, f, opts){
     st.hist.push(st.i); st.i = ni; st.dir = 'fwd';
     emit('page', {pageId:pages[ni].id, index:ni});
     if((ni === pages.length-1 || pages[ni].submitOnEnter) && !st.done) submit(true);
-    render(); var sc = scroller(); if(sc) sc.scrollTop = 0;
+    render();
+    /* Eingebettet (inline): nur bis zum Funnel-Anfang scrollen, nie die ganze Seite nach oben */
+    if(opts.inline){ var rt = root.getBoundingClientRect(); if(rt.top < 0) window.scrollTo({top: window.scrollY + rt.top - (opts.scrollOffset || 16), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
+    else { var sc = scroller(); if(sc) sc.scrollTop = 0; }
     return true;
   }
   function back(){ if(!st.hist.length) return; st.i = st.hist.pop(); st.dir = 'back'; st.errors = {}; render(); }
@@ -1061,7 +1064,14 @@ window.FP = FP;
 (function(){
   var C = window.FS_CONFIG || {}, el = document.getElementById('funnel');
   var qs = new URLSearchParams(location.search);
-  var slug = qs.get('s') || (location.pathname.match(/\/f\/([^\/?#]+)/) || [])[1];
+  /* Link-Formen: taptell.de/funnelname · taptell.de/f/funnelname · f.html?s=funnelname */
+  var slug = qs.get('s') || (location.pathname.match(/\/f\/([^\/?#]+)/) || [])[1] || (location.pathname.match(/^\/([a-z0-9][a-z0-9-]*)\/?$/) || [])[1];
+  /* Eingebettet als iFrame: Höhe an die Website melden, damit kein innerer Scrollbalken entsteht */
+  if(qs.get('embed') === '1' || window.parent !== window){
+    document.documentElement.classList.add('tt-embed');
+    var post = function(){ try{ window.parent.postMessage({taptell:'height', h:document.documentElement.scrollHeight}, '*'); }catch(e){} };
+    if(window.ResizeObserver) new ResizeObserver(post).observe(document.documentElement); window.addEventListener('load', post);
+  }
   var msg = function(t){ el.innerHTML = '<div class="tt-msg">' + t + '</div>'; };
   if(!C.supabaseUrl || !window.supabase){ msg('Dieser Funnel ist nicht verfügbar.'); return; }
   var sb = window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey, {auth:{persistSession:false, autoRefreshToken:false}});

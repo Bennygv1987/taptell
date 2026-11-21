@@ -25,8 +25,8 @@ type Field = { key: string; label: string; value: string; type?: string; inputTy
 type Rule = { id?: string; field: string; op: 'lte' | 'gte' | 'eq' | 'contains' | 'any'; value?: string; to?: string; lists?: string[]; label?: string };
 type Hook = { id: string; url: string; secret?: string; active?: boolean; events?: string[]; name?: string };
 type Automation = {
-  notify?: { enabled?: boolean; to?: string; lists?: string[]; subject?: string; body?: string };
-  confirm?: { enabled?: boolean; subject?: string; body?: string; replyTo?: string };
+  notify?: { enabled?: boolean; to?: string; lists?: string[]; subject?: string; body?: string; html?: string; fields?: boolean };
+  confirm?: { enabled?: boolean; subject?: string; body?: string; html?: string; fields?: boolean; replyTo?: string };
   rules?: Rule[];
   webhooks?: Hook[];
 };
@@ -67,8 +67,25 @@ function optionImages(funnel: any): Record<string, string> {
   return map;
 }
 
+// ---------- Formatierte Nachricht (aus dem E-Mail-Editor) ----------
+// Gespeichert ist bereinigtes HTML mit {{platzhaltern}}. Werte werden escaped, Tags bekommen Inline-Styles.
+function mailRender(html: string, v: Record<string, string>, primary: string) {
+  const P = primary || '#18181b';
+  return String(html || '')
+    .replace(/<\/?(script|style|iframe|object|embed)[^>]*>/gi, '')
+    .replace(/\son\w+="[^"]*"/gi, '')
+    .replace(/\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g, (_m, k, fb) => esc(v[k] ? v[k] : String(fb ?? '').trim()))
+    .replace(/<p>/g, '<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#3d424d">')
+    .replace(/<h2>/g, '<h2 style="margin:0 0 10px;font-size:20px;line-height:1.3;color:#12141a">')
+    .replace(/<h3>/g, '<h3 style="margin:0 0 8px;font-size:17px;line-height:1.35;color:#12141a">')
+    .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 12px;padding-left:22px;font-size:15px;line-height:1.6;color:#3d424d">')
+    .replace(/<hr>/g, '<hr style="border:0;border-top:1px solid #e6e8ec;margin:18px 0">')
+    .replace(/<a data-btn="[^"]*" href="([^"]*)">|<a href="([^"]*)" data-btn="[^"]*">/g, (_m, h1, h2) => `<a href="${h1 || h2}" style="display:inline-block;background:${P};color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 18px;border-radius:8px;margin:4px 0 12px">`)
+    .replace(/<a href="([^"]*)">/g, `<a href="$1" style="color:${P}">`);
+}
+
 // ---------- E-Mail-Layout ----------
-function emailHtml(opts: { funnel: any; title: string; intro: string; fields?: Field[]; total?: string; cta?: { label: string; url: string }; footer?: string }) {
+function emailHtml(opts: { funnel: any; title: string; intro: string; introHtml?: string; fields?: Field[]; total?: string; cta?: { label: string; url: string }; footer?: string }) {
   const t = opts.funnel.theme ?? {}, p = t.primary || '#1c2e3d', logo = absUrl(t.logoImg);
   const imgs = optionImages(opts.funnel);
   const rows = (opts.fields ?? []).filter((f) => f.value && f.type !== 'signature').map((f) => {
@@ -82,7 +99,7 @@ function emailHtml(opts: { funnel: any; title: string; intro: string; fields?: F
     <tr><td style="height:4px;background:${esc(p)}"></td></tr>
     <tr><td style="padding:28px 32px 8px">${logo ? `<img src="${esc(logo)}" height="36" alt="" style="display:block;margin-bottom:20px">` : ''}
       <h1 style="margin:0 0 8px;font-size:20px;line-height:1.3;color:#12141a">${esc(opts.title)}</h1>
-      <p style="margin:0;font-size:15px;line-height:1.55;color:#3d424d;white-space:pre-line">${esc(opts.intro)}</p></td></tr>
+      ${opts.introHtml ? `<div style="font-size:15px;line-height:1.6;color:#3d424d">${opts.introHtml}</div>` : `<p style="margin:0;font-size:15px;line-height:1.55;color:#3d424d;white-space:pre-line">${esc(opts.intro)}</p>`}</td></tr>
     ${rows ? `<tr><td style="padding:16px 32px 4px"><table width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>` : ''}
     ${opts.total ? `<tr><td style="padding:12px 32px 0"><div style="background:#f5f6f8;border-radius:8px;padding:12px 14px;font-size:14px;color:#3d424d">Gesamt: <b style="color:#12141a">${esc(opts.total)}</b></div></td></tr>` : ''}
     ${opts.cta && opts.cta.url ? `<tr><td style="padding:24px 32px 0"><a href="${esc(opts.cta.url)}" style="display:inline-block;background:${esc(p)};color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 18px;border-radius:8px">${esc(opts.cta.label)}</a></td></tr>` : ''}
@@ -161,7 +178,8 @@ async function processLead(admin: any, lead: any, funnel: any, only?: { kind: st
     if (to.length) {
       const subject = render(a.notify?.subject || 'Neue Anfrage: {{funnel}}', vars) + (ruleHits.length ? ' · ' + ruleHits.join(', ') : '');
       const intro = render(a.notify?.body || 'Es ist eine neue Anfrage über „{{funnel}}“ eingegangen.', vars);
-      const html = emailHtml({ funnel, title: subject, intro, fields, total: vars.total, cta: { label: 'Im Dashboard öffnen', url: vars.link } });
+      const P = funnel.theme?.primary || '#18181b', withFields = a.notify?.fields !== false;
+      const html = emailHtml({ funnel, title: subject, intro, introHtml: a.notify?.html ? mailRender(a.notify.html, vars, P) : undefined, fields: withFields ? fields : [], total: withFields ? vars.total : undefined, cta: { label: 'Im Dashboard öffnen', url: vars.link } });
       await log('email', to.join(', '), await sendMail(to, subject, html, lead.email || undefined));
     }
   }
@@ -171,7 +189,8 @@ async function processLead(admin: any, lead: any, funnel: any, only?: { kind: st
     const target = only?.to?.[0] || lead.email;
     const subject = render(a.confirm?.subject || 'Danke für deine Anfrage, {{vorname|}}', vars);
     const intro = render(a.confirm?.body || 'Wir haben deine Anfrage erhalten und melden uns in Kürze bei dir.', vars);
-    const html = emailHtml({ funnel, title: subject, intro, fields: fields.filter((f) => f.inputType !== 'email' && f.inputType !== 'tel' && f.type !== 'checkbox'), total: vars.total, footer: funnel.name });
+    const P = funnel.theme?.primary || '#18181b', withFields = a.confirm?.fields !== false;
+    const html = emailHtml({ funnel, title: subject, intro, introHtml: a.confirm?.html ? mailRender(a.confirm.html, vars, P) : undefined, fields: withFields ? fields.filter((f) => f.inputType !== 'email' && f.inputType !== 'tel' && f.type !== 'checkbox') : [], total: withFields ? vars.total : undefined, footer: funnel.name });
     await log('email', target, await sendMail([target], subject, html, a.confirm?.replyTo || undefined));
   }
 
