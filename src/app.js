@@ -24,6 +24,7 @@ var IP = {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 000 11H13"/>',
   mobile:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>', monitor:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
   sidebar:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
+  flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', minus:'<path d="M5 12h14"/>', fit:'<path d="M4 9V5a1 1 0 011-1h4M15 4h4a1 1 0 011 1v4M20 15v4a1 1 0 01-1 1h-4M9 20H5a1 1 0 01-1-1v-4"/>', logic:'<path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/>',
   fBold:'<path d="M7 5h6a3.5 3.5 0 010 7H7zM7 12h7a3.5 3.5 0 010 7H7z"/>',
   fItalic:'<path d="M10 5h8M6 19h8M14 5l-4 14"/>',
   fUnder:'<path d="M7 4v7a5 5 0 0010 0V4M5 20h14"/>',
@@ -1516,7 +1517,7 @@ function lgLayout(f){
     mxd = Math.max(mxd, depth[i]);
     (E[i] || []).forEach(function(e){ if(e.to > i) depth[e.to] = Math.max(depth[e.to], depth[i] + 1); });
   }
-  var rows = {}, pos = [], W = 224, H = 66, GX = 36, GY = 70, maxRow = 0, R, L = 0, Rn = 0, edges = [];
+  var rows = {}, pos = [], W = 190, H = 46, GX = 40, GY = 56, maxRow = 0, R, L = 0, Rn = 0, edges = [];
   for(i = 0; i < n; i++){ rows[depth[i]] = rows[depth[i]] || []; rows[depth[i]].push(i); }
   Object.keys(rows).forEach(function(d){ maxRow = Math.max(maxRow, rows[d].length); });
   E.forEach(function(es, i){ es.forEach(function(e){ if(e.to < 0) return; var kind = depth[e.to] === depth[i] + 1 ? 'adj' : depth[e.to] > depth[i] ? 'skip' : 'back'; edges.push({from:i, to:e.to, e:e, route:kind, lane:kind === 'skip' ? Rn++ : kind === 'back' ? L++ : 0}); }); });
@@ -1527,16 +1528,19 @@ function lgLayout(f){
 }
 function logicModal(focus){
   var f = F(); if(!f) return;
-  var L = {pi:focus != null ? focus : S.pi};
+  var L = {pi:focus != null ? focus : S.pi, open:false, z:1};
   var drawCanvas = function(){
     var g = lgLayout(f), reach = flowReach(f), c = L.el.querySelector('#lgc'), W = g.W, H = g.H;
     var paths = '', labels = '';
     g.edges.forEach(function(ed){
       var e = ed.e, a = g.pos[ed.from], b = g.pos[ed.to]; if(!a || !b) return;
-      var d, mx, my, r = 10;
+      var d, mx, my, r = 8;
       if(ed.route === 'adj'){
-        var sx = a.x + W / 2, sy = a.y + H, tx = b.x + W / 2, ty = b.y, dy = Math.max(30, (ty - sy) / 2);
-        d = 'M'+sx+' '+sy+' C'+sx+' '+(sy+dy)+' '+tx+' '+(ty-dy)+' '+tx+' '+(ty-6); mx = (sx + tx) / 2; my = (sy + ty) / 2;
+        /* eckig mit runden Kurven: runter, quer, runter */
+        var sx = a.x + W / 2, sy = a.y + H, tx = b.x + W / 2, ty = b.y, midY = sy + (ty - sy) / 2;
+        if(Math.abs(tx - sx) < 1){ d = 'M'+sx+' '+sy+' V'+(ty-6); }
+        else { var hs = tx > sx ? 1 : -1, rr = Math.min(r, Math.abs(tx - sx) / 2); d = 'M'+sx+' '+sy+' V'+(midY - rr)+' Q'+sx+' '+midY+' '+(sx + hs*rr)+' '+midY+' H'+(tx - hs*rr)+' Q'+tx+' '+midY+' '+tx+' '+(midY + rr)+' V'+(ty-6); }
+        mx = (sx + tx) / 2; my = midY; if(Math.abs(tx - sx) < 1){ my = (sy + ty) / 2; }
       } else {
         /* rechts nach unten, links nach oben – mit runden Ecken */
         var right = ed.route === 'skip', lx = right ? g.laneR + ed.lane * 16 : g.laneL - ed.lane * 16, sgn = right ? 1 : -1;
@@ -1549,11 +1553,12 @@ function logicModal(focus){
     });
     var mk = function(k){ return '<marker id="lgm-'+k+'" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1.5L8 5L1 8.5" class="lgmk '+k+'"/></marker>'; };
     var nodes = f.pages.map(function(p, i){
-      var es = g.E[i] || [], rules = (p.logic || []).filter(function(r){ return r.goto; }).length, un = !reach[i];
-      var meta = !es.length ? I('check',11)+'Ende' : rules ? I('branch',11)+rules+(rules === 1 ? ' Regel' : ' Regeln') : es.some(function(e){ return e.kind !== 'next'; }) ? I('branch',11)+'Verzweigt' : 'Weiter zu '+(es[0].to + 1);
-      return '<button type="button" class="lgn'+(i === L.pi ? ' on' : '')+(un ? ' un' : '')+'" data-lgn="'+i+'" style="left:'+g.pos[i].x+'px;top:'+g.pos[i].y+'px;width:'+W+'px;height:'+H+'px"><span class="lgt"><span class="n">'+(i+1)+'</span><b>'+esc(p.name)+'</b></span><span class="lgm'+(un ? ' warn' : '')+'">'+(un ? I('info',11)+'Nicht erreichbar' : meta)+'</span></button>';
+      var es = g.E[i] || [], rules = (p.logic || []).filter(function(r){ return r.goto; }).length, un = !reach[i], end = !es.length, branched = es.some(function(e){ return e.kind !== 'next'; });
+      var tip = un ? 'Nicht erreichbar' : end ? 'Ende des Funnels' : rules ? rules + (rules === 1 ? ' Regel' : ' Regeln') : branched ? 'Verzweigt' : 'Weiter zu ' + (es[0].to + 1);
+      return '<button type="button" class="lgn'+(i === L.pi && L.open ? ' on' : '')+(un ? ' un' : '')+(end ? ' end' : '')+'" data-lgn="'+i+'" title="'+esc(p.name+' · '+tip)+'" style="left:'+g.pos[i].x+'px;top:'+g.pos[i].y+'px;width:'+W+'px;height:'+H+'px"><span class="n">'+(end ? I('flag',12) : i+1)+'</span><b>'+esc(p.name)+'</b>'+(rules || branched ? '<span class="lgi'+(rules ? ' on' : '')+'">'+I('logic',13)+'</span>' : '')+(un ? '<span class="lgi warn">'+I('info',13)+'</span>' : '')+'</button>';
     }).join('');
-    c.innerHTML = '<div class="lgs" style="width:'+g.width+'px;height:'+g.height+'px"><svg class="lgsv" width="'+g.width+'" height="'+g.height+'" aria-hidden="true"><defs>'+mk('if')+mk('next')+mk('btn')+'</defs>'+paths+'</svg>'+nodes+labels+'</div>';
+    L.g = g;
+    c.innerHTML = '<div class="lgz" style="width:'+(g.width*L.z)+'px;height:'+(g.height*L.z)+'px"><div class="lgs" style="width:'+g.width+'px;height:'+g.height+'px;transform:scale('+L.z+')"><svg class="lgsv" width="'+g.width+'" height="'+g.height+'" aria-hidden="true"><defs>'+mk('if')+mk('next')+mk('btn')+'</defs>'+paths+'</svg>'+nodes+labels+'<div class="lgpop" id="lgp" hidden></div></div></div>';
   };
   var fieldOpts = function(sel){
     var by = {}, order = [];
@@ -1562,42 +1567,56 @@ function logicModal(focus){
     return '<option value="">Feld wählen …</option>' + order.map(function(pi){ return '<optgroup label="'+(pi+1)+'. '+esc(f.pages[pi].name)+'">' + by[pi].map(function(b){ return '<option value="'+b.id+'"'+(b.id === sel ? ' selected' : '')+'>'+esc(lgName(b))+'</option>'; }).join('') + '</optgroup>'; }).join('');
   };
   var drawPanel = function(){
-    var p = f.pages[L.pi], el = L.el.querySelector('#lgp'); if(!p){ el.innerHTML = ''; return; }
+    var p = f.pages[L.pi], el = L.el.querySelector('#lgp'); if(!el) return; if(!p || !L.open){ el.hidden = true; el.innerHTML = ''; return; }
     var rules = p.logic || [];
-    var h = '<div class="lgph"><span class="n">'+(L.pi+1)+'</span><div><b>'+esc(p.name)+'</b><small>Wohin geht es nach dieser Seite?</small></div></div>';
+    var h = '<div class="lgph"><span class="n">'+(L.pi+1)+'</span><b>'+esc(p.name)+'</b><button type="button" class="ibtn" data-lga="closePop" title="Schließen (Esc)">'+I('x',13)+'</button></div>';
     h += rules.map(function(r, ri){
       var cs = r.cond && r.cond.length ? r.cond : [{bid:'', op:'is', val:''}];
-      return '<div class="lgrule"><div class="lgrh"><span class="lgw">Falls</span><button type="button" class="ibtn" data-lga="delRule" data-ri="'+ri+'" title="Regel löschen">'+I('trash',13)+'</button></div>'
+      return '<div class="lgrule"><button type="button" class="ibtn lgdel" data-lga="delRule" data-ri="'+ri+'" title="Regel löschen">'+I('trash',13)+'</button>'
         + cs.map(function(c, ci){
             var b = lgBlock(f, c.bid), k = lgKind(b), noVal = c.op === 'filled' || c.op === 'empty', val;
             if(!b || noVal) val = '';
             else if(k === 'choice') val = '<select class="inp" data-lgf="val" data-ri="'+ri+'" data-ci="'+ci+'"><option value="">Antwort wählen …</option>'+(b.props.options || []).map(function(o){ return '<option value="'+o.id+'"'+(o.id === c.val ? ' selected' : '')+'>'+esc(o.label)+'</option>'; }).join('')+'</select>';
             else val = '<input class="inp" '+(k === 'num' ? 'type="number" step="any"' : 'type="text"')+' data-lgf="val" data-ri="'+ri+'" data-ci="'+ci+'" value="'+esc(c.val == null ? '' : c.val)+'" placeholder="Wert">';
-            return (ci ? '<div class="lgjoin"><button type="button" class="'+(r.join !== 'or' ? 'on' : '')+'" data-lga="join" data-v="and" data-ri="'+ri+'">und</button><button type="button" class="'+(r.join === 'or' ? 'on' : '')+'" data-lga="join" data-v="or" data-ri="'+ri+'">oder</button></div>' : '')
-              + '<div class="lgcond"><select class="inp" data-lgf="bid" data-ri="'+ri+'" data-ci="'+ci+'">'+fieldOpts(c.bid)+'</select>'
+            return (ci ? '<div class="lgrow"><span></span><div class="lgjoin"><button type="button" class="'+(r.join !== 'or' ? 'on' : '')+'" data-lga="join" data-v="and" data-ri="'+ri+'">und</button><button type="button" class="'+(r.join === 'or' ? 'on' : '')+'" data-lga="join" data-v="or" data-ri="'+ri+'">oder</button></div></div>' : '')
+              + '<div class="lgrow"><span class="lgw">'+(ci ? '' : 'Falls')+'</span><div class="lgcond"><select class="inp" data-lgf="bid" data-ri="'+ri+'" data-ci="'+ci+'">'+fieldOpts(c.bid)+'</select>'
               + (b ? '<div class="lgcr"><select class="inp" data-lgf="op" data-ri="'+ri+'" data-ci="'+ci+'">'+LOPS[k].map(function(o){ return '<option value="'+o[0]+'"'+(o[0] === c.op ? ' selected' : '')+'>'+o[1]+'</option>'; }).join('')+'</select>'+val+'</div>' : '')
-              + (cs.length > 1 ? '<button type="button" class="ibtn lgx" data-lga="delCond" data-ri="'+ri+'" data-ci="'+ci+'" title="Bedingung entfernen">'+I('x',12)+'</button>' : '') + '</div>';
+              + (cs.length > 1 ? '<button type="button" class="ibtn lgx" data-lga="delCond" data-ri="'+ri+'" data-ci="'+ci+'" title="Bedingung entfernen">'+I('x',12)+'</button>' : '') + '</div></div>';
           }).join('')
-        + '<button type="button" class="btn ghost sm" data-lga="addCond" data-ri="'+ri+'">'+I('plus',13)+'Bedingung</button>'
-        + '<div class="lgto"><span class="lgw">Gehe zu</span><select class="inp" data-lgf="goto" data-ri="'+ri+'">'+pageOptions(r.goto, 'Seite wählen …')+'</select></div></div>';
+        + '<div class="lgrow"><span class="lgw">Gehe zu</span><select class="inp" data-lgf="goto" data-ri="'+ri+'">'+pageOptions(r.goto, 'Seite wählen …')+'</select></div>'
+        + '<div class="lgrow"><span></span><button type="button" class="lglink" data-lga="addCond" data-ri="'+ri+'">'+I('plus',12)+'Bedingung hinzufügen</button></div></div>';
     }).join('');
-    h += '<button type="button" class="btn sm lgadd" data-lga="addRule">'+I('plus',13)+(rules.length ? 'Weitere Regel' : 'Regel hinzufügen')+'</button>';
-    h += '<div class="lgelse"><span class="lgw">'+(rules.length ? 'Sonst gehe zu' : 'Danach gehe zu')+'</span><select class="inp" data-lgf="next">'+pageOptions(p.next, L.pi < f.pages.length - 1 ? 'Nächste Seite ('+(L.pi+2)+'. '+f.pages[L.pi+1].name+')' : 'Ende – Anfrage absenden')+'</select></div>';
+    h += '<button type="button" class="lgadd" data-lga="addRule">'+I('branch',13)+'Regel hinzufügen</button>';
+    h += '<div class="lgrow lgelse"><span class="lgw">'+(rules.length ? 'Sonst' : 'Danach')+'</span><select class="inp" data-lgf="next">'+pageOptions(p.next, L.pi < f.pages.length - 1 ? 'Nächste Seite ('+(L.pi+2)+'. '+f.pages[L.pi+1].name+')' : 'Ende – Anfrage absenden')+'</select></div>';
     var other = (flowEdges(f)[L.pi] || []).filter(function(e){ return !e.logic && e.kind !== 'next'; });
     if(other.length) h += '<div class="lgoth"><div class="flab">Weitere Verzweigungen auf dieser Seite</div>' + other.map(function(e){ var t = f.pages[e.to]; return '<div class="lgo">'+esc(e.label)+I('right',12)+(t ? (e.to+1)+'. '+esc(t.name) : 'Seite fehlt')+'</div>'; }).join('') + '<div class="hint">Diese stellst du direkt am Element ein (z. B. bei den Antworten). Regeln oben haben Vorrang.</div></div>';
-    h += '<button type="button" class="btn ghost sm lgopen" data-lga="open">'+I('pen',13)+'Seite im Editor öffnen</button>';
-    el.innerHTML = h;
+    h += '<button type="button" class="lglink lgopen" data-lga="open">'+I('pen',12)+'Seite im Editor öffnen</button>';
+    el.innerHTML = h; el.hidden = false;
+    /* neben der Karte, sonst links davon; nie über den Rand */
+    var g = L.g, ps = g.pos[L.pi], pw = 400, x = ps.x + g.W + 14;
+    if(x + pw > g.width + 200 && ps.x - pw - 14 > 0) x = ps.x - pw - 14;
+    el.style.left = x + 'px'; el.style.top = Math.max(8, ps.y - 8) + 'px';
   };
   var redraw = function(panel){ drawCanvas(); if(panel !== false) drawPanel(); };
   var rule = function(ri){ var p = f.pages[L.pi]; p.logic = p.logic || []; return p.logic[+ri]; };
-  modal({title:'Logik', sub:'Klicke auf eine Seite und lege fest, wohin es je nach Antwort weitergeht.', size:'logic',
-    body:'<div class="lgb"><div class="lgc" id="lgc"></div><aside class="lgp" id="lgp"></aside></div>',
+  modal({title:'Logik', sub:'Klicke auf eine Seite und lege fest, wohin es je nach Antwort weitergeht. Regeln haben Vorrang vor „Sonst“.', size:'logic',
+    body:'<div class="lgb"><div class="lgc" id="lgc"></div><div class="lgctl"><button type="button" class="ibtn" data-lga="zin" title="Vergrößern">'+I('plus',14)+'</button><button type="button" class="ibtn" data-lga="zout" title="Verkleinern">'+I('minus',14)+'</button><button type="button" class="ibtn" data-lga="zfit" title="Einpassen">'+I('fit',14)+'</button></div></div>',
     onOpen:function(el, close){
       L.el = el; redraw();
-      var on = el.querySelector('.lgn.on'); if(on) on.scrollIntoView({block:'center', inline:'center'});
+      var fit = function(){ var c = el.querySelector('#lgc'); L.z = Math.max(.4, Math.min(1, (c.clientWidth - 24) / L.g.width, (c.clientHeight - 24) / L.g.height)); redraw(); };
+      if(L.g.height > el.querySelector('#lgc').clientHeight || L.g.width > el.querySelector('#lgc').clientWidth) fit();
+      /* Esc schließt zuerst das Regel-Fenster, dann den Dialog */
+      var onEsc = function(e){ if(e.key === 'Escape' && L.open && document.body.contains(el)){ e.stopImmediatePropagation(); L.open = false; redraw(); } };
+      document.addEventListener('keydown', onEsc, true); L.offEsc = function(){ document.removeEventListener('keydown', onEsc, true); };
       el.addEventListener('click', function(e){
-        var n = e.target.closest('[data-lgn]'); if(n){ L.pi = +n.getAttribute('data-lgn'); redraw(); return; }
-        var a = e.target.closest('[data-lga]'); if(!a) return; var act = a.getAttribute('data-lga'), ri = a.getAttribute('data-ri'), p = f.pages[L.pi];
+        var n = e.target.closest('[data-lgn]'); if(n){ var ni = +n.getAttribute('data-lgn'); L.open = !(L.open && L.pi === ni); L.pi = ni; redraw(); return; }
+        var a = e.target.closest('[data-lga]');
+        if(!a){ if(L.open && e.target.closest('#lgc') && !e.target.closest('#lgp')){ L.open = false; redraw(); } return; }
+        var act = a.getAttribute('data-lga'), ri = a.getAttribute('data-ri'), p = f.pages[L.pi];
+        if(act === 'zin'){ L.z = Math.min(1.6, +(L.z + .15).toFixed(2)); redraw(); return; }
+        if(act === 'zout'){ L.z = Math.max(.4, +(L.z - .15).toFixed(2)); redraw(); return; }
+        if(act === 'zfit'){ fit(); return; }
+        if(act === 'closePop'){ L.open = false; redraw(); return; }
         if(act === 'open'){ close(); S.ltab = 'pages'; selectPage(L.pi); renderLeft(); return; }
         snap(true);
         if(act === 'addRule'){ var fl = logicFields(f, L.pi), last = fl[fl.length - 1]; p.logic = (p.logic || []).concat([{cond:[{bid:last ? last.b.id : '', op:last ? LOPS[lgKind(last.b)][0][0] : 'is', val:''}], join:'and', goto:''}]); }
@@ -1614,7 +1633,7 @@ function logicModal(focus){
         if(k === 'goto'){ snap(true); r.goto = x.value; touch(); redraw(); return; }
         r.cond = r.cond && r.cond.length ? r.cond : [{bid:'', op:'is', val:''}];
         var c = r.cond[+x.getAttribute('data-ci')]; if(!c) return;
-        if(k === 'val'){ snap(); c.val = x.type === 'number' && x.value !== '' ? +x.value : x.value; touch(); redraw(!live); return; }
+        if(k === 'val'){ snap(); c.val = x.type === 'number' && x.value !== '' ? +x.value : x.value; touch(); if(!live) redraw(); return; } /* beim Tippen nichts neu zeichnen, sonst ginge der Fokus verloren */
         snap(true);
         if(k === 'bid'){ c.bid = x.value; var b = lgBlock(f, c.bid); c.op = LOPS[lgKind(b)][0][0]; c.val = ''; }
         if(k === 'op') c.op = x.value;
@@ -1623,7 +1642,7 @@ function logicModal(focus){
       el.addEventListener('change', function(e){ upd(e, false); });
       el.addEventListener('input', function(e){ if(e.target.matches('input[data-lgf="val"]')) upd(e, true); });
     },
-    onClose:function(){ renderLeft(); renderCanvas(true); renderRight(); }
+    onClose:function(){ if(L.offEsc) L.offEsc(); renderLeft(); renderCanvas(true); renderRight(); }
   });
 }
 function flowModal(){ logicModal(); }
