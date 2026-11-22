@@ -6,7 +6,7 @@ var FP = {};
 var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 /* Hervorhebung __Wort__: Schwung (wie Onepage: flacher Bogen, feine Linie) und Kreis als SVG; Marker, Fläche, Rahmen usw. per CSS (Klasse hl-* am Element) */
 var UL = '<svg class="fp-ulsv u" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 0,30 q 50,-35 100,0"/></svg><svg class="fp-ulsv c" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 54,4 C 82,3 99,10 98,21 C 97,33 74,38 48,37 C 20,36 2,30 3,19 C 4,9 22,3 44,4 C 50,4 57,6 62,8"/></svg>';
-var md = function(s){ return esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>'); };
+var md = function(s){ return esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g,'$1<em>$2</em>').replace(/\+\+(.+?)\+\+/g,'<u>$1</u>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>'); };
 FP.esc = esc; FP.md = md;
 /* Stile für die Hervorhebung __Wort__ (Design-Tab und pro Überschrift) */
 FP.HL_STYLES = [['swoosh','Schwung'],['line','Linie'],['marker','Marker'],['half','Textmarker'],['pill','Fläche'],['stroke','Rahmen'],['circle','Kreis'],['color','Farbe']];
@@ -322,10 +322,17 @@ FP.rateMax = function(p){ return p.style === 'emoji' ? FP.emojiList(p).length : 
 FP.faceFor = function(p, v){ var list = FP.emojiList(p), mx = FP.rateMax(p), mn = p.style === 'nps' ? 0 : 1; var t = mx > mn ? (v - mn) / (mx - mn) : 0; return list[Math.max(0, Math.min(list.length - 1, Math.round(t * (list.length - 1))))]; };
 /* ---------- Hinweis-Pfeil: handgezeichnete Pfeile (zeigen in der Grundstellung nach unten) ---------- */
 FP.ARROWS = {
-  curve:{d:'M28 10 C 64 12, 92 40, 74 98', h:'M58 86 L74 99 L84 81'},
-  loop:{d:'M18 12 C 66 2, 92 38, 62 50 C 38 58, 42 30, 62 34 C 88 40, 86 76, 70 100', h:'M56 90 L70 102 L82 87'},
-  straight:{d:'M60 8 C 57 38, 63 68, 60 100', h:'M47 87 L60 101 L73 87'},
-  swoop:{d:'M12 30 C 30 6, 70 4, 84 30 C 94 50, 86 78, 66 98', h:'M52 88 L66 100 L78 85'}
+  curve:{d:'M28 10 C 64 12, 92 40, 74 98'},
+  loop:{d:'M18 12 C 66 2, 92 38, 62 50 C 38 58, 42 30, 62 34 C 88 40, 86 76, 70 100'},
+  straight:{d:'M60 8 C 57 38, 63 68, 60 100'},
+  swoop:{d:'M12 30 C 30 6, 70 4, 84 30 C 94 50, 86 78, 66 98'}
+};
+/* Pfeilspitze exakt aus der Richtung am Linienende berechnen: zwei gleich lange Schenkel, symmetrisch zur Tangente */
+FP.arrowHead = function(d){
+  var n = String(d).match(/-?\d+(?:\.\d+)?/g).map(Number), k = n.length;
+  var ex = n[k-2], ey = n[k-1], cx = n[k-4], cy = n[k-3], a = Math.atan2(ey - cy, ex - cx), L = 15, s = 32 * Math.PI / 180;
+  var pt = function(t){ return (ex - L * Math.cos(a + t)).toFixed(1) + ' ' + (ey - L * Math.sin(a + t)).toFixed(1); };
+  return 'M' + pt(-s) + ' L' + ex + ' ' + ey + ' L' + pt(s);
 };
 
 /* ---------- Ladeseite: eigene Lottie-Animationen (Farbe [1,0,1] wird zur Primärfarbe) ---------- */
@@ -440,7 +447,7 @@ FP.renderBlock = function(b, ctx){
       /* Liegt über dem Inhalt (nimmt keinen Platz ein), frei verschiebbar über x/y, klickt nicht im Weg */
       var aw = FP.ARROWS[p.style] || FP.ARROWS.curve, asz = Math.max(30, Math.min(260, +p.size || 90)), aside = p.textSide || 'start';
       var atx = aside === 'none' || !p.text ? '' : '<span class="at'+(p.hand !== false ? ' hand' : '')+'">'+T(p.text)+'</span>';
-      var asvg = '<span class="ar" style="transform:rotate('+(+p.rotate||0)+'deg)'+(p.flip ? ' scaleX(-1)' : '')+'"><svg viewBox="0 0 120 120" width="'+asz+'" height="'+asz+'" aria-hidden="true"><path class="ap" pathLength="1" d="'+aw.d+'"/><path class="ah" pathLength="1" d="'+aw.h+'"/></svg></span>';
+      var asvg = '<span class="ar" style="transform:rotate('+(+p.rotate||0)+'deg)'+(p.flip ? ' scaleX(-1)' : '')+'"><svg viewBox="0 0 120 120" width="'+asz+'" height="'+asz+'" aria-hidden="true"><path class="ap" pathLength="1" d="'+aw.d+'"/><path class="ah" pathLength="1" d="'+FP.arrowHead(aw.d)+'"/></svg></span>';
       h = '<div class="fp-arw a-'+esc(p.anim || 'bounce')+'" role="note" style="--ax:'+(+p.x||0)+'px;--ay:'+(+p.y||0)+'px;--asz:'+asz+'px'+(p.acolor ? ';--ac:'+esc(p.acolor) : '')+'">'+(aside === 'end' ? asvg + atx : atx + asvg)+'</div>';
       break;
     case 'loader':

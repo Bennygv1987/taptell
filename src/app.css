@@ -14,7 +14,7 @@
   --ok:#16a34a;--okS:#ecfdf3;--okT:#15803d;--warn:#d97706;--warnS:#fffbeb;--warnT:#b45309;--bad:#dc2626;--badS:#fef2f2;--badT:#b91c1c;--info:#2f5bd3;--infoS:#eef3fe;--infoT:#2449b0;--pur:#8b3fd9;--purS:#f5efff;--purT:#7a2fc9;
   /* Rollen */
   --bg:var(--n50);--side:#f4f4f5;--card:var(--n0);--raise:var(--n0);--hover:rgba(9,9,11,.04);--press:rgba(9,9,11,.07);
-  --ink:var(--n900);--ink2:var(--n700);--mut:var(--n500);--line:var(--n150);--line2:var(--n100);
+  --ink:var(--n900);--ink2:var(--n700);--tool:#18181b;--toolLine:rgba(255,255,255,0);--mut:var(--n500);--line:var(--n150);--line2:var(--n100);
   /* Schrift-Skala */
   --fs-11:11px;--fs-12:12px;--fs-13:13px;--fs-14:14px;--fs-16:16px;--fs-18:18px;--fs-22:22px;--fs-28:28px;
   /* Radien */
@@ -32,7 +32,7 @@
   --a:#fafafa;--a2:#e4e4e7;--pt:#09090b;
   --acc:#7b98ff;--accS:rgba(123,152,255,.12);--accL:rgba(123,152,255,.38);
   --ok:#4ade80;--okS:rgba(74,222,128,.12);--okT:#4ade80;--warn:#fbbf24;--warnS:rgba(251,191,36,.12);--warnT:#fbbf24;--bad:#f87171;--badS:rgba(248,113,113,.12);--badT:#f87171;--info:#7b98ff;--infoS:rgba(123,152,255,.12);--infoT:#9db3ff;--pur:#c4a1ff;--purS:rgba(196,161,255,.12);--purT:#c4a1ff;
-  --side:#0c0c0e;--raise:#18181b;--hover:rgba(255,255,255,.05);--press:rgba(255,255,255,.08);
+  --side:#0c0c0e;--raise:#18181b;--tool:#232326;--toolLine:rgba(255,255,255,.1);--hover:rgba(255,255,255,.05);--press:rgba(255,255,255,.08);
   --sh:none;--sh-md:0 0 0 1px rgba(255,255,255,.04),0 12px 32px -12px rgba(0,0,0,.7);--sh2:0 0 0 1px rgba(255,255,255,.08),0 24px 60px -12px rgba(0,0,0,.75);
   --ring:0 0 0 3px rgba(123,152,255,.28);
   color-scheme:dark;
@@ -368,7 +368,7 @@ pre.code,textarea.code{background:var(--n900);color:#d6d9e4;border-radius:var(--
 .dropline{position:absolute;left:14px;right:14px;height:3px;background:var(--info);border-radius:var(--r-xs);z-index:30;pointer-events:none;box-shadow:0 0 0 3px rgba(37,99,235,.18)}
 .dropline:before,.dropline:after{content:"";position:absolute;top:-3.5px;width:10px;height:10px;border-radius:50%;background:var(--info)}
 .dropline:before{left:-5px}.dropline:after{right:-5px}
-.btool{position:absolute;z-index:40;display:flex;gap:2px;background:var(--ink);border-radius:var(--r-md);padding:3px;box-shadow:var(--sh2)}
+.btool{position:absolute;z-index:40;display:flex;gap:2px;background:var(--tool);border:1px solid var(--toolLine);border-radius:var(--r-md);padding:3px;box-shadow:var(--sh2)}
 .btool button{width:26px;height:26px;border:0;background:none;color:#fff;border-radius:var(--r-sm);cursor:pointer;display:grid;place-items:center}
 .btool button:hover{background:rgba(255,255,255,.15)}
 .btool button svg{width:14px;height:14px}
@@ -831,3 +831,24 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
 #scr .fp-b.sel[data-type=arrow]{outline:0 !important;box-shadow:none !important}
 #scr .fp-b.sel[data-type=arrow] .fp-arw,#scr .fp-arw.dragging{outline:1.5px dashed var(--acc);outline-offset:6px;border-radius:var(--r-md)}
 @media (hover:hover) and (pointer:fine){#scr .fp-arw:hover{outline:1px dashed var(--n300);outline-offset:6px;border-radius:var(--r-md)}}
+
+/* Text direkt im Vorschaubild bearbeiten */
+#scr .fp-b.editing{outline:2px solid var(--acc) !important;outline-offset:4px;border-radius:var(--r-sm);cursor:text}
+#scr .fp-b.editing [contenteditable="true"]{pointer-events:auto;cursor:text;outline:none;caret-color:var(--acc);-webkit-user-select:text;user-select:text}
+#scr .fp-b.editing [contenteditable="true"] *{pointer-events:auto}
+#scr .fp-b.editing [contenteditable="true"]:empty::before{content:'Text eingeben …';opacity:.4}
+#scr .fp-b.editing .fp-btn{cursor:text}
+@media (hover:hover) and (pointer:fine){#scr .fp-b.sel:not(.editing)[data-type=heading],#scr .fp-b.sel:not(.editing)[data-type=text],#scr .fp-b.sel:not(.editing)[data-type=badge]{cursor:text}}
+.inlbar{position:fixed;z-index:60;border:1px solid var(--toolLine);display:flex;align-items:center;gap:1px;padding:3px;border-radius:var(--r-md);background:var(--tool);color:#fff;box-shadow:0 10px 28px -8px rgba(0,0,0,.45);transform-origin:50% 100%;animation:inlIn 150ms var(--ease-out)}
+.inlbar.below{transform-origin:50% 0}
+@keyframes inlIn{from{opacity:0;transform:scale(.96) translateY(3px)}}
+.inlbar button{appearance:none;border:0;background:none;color:inherit;width:28px;height:28px;border-radius:var(--r-sm);display:grid;place-items:center;cursor:pointer;opacity:.82;transition:background-color var(--dur-fast) ease,opacity var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.inlbar button svg{width:15px;height:15px}
+.inlbar button:active{transform:scale(.92)}
+.inlbar button.on{background:rgba(255,255,255,.18);opacity:1}
+@media (hover:hover) and (pointer:fine){.inlbar button:hover{background:rgba(255,255,255,.12);opacity:1}}
+.inlbar i{width:1px;height:16px;margin:0 3px;background:rgba(255,255,255,.18)}
+.inlbar .ok{width:auto;padding:0 10px;margin-left:2px;font:600 var(--fs-12) var(--ui);background:#fff;color:var(--tool);opacity:1}
+@media (hover:hover) and (pointer:fine){.inlbar .ok:hover{background:#fff;opacity:.9}}
+@media (prefers-reduced-motion:reduce){.inlbar{animation-name:inlFade}}
+@keyframes inlFade{from{opacity:0}}
