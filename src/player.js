@@ -78,6 +78,9 @@ FP.FACES = [
 FP.FACE_LABELS = ['Sehr schlecht','Schlecht','Okay','Gut','Super'];
 FP.faceIdx = function(n, i){ return n > 1 ? Math.round(i * 4 / (n - 1)) : 4; };
 
+/* WhatsApp-Logo (gefüllt) und Link-Helfer: Nummer in internationales Format, erste Nachricht vorbefüllt */
+FP.WA = '<svg class="wa" viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:none"><path d="M12 2.2a9.8 9.8 0 00-8.4 14.8l-1.3 4.8 4.9-1.3A9.8 9.8 0 1012 2.2zm0 17.9a8.1 8.1 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8.1 8.1 0 1112 20.1zm4.5-6c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.6 6.6 0 01-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.8 11.8 0 004.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 001.8-1.2 2.2 2.2 0 00.1-1.3c0-.1-.2-.2-.5-.3z"/></svg>';
+FP.waUrl = function(num, text){ var n = String(num || '').replace(/\D/g, '').replace(/^00/, '').replace(/^0/, '49'); return n ? 'https://wa.me/' + n + (text ? '?text=' + encodeURIComponent(text) : '') : ''; };
 FP.BTN_ICONS = {
   arrow:BI('<path d="M5 12h14M13 6l6 6-6 6"/>'), chevron:BI('<path d="M9 6l6 6-6 6"/>'), send:BI('<path d="M21.5 2.5L10.5 13.5"/><path d="M21.5 2.5l-7 19-4-8-8-4z"/>'),
   check:BI('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), calendar:BI('<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>'),
@@ -108,12 +111,35 @@ FP.usedFonts = function(f){ var t = f.theme || {}, out = [t.font, t.headingFont]
 FP.themeVars = function(t){
   t = t || {};
   return '--p:'+(t.primary||'#4353ff')+';--pt:'+(t.primaryText||'#fff')+';--bg:'+(t.bg||'#fff')+';--sf:'+(t.surface||'#f4f5f7')+';--tx:'+(t.text||'#111318')+';--mt:'+(t.muted||'#6b7280')+';--r:'+(t.radius!=null?t.radius:14)+'px;--br:'+(t.btnRadius!=null?t.btnRadius:12)+'px;--ff:'+FP.fontStack(t.font||'Inter')+';--hf:'+FP.fontStack(t.headingFont||t.font||'Inter')+';'
-    +'--sc:'+((+t.scale||100)/100)+';--hw:'+(t.headingWeight||700)+';--hls:'+((t.headingLs!=null&&t.headingLs!==''?+t.headingLs:-2)/100)+'em;--htt:'+(t.headingUpper?'uppercase':'none')+';--lh:'+(t.lineHeight||1.55)+';--bpy:'+(t.btnPad!=null&&t.btnPad!==''?t.btnPad:16)+'px;--bpx:'+(t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22)+'px;--bw:'+(t.btnWeight||600)+';--btt:'+(t.btnUpper?'uppercase':'none')+';--bls:'+(t.btnUpper?'.05em':'normal')+';--pad:'+(t.pad!=null&&t.pad!==''?t.pad:20)+'px;'
+    +'--sc:'+((+t.scale||100)/100)+';--hw:'+(t.headingWeight||700)+';--hls:'+((t.headingLs!=null&&t.headingLs!==''?+t.headingLs:-2)/100)+'em;--htt:'+(t.headingUpper?'uppercase':'none')+';--lh:'+(t.lineHeight||1.55)+';'+(t.headingLh?'--hlh:'+t.headingLh+';':'')+'--bpy:'+(t.btnPad!=null&&t.btnPad!==''?t.btnPad:16)+'px;--bpx:'+(t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22)+'px;--bw:'+(t.btnWeight||600)+';--btt:'+(t.btnUpper?'uppercase':'none')+';--bls:'+(t.btnUpper?'.05em':'normal')+';--pad:'+(t.pad!=null&&t.pad!==''?t.pad:20)+'px;'
     + [['spTop','tpt'],['spHead','hg'],['spContent','cg'],['spBlock','bk'],['spBottom','bpb']].map(function(x){ var v = t[x[0]]; return v != null && v !== '' ? '--'+x[1]+':'+(+v)+'px;' : ''; }).join('')
     /* kleineres Logo → flacherer Kopf (Mindesthöhe sonst 30px für den Zurück-Button) */
     + (t.logoImg && +t.logoH ? '--hmh:'+Math.min(30, +t.logoH)+'px;' : '');
 };
 
+/* Logik-Regeln: Bedingungen auf beliebige frühere Antworten (und/oder) */
+FP.logicTest = function(rule, f, answers){
+  var cs = (rule.cond || []).filter(function(c){ return c.bid; }); if(!cs.length) return false;
+  var res = cs.map(function(c){
+    var b = FP.allBlocks(f).filter(function(x){ return x.id === c.bid; })[0]; if(!b) return false;
+    var v = answers[(b.props && b.props.key) || b.id], arr = [].concat(v == null ? [] : v), filled = arr.length > 0 && arr.some(function(x){ return x !== '' && x !== false; });
+    var n = +v, cv = c.val, num = +cv;
+    switch(c.op){
+      case 'is': return arr.some(function(x){ return String(x).trim().toLowerCase() === String(cv == null ? '' : cv).trim().toLowerCase(); });
+      case 'isnot': return !arr.some(function(x){ return String(x).trim().toLowerCase() === String(cv == null ? '' : cv).trim().toLowerCase(); });
+      case 'contains': return arr.some(function(x){ return String(x).toLowerCase().indexOf(String(cv || '').toLowerCase()) >= 0; });
+      case 'filled': return filled;
+      case 'empty': return !filled;
+      case 'eq': return v != null && v !== '' && n === num;
+      case 'gt': return v != null && v !== '' && n > num;
+      case 'lt': return v != null && v !== '' && n < num;
+      case 'gte': return v != null && v !== '' && n >= num;
+      case 'lte': return v != null && v !== '' && n <= num;
+    }
+    return false;
+  });
+  return rule.join === 'or' ? res.some(Boolean) : res.every(Boolean);
+};
 FP.allBlocks = function(f){ var out=[]; (f.pages||[]).forEach(function(p){ (p.blocks||[]).forEach(function(b){ out.push(b); }); }); return out; };
 var keyOf = function(b){ return (b.props && b.props.key) || b.id; };
 FP.keyOf = keyOf;
@@ -398,10 +424,10 @@ FP.renderBlock = function(b, ctx){
   switch(b.type){
     case 'heading':
       var lv = p.level || 1;
-      h = '<h'+lv+' class="fp-h'+lv+'" style="'+(p.color?'color:'+p.color+';':'')+(p.size?'font-size:'+p.size+'px;':'')+'">'+T(p.text)+'</h'+lv+'>';
+      h = '<h'+lv+' class="fp-h'+lv+'" style="'+(p.color?'color:'+p.color+';':'')+(p.size?'font-size:'+p.size+'px;':'')+(p.lh?'line-height:'+p.lh+';':'')+'">'+T(p.text)+'</h'+lv+'>';
       break;
     case 'text':
-      h = '<p class="fp-txt" style="'+(p.color?'color:'+p.color+';':'')+(p.size?'font-size:'+p.size+'px;':'')+'">'+T(p.text)+'</p>';
+      h = '<p class="fp-txt" style="'+(p.color?'color:'+p.color+';':'')+(p.size?'font-size:'+p.size+'px;':'')+(p.lh?'line-height:'+p.lh+';':'')+'">'+T(p.text)+'</p>';
       break;
     case 'badge':
       h = '<span class="fp-badge '+(p.variant||'')+(p.upper?' up':'')+'">'+T(p.text)+'</span>';
@@ -479,10 +505,10 @@ FP.renderBlock = function(b, ctx){
     case 'button':
       var th = ctx.f.theme || {}, bv = p.variant || th.btnVariant || '';
       if(bv === 'filled') bv = '';
-      var ic = p.icon != null && p.icon !== '' ? p.icon : (p.arrow === false ? 'none' : 'arrow'), icH = ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
+      var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow'), icH = ic === 'whatsapp' ? FP.WA : ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
       var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse':'');
       var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '') + (p.radiusOn ? '--br:'+(+p.radius||0)+'px;' : '');
-      bst += FP.padSides(p, ['bpt','bpr','bpb','bpl']);
+      var bpd = FP.padSides(p, ['bpt','bpr','bpb','bpl']); if(bpd) bst += bpd + 'min-height:0;'; /* eigener Innenabstand schlägt Mindesthöhen aus Vorlagen-CSS */
       var subIn = p.sub && p.subIn;
       var lbl = subIn ? '<span class="tx"><span class="ln">'+T(p.label||'Weiter')+'</span><span class="sb">'+T(p.sub)+'</span></span>' : '<span>'+T(p.label||'Weiter')+'</span>';
       if(subIn) cls += ' two';
@@ -504,7 +530,7 @@ FP.renderBlock = function(b, ctx){
         break;
       }
       var ratio = lay==='image' && p.ratio ? String(p.ratio).replace(':','/') : '';
-      h += '<div class="fp-opts '+lay+((lay==='image'&&p.cols===1)?' one':'')+((lay==='grid'&&p.cols===3)?' grid3':'')+((lay==='image'||lay==='grid'||lay==='checklist')&&+p.colsD>1?' cd'+(+p.colsD):'')+'"'+(ratio?' style="--ir:'+esc(ratio)+'"':'')+'>';
+      h += '<div class="fp-opts '+lay+((lay==='image'&&p.cols===1)?' one':'')+((lay==='grid'&&p.cols===3)?' grid3':'')+((lay==='image'||lay==='grid'||lay==='checklist')&&+p.colsD>1?' cd'+(+p.colsD):'')+(p.optAlign?' ta-'+(p.optAlign==='center'?'c':'l'):'')+(p.optFw?' ofw':'')+(p.optSubFw?' osfw':'')+'"'+((ratio||p.optFw||p.optSubFw)?' style="'+(ratio?'--ir:'+esc(ratio)+';':'')+(p.optFw?'--ofw:'+(+p.optFw)+';':'')+(p.optSubFw?'--osfw:'+(+p.optSubFw)+';':'')+'"':'')+'>';
       (p.options||[]).forEach(function(o){
         var on = sel.indexOf(o.id) >= 0;
         var price = p.showPrices && (+o.price || +o.unitPrice) ? '<span class="pr">'+(+o.price ? '+ '+FP.money(o.price,cur) : FP.money(o.unitPrice,cur)+(o.unitLabel?' / '+esc(o.unitLabel):''))+'</span>' : '';
@@ -700,10 +726,10 @@ FP.renderShell = function(f, idx, inner, opts){
   if(t.fab && !opts.noFab && (t.fabPhone || t.fabWa)){
     var tel = String(t.fabPhone || '').replace(/[^\d+]/g, ''), wa = String(t.fabWa || '').replace(/\D/g, '').replace(/^0+/, '49');
     var waUrl = wa ? 'https://wa.me/' + wa + (t.fabText ? '?text=' + encodeURIComponent(t.fabText) : '') : '';
-    var fabFace = t.fabImg ? '<span class="fp-ph" style="background-image:url(&quot;'+esc(t.fabImg)+'&quot;)"></span>' : (tel && !wa ? FP.ICONS.phone : FP.ICONS.chat);
+    var fabFace = t.fabImg ? '<span class="fp-ph" style="background-image:url(&quot;'+esc(t.fabImg)+'&quot;)"></span>' : (tel && !wa ? FP.ICONS.phone : wa && !tel ? FP.WA : FP.ICONS.chat);
     var one = !(tel && wa), lnk = tel ? 'tel:' + tel : waUrl;
-    opts.fab = '<div class="fp-fabw'+(t.stickyCta ? ' up' : '')+'"><div class="fp-fab" data-fab>'
-      + (one ? '' : '<div class="fp-fabm"><a class="fp-fabo" href="tel:'+esc(tel)+'">'+FP.ICONS.phone+'<span>Anrufen</span></a><a class="fp-fabo" href="'+esc(waUrl)+'" target="_blank" rel="noopener">'+FP.ICONS.chat+'<span>WhatsApp</span></a></div>')
+    opts.fab = '<div class="fp-fabw'+(t.stickyCta ? ' up' : '')+(t.fabSide === 'left' ? ' left' : '')+' fs-'+(t.fabStyle || 'brand')+(t.fabSize === 'sm' ? ' sm' : '')+'"><div class="fp-fab" data-fab>'
+      + (one ? '' : '<div class="fp-fabm"><a class="fp-fabo" href="tel:'+esc(tel)+'">'+FP.ICONS.phone+'<span>Anrufen</span></a><a class="fp-fabo" href="'+esc(waUrl)+'" target="_blank" rel="noopener">'+FP.WA+'<span>WhatsApp</span></a></div>')
       + (t.fabLabel ? '<span class="fp-fabl">'+esc(t.fabLabel)+'</span>' : '')
       + (one ? '<a class="fp-fabb" href="'+esc(lnk)+'"'+(tel ? '' : ' target="_blank" rel="noopener"')+' aria-label="'+(tel ? 'Anrufen' : 'WhatsApp')+'">'+fabFace+'</a>' : '<button type="button" class="fp-fabb" data-act="fab" aria-expanded="false" aria-label="Kontakt aufnehmen">'+fabFace+'</button>')
       + '</div></div>';
@@ -887,6 +913,8 @@ FP.mount = function(root, f, opts){
   function resolveTarget(target){
     var page = pages[st.i];
     if(target) return target;
+    var lg = page.logic || [];
+    for(var li = 0; li < lg.length; li++){ if(lg[li].goto && FP.logicTest(lg[li], f, st.answers)) return lg[li].goto; }
     var routed = null;
     page.blocks.forEach(function(b){
       if(b.type==='choice' && !b.props.multi){
@@ -1041,6 +1069,7 @@ FP.mount = function(root, f, opts){
     else if(act === 'btn'){
       var p = b.props, a = p.action || 'next';
       if(a === 'url'){ if(opts.onUrl) opts.onUrl(p.url); else window.location.href = p.url; }
+      else if(a === 'wa'){ var wu = FP.waUrl(p.waNumber, FP.interp(p.waText || '', f, st.answers || {})); if(wu) window.open(wu, '_blank', 'noopener'); }
       else if(a === 'submit'){ if(st.busy) return; if(!validate()){ render(true); var e2 = root.querySelector('.fp-err'); if(e2 && e2.scrollIntoView) e2.scrollIntoView({block:'center',behavior:'smooth'}); return; }
         /* Absenden: Lead sofort speichern, Button zeigt kurz Laden und Haken, dann weiter */
         submit(); st.busy = true; el.classList.add('busy'); el.setAttribute('aria-busy', 'true');

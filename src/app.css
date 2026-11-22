@@ -852,3 +852,57 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
 @media (hover:hover) and (pointer:fine){.inlbar .ok:hover{background:#fff;opacity:.9}}
 @media (prefers-reduced-motion:reduce){.inlbar{animation-name:inlFade}}
 @keyframes inlFade{from{opacity:0}}
+
+/* Logik-Builder */
+.modal.logic{width:min(1240px,100%);height:min(860px,calc(100vh - 48px))}
+.modal.logic .mb{padding:0;flex:1;min-height:0;display:flex;border-top:1px solid var(--line2);margin-top:14px}
+.lgb{display:grid;grid-template-columns:minmax(0,1fr) 360px;flex:1;min-height:0}
+.lgc{position:relative;overflow:auto;background:var(--bg) radial-gradient(circle,var(--n200) 1px,transparent 1.2px) 0 0/18px 18px;border-bottom-left-radius:var(--r-xl)}
+.lgs{position:relative;margin:0 auto}
+.lgsv{position:absolute;inset:0;overflow:visible;pointer-events:none}
+.lge{fill:none;stroke-width:1.6;stroke-linecap:round}
+.lge.if{stroke:var(--acc)}
+.lge.next{stroke:var(--n400)}
+.lge.btn{stroke:var(--n400);stroke-dasharray:4 4}
+.lgmk{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.lgmk.if{stroke:var(--acc)}.lgmk.next,.lgmk.btn{stroke:var(--n400)}
+.lgn{position:absolute;appearance:none;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:10px 12px;border-radius:var(--r-lg);background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-md);color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.lgn:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){.lgn:hover{border-color:var(--n300)}}
+.lgn.on{border-color:var(--acc);box-shadow:var(--ring),var(--sh-md)}
+.lgn.un{border-style:dashed;box-shadow:none}
+.lgt{display:flex;align-items:center;gap:8px;min-width:0}
+.lgt b{font-size:var(--fs-13);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgn .n,.lgph .n{flex:none;width:20px;height:20px;border-radius:var(--r-sm);display:grid;place-items:center;background:var(--n100);color:var(--mut);font:600 var(--fs-11) var(--mono)}
+.lgn.on .n{background:var(--accS);color:var(--acc)}
+.lgm{display:flex;align-items:center;gap:5px;font-size:var(--fs-11);color:var(--mut)}
+.lgm svg{width:11px;height:11px}
+.lgm.warn{color:var(--warnT)}
+.lgl{position:absolute;transform:translate(-50%,-50%);max-width:190px;padding:2px 8px;border-radius:var(--r-pill);background:var(--card);border:1px solid var(--accL);color:var(--acc);font:500 var(--fs-11)/1.5 var(--ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.lgl.btn{border-color:var(--line);color:var(--mut)}
+.lgp{border-left:1px solid var(--line2);overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--card)}
+.lgph{display:flex;align-items:center;gap:10px}
+.lgph b{display:block;font-size:var(--fs-14)}
+.lgph small{display:block;color:var(--mut);font-size:var(--fs-12)}
+.lgw{font:600 var(--fs-11) var(--ui);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.lgrule{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);animation:lgIn 200ms var(--ease-out)}
+@keyframes lgIn{from{opacity:0;transform:translateY(4px)}}
+.lgrh{display:flex;align-items:center;justify-content:space-between}
+.lgcond{position:relative;display:grid;gap:6px;padding:8px;border-radius:var(--r-md);background:var(--n100)}
+.lgcond:has(.lgx) select:first-child{padding-right:30px}
+.lgx{position:absolute;top:10px;right:10px;width:22px;height:22px}
+.lgcr{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:6px}
+.lgcr:has(> :only-child){grid-template-columns:1fr}
+.lgjoin{display:flex;justify-content:center;gap:2px}
+.lgjoin button{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--mut);font:500 var(--fs-11) var(--ui);padding:2px 10px;border-radius:var(--r-pill);cursor:pointer;transition:transform var(--dur-press) var(--ease-out)}
+.lgjoin button:active{transform:scale(.97)}
+.lgjoin button.on{border-color:var(--acc);color:var(--acc);background:var(--accS)}
+.lgto,.lgelse{display:grid;gap:6px}
+.lgelse{padding:12px;border-radius:var(--r-lg);background:var(--n100)}
+.lgadd{justify-content:center}
+.lgoth{display:grid;gap:6px}
+.lgo{display:flex;align-items:center;gap:6px;font-size:var(--fs-12);color:var(--ink2)}
+.lgo svg{width:12px;height:12px;color:var(--mut)}
+.lgopen{align-self:flex-start;margin-top:auto}
+@media (max-width:860px){.lgb{grid-template-columns:1fr;grid-template-rows:minmax(240px,1fr) auto}.lgp{border-left:0;border-top:1px solid var(--line2)}}
+@media (prefers-reduced-motion:reduce){.lgrule{animation-name:fade}}

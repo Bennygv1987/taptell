@@ -65,7 +65,7 @@
 @keyframes fpTilt{from{opacity:0;transform:perspective(1200px) rotateX(9deg) translateY(14px)}to{opacity:1;transform:none}}
 @keyframes fpStag{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .fp-b{position:relative}
-.fp-h1,.fp-h2,.fp-h3{font-family:var(--hf);font-weight:var(--hw,700);letter-spacing:var(--hls,-.02em);text-transform:var(--htt,none);margin:0;line-height:1.15}
+.fp-h1,.fp-h2,.fp-h3{font-family:var(--hf);font-weight:var(--hw,700);letter-spacing:var(--hls,-.02em);text-transform:var(--htt,none);margin:0;line-height:var(--hlh,1.15)}
 .fp-h1{font-size:calc(28px*var(--sc,1))}.fp-h2{font-size:calc(23px*var(--sc,1))}.fp-h3{font-size:calc(18px*var(--sc,1))}
 .fp-txt{font-size:calc(15.5px*var(--sc,1));line-height:var(--lh,1.55);font-weight:var(--tw,400);color:var(--mt);margin:0}
 .fp-txt strong,.fp-h1 strong,.fp-h2 strong{color:var(--tx)}
@@ -705,3 +705,25 @@ textarea.fp-in{min-height:110px;resize:vertical}
 @keyframes fpArwD{to{stroke-dashoffset:0}}
 .fp.is-edit .fp-b[data-type=arrow] .fp-arw{pointer-events:auto;cursor:move;touch-action:none}
 @media (prefers-reduced-motion:reduce){.fp-arw svg{animation:none !important}.fp:not(.is-edit) .fp-arw.a-draw :is(.ap,.ah){animation:none;stroke-dashoffset:0}}
+
+/* Auswahl: Ausrichtung und Stärke von Titel/Untertitel der Antworten */
+.fp-opts.ta-c .fp-opt .lbl,.fp-opts.ta-c.image .fp-opt .lbl{text-align:center}
+.fp-opts.ta-l .fp-opt,.fp-opts.ta-l .fp-opt .lbl{text-align:left}
+.fp-opts.ta-l.grid .fp-opt,.fp-opts.ta-l.grid3 .fp-opt{align-items:flex-start}
+.fp-opts.ofw .fp-opt .lbl{font-weight:var(--ofw)}
+.fp-opts.osfw .fp-opt .sub{font-weight:var(--osfw)}
+/* Kontakt-Knopf: weiß mit dezentem Schatten, WhatsApp-Grün oder Markenfarbe; links oder rechts */
+.fp-fabw.left{justify-content:flex-start}
+.fp-fabw.left .fp-fabm{right:auto;left:0;align-items:flex-start;transform-origin:0 100%}
+.fp-fabw.fs-white .fp-fabb{background:#fff;color:#25d366;box-shadow:0 8px 24px -10px rgba(0,0,0,.28),0 1px 3px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04)}
+.fp-fabw.fs-white .fp-fabb:has(svg:not(.wa)){color:var(--p)}
+.fp-fabw.fs-green .fp-fabb{background:#25d366;color:#fff;box-shadow:0 10px 26px -8px rgba(37,211,102,.55),0 2px 6px rgba(0,0,0,.12)}
+.fp-fabb svg.wa{width:28px;height:28px}
+.fp-fabo svg.wa{color:#25d366}
+.fp-fabw.sm .fp-fabb{width:48px;height:48px}
+.fp-fabw.sm .fp-fabb svg{width:22px;height:22px}
+.fp-fab{animation:fpFabIn 320ms var(--ease-out) 600ms both}
+@keyframes fpFabIn{from{opacity:0;transform:translateY(10px) scale(.92)}}
+@media (hover:hover) and (pointer:fine){.fp-fabb{transition:transform 200ms var(--ease-out),box-shadow 200ms ease}.fp-fabb:hover{transform:translateY(-2px)}}
+@media (prefers-reduced-motion:reduce){.fp-fab{animation-name:fpFade}}
+.fp-btn svg.wa{width:20px;height:20px}

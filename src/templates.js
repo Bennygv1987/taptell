@@ -961,6 +961,8 @@ function liftCss(t){
   css = css.replace(/(^|\n)\.fp\.prog-top \.fp-top\{padding-top:(\d+)px\}(?=\n|$)/, function(m, a, n){ top = +n; set('spTop', top); return a; });
   css = css.replace(/(^|\n)\.fp\.prog-top \.fp-prog\{margin:0 0 (\d+)px;height:(\d+)px;background:rgba\(43,42,43,\.1\)\}(?=\n|$)/, function(m, a, mb, h){ hg = +mb; set('spHead', hg); set('progH', +h); return a; });
   css = css.replace(/(^|\n)\.fp-body\{padding-top:(\d+)px\}(?=\n|$)/, function(m, a, n){ set('spContent', +n); return a; });
+  /* Zeilenhöhe der Überschriften in die Einstellung übernehmen, damit der Regler im Design-Tab wirkt */
+  css = css.replace(/(^|\n)\.fp-h1,\.fp-h2,\.fp-h3\{line-height:([\d.]+);?([^}\n]*)\}(?=\n|$)/, function(m, a, n, rest){ set('headingLh', +n); return rest ? a + '.fp-h1,.fp-h2,.fp-h3{' + rest + '}' : a; });
   css = css.replace(/\.fp-btn\{font-size:([^;{}]+);min-height:[^;{}]+;padding:(\d+)px (\d+)px\}/, function(m, fs, py, px){ if(t.btnPad == null || +t.btnPad === +py) t.btnPad = 19; set('btnPadX', +px); return '.fp-btn{font-size:'+fs+'}'; });
   /* Desktop-Werte relativ zu den Einstellungen statt fest */
   if(top != null) css = css.replace(/\.fp\.prog-top \.fp-top\{padding-top:(\d+)px\}/g, function(m, n){ return '.fp.prog-top .fp-top{padding-top:calc(var(--tpt,'+top+'px) + '+(n - top)+'px)}'; });
@@ -969,7 +971,14 @@ function liftCss(t){
   if(css === before) return false;
   t.customCss = css; return true;
 }
-TEMPLATES.forEach(function(tp){ var mk = tp.make; tp.make = function(){ var d = mk(); liftCss(d.theme); return d; }; });
+/* Vorlagen einheitlich mittig: Überschriften, Texte, Badges, Fragen, Bewertungen, Vertrauens-Elemente und schmale Buttons.
+   Listen, Eingabefelder und Antwort-Karten bleiben linksbündig (dort liest es sich besser). */
+var CENTER = {heading:1, text:1, badge:1, trust:1, reviews:1, avatars:1, logos:1, rating:1, countdown:1, choice:1, slider:1, button:1};
+function centerPages(d){
+  (d && d.pages || []).forEach(function(pg){ (pg.blocks || []).forEach(function(b){ if(CENTER[b.type] && b.props && b.props.align !== 'right') b.props.align = 'center'; }); });
+  return d;
+}
+TEMPLATES.forEach(function(tp){ var mk = tp.make; tp.make = function(){ var d = mk(); liftCss(d.theme); if(tp.id !== 'blank') centerPages(d); return d; }; });
 
 function newFunnel(tplId, overrides){
   var t = TEMPLATES.filter(function(x){return x.id===tplId;})[0] || TEMPLATES[TEMPLATES.length-1];
@@ -981,5 +990,5 @@ function newFunnelFrom(d, tplId, overrides){
   return Object.assign({id:uid()+uid().slice(0,4), name:d.name, template:tplId, status:'draft', createdAt:now, updatedAt:now, theme:d.theme, settings:Object.assign({currency:'EUR', basePrice:0, baseLabel:'Grundpreis', webhook:'', redirect:'', pixel:''}, d.settings||{}), pages:d.pages, stats:{views:0, starts:0, completes:0, pages:{}, daily:{}}}, overrides||{});
 }
 
-window.FS_T = {uid:uid, clone:clone, THEMES:THEMES, THEME_BASE:THEME_BASE, theme:theme, DEF:DEF, LIB:LIB, SECTIONS:SECTIONS, B:B, P:P, O:O, fromLib:fromLib, TEMPLATES:TEMPLATES, CATS:CATS, newFunnel:newFunnel, newFunnelFrom:newFunnelFrom, art:art, liftCss:liftCss, fromSpec:fromSpec, IMG:IMG, SPECS:SPECS, aiFallback:aiFallback};
+window.FS_T = {uid:uid, clone:clone, THEMES:THEMES, THEME_BASE:THEME_BASE, theme:theme, DEF:DEF, LIB:LIB, SECTIONS:SECTIONS, B:B, P:P, O:O, fromLib:fromLib, TEMPLATES:TEMPLATES, CATS:CATS, newFunnel:newFunnel, newFunnelFrom:newFunnelFrom, art:art, liftCss:liftCss, fromSpec:function(s){ return centerPages(fromSpec(s)); }, centerPages:centerPages, IMG:IMG, SPECS:SPECS, aiFallback:aiFallback};
 })();

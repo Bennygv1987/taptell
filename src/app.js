@@ -350,7 +350,8 @@ function funnelMenu(btn, id){
 function duplicateFunnel(f){
   var c = clone(f); c.id = uid()+uid().slice(0,4); c.name = f.name + ' (Kopie)'; c.status = 'draft'; c.createdAt = c.updatedAt = Date.now(); c.stats = {views:0,starts:0,completes:0,pages:{},daily:{}}; delete c.demo;
   var map = {};
-  c.pages.forEach(function(p){ var n = uid(); map[p.id] = n; p.id = n; p.blocks.forEach(function(b){ b.id = uid(); }); });
+  c.pages.forEach(function(p){ var n = uid(); map[p.id] = n; p.id = n; p.blocks.forEach(function(b){ var nb = uid(); map[b.id] = nb; b.id = nb; }); });
+  c.pages.forEach(function(p){ (p.logic||[]).forEach(function(r){ r.goto = map[r.goto] || ''; (r.cond||[]).forEach(function(cd){ cd.bid = map[cd.bid] || ''; }); }); });
   c.pages.forEach(function(p){ if(p.next) p.next = map[p.next] || ''; (p.scoreRoutes||[]).forEach(function(r){ r.goto = map[r.goto] || ''; }); p.blocks.forEach(function(b){ if(b.props.target) b.props.target = map[b.props.target] || ''; (b.props.options||[]).forEach(function(o){ if(o.goto) o.goto = map[o.goto] || ''; }); (b.props.routes||[]).forEach(function(r){ if(r.goto) r.goto = map[r.goto] || ''; }); }); });
   db.funnels.unshift(c); save(); render(); toast('Funnel dupliziert');
 }
@@ -521,8 +522,8 @@ function toHex(v){ v = String(v||''); if(/^#[0-9a-f]{6}$/i.test(v)) return v; if
 
 /* ================= EDITOR ================= */
 var FIELDS = {
-  heading:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzentfarbe== · [[Marker]] · {{name}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['size','num','Schriftgröße (px, optional)']],
-  text:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzent== · [[Marker]] · {{name}}, {{total}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['size','num','Schriftgröße (px, optional)']],
+  heading:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzentfarbe== · [[Marker]] · {{name}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
+  text:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzent== · [[Marker]] · {{name}}, {{total}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
   badge:[['text','text','Text'],['variant','seg','Stil',[['','Soft'],['filled','Gefüllt'],['outline','Rahmen'],['grey','Grau']]],['upper','toggle','Großbuchstaben']],
   compare:[['bleed','toggle','Volle Breite ohne Seitenrand'],['before','image','Vorher-Bild (links)'],['after','image','Nachher-Bild (rechts)'],['row2','row',[['labelBefore','text','Text links'],['labelAfter','text','Text rechts']]],['ratio','select','Seitenverhältnis',[['4:3','4:3'],['1:1','1:1'],['16:9','16:9'],['3:4','3:4 (hoch)']]],['start','range','Startposition',[5,95,1,'%']],['radius','range','Ecken',[0,40,1]]],
   image:[['src','image','Bild'],['bleed','toggle','Volle Breite ohne Seitenrand','Das Bild reicht bis an den Rand des Bildschirms. Die Höhe bestimmst du weiter unten.'],['ratio','select','Seitenverhältnis',[['','Feste Höhe'],['2:1','2:1'],['16:9','16:9'],['4:3','4:3'],['1:1','1:1'],['auto','Original']]],['height','range','Höhe',[80,420,10],function(p){ return !p.ratio; }],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text']],
@@ -539,7 +540,7 @@ var FIELDS = {
   loader:[['anim','select','Animation',FP.LOADERS],['src','text','Lottie-Adresse (.json, z. B. von LottieFiles)',null,function(p){ return p.anim === 'custom'; }],['json','lottie','Oder Datei hochladen',null,function(p){ return p.anim === 'custom'; }],['duration','range','Dauer',[1,10,0.5,' s']],['size','range','Größe',[60,240,4]],['texts','strings','Wechselnde Hinweise','Wechseln gleichmäßig über die Dauer.'],['showBar','toggle','Ladebalken anzeigen'],['_n','note','Nach Ablauf geht es automatisch zur nächsten Seite. Wer zurückgeht, überspringt die Ladeseite.']],
   faq:[['items','faq','Fragen & Antworten']],
   countdown:[['label','text','Text darüber'],['minutes','num','Dauer in Minuten']],
-  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[1,'1']],function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
+  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[1,'1']],function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
   input:[['label','text','Label'],['placeholder','text','Platzhalter'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['faces','Smileys flach mit Text'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='faces'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.style==='faces'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.style==='faces'; }],['faceLabels','strings','Texte unter den Smileys','Leer lassen für: Sehr schlecht, Schlecht, Okay, Gut, Super.',function(p){ return p.style==='faces' && !p.faceNoText; }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.style==='faces' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.style!=='faces' || (p.faceNoText && p.faceEnds); }],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
@@ -547,7 +548,7 @@ var FIELDS = {
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen']]],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
+  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['whatsapp','WhatsApp'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
   summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }],['sticky','toggle','Unten fixieren','Bleibt beim Scrollen am unteren Rand sichtbar, solange das Element weiter unten auf der Seite steht.']],
   spacer:[['height','range','Höhe',[4,160,2]]],
   divider:[],
@@ -622,7 +623,7 @@ function renderCanvas(keepScroll){
   var nav = '<div class="pnav"><button class="ibtn" data-a="pprev" title="Vorherige Seite"'+(S.pi?'':' disabled')+'>'+I('left',15)+'</button>'
     + '<button class="pcur" data-a="pjump" title="Seite wählen"><span class="n">'+(S.pi+1)+'</span><span class="t">'+esc(curPage().name)+'</span><span class="of">von '+n+'</span>'+I('chevDown',13)+'</button>'
     + '<button class="ibtn" data-a="pnext" title="Nächste Seite"'+(S.pi<n-1?'':' disabled')+'>'+I('right',15)+'</button><span class="vr"></span>'
-    + '<button class="btn ghost sm" data-a="flow" title="Ablauf und Verzweigungen anzeigen">'+I('branch',14)+'Ablauf'+(branches?'<span class="pill nos" style="padding:0 6px;margin-left:2px">'+branches+'</span>':'')+'</button>'
+    + '<button class="btn ghost sm" data-a="flow" title="Logik: Ablauf und Verzweigungen bearbeiten">'+I('branch',14)+'Logik'+(branches?'<span class="pill nos" style="padding:0 6px;margin-left:2px">'+branches+'</span>':'')+'</button>'
     + '<button class="btn ghost sm ic" data-a="addPage" title="Seite hinzufügen">'+I('plus',15)+'</button></div>';
   var t = f.theme;
   var html = FP.renderPage(f, S.pi, {edit:true, answers:{}});
@@ -701,6 +702,7 @@ function field(spec, p, scope){
     case 'textarea': return VARK.indexOf(k) >= 0 && scope === 'p' ? wv('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>') : w('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>');
     case 'code': return w('<textarea class="inp" '+a+' rows="6" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)">'+esc(v)+'</textarea>');
     case 'num': return w('<input class="inp" type="number" '+a+' data-num value="'+(v==null?'':esc(v))+'" step="any">');
+    case 'lh': var lhd = b0lh(p); return w('<input class="inp" type="number" '+a+' data-num value="'+(v==null?'':esc(v))+'" step="0.05" min="0.8" max="3" placeholder="'+lhd+'">');
     case 'note': return '<div class="hint" style="margin:-2px 0 12px">'+esc(label)+'</div>';
     case 'lottie': return w('<div class="upl">'+(v ? '<span class="pill">Eigene Datei geladen</span>' : '')+'<label class="btn sm">'+I('upload',13)+(v ? 'Ersetzen' : 'Lottie-Datei (.json)')+'<input type="file" accept=".json,application/json" data-lottie="'+k+'"></label>'+(v ? '<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Entfernen">'+I('trash')+'</button>' : '')+'</div>');
     case 'imgstrings': return w((v||[]).map(function(x, i){ var isImg = /^(https?:|data:|\/)/.test(x); return '<div class="strl">'+(isImg ? '<span class="sthumb" style="background-image:url(&quot;'+esc(x)+'&quot;)"></span><input class="inp" value="'+(/^data:/.test(x) ? 'Hochgeladenes Bild' : esc(x))+'" disabled>' : '<input class="inp" data-arr="'+k+'" data-ai="'+i+'" value="'+esc(x)+'">')+'<button class="ibtn" data-a="arrDel" data-k="'+k+'" data-i="'+i+'" title="Entfernen">'+I('x')+'</button></div>'; }).join('')
@@ -711,7 +713,7 @@ function field(spec, p, scope){
       return '<div class="fld"><div class="flh"><label>'+esc(label)+'</label><button class="varbtn" data-a="padLink" data-scope="'+scope+'" data-keys="'+pk.join(',')+'" data-mode="'+(pset?'reset':'all')+'" title="'+(pset?'Alle Seiten zurücksetzen':'Oben auf alle Seiten übernehmen')+'">'+(pset?I('x',12)+'Zurücksetzen':I('link',12)+'Alle gleich')+'</button></div><div class="pad4">'
         + pk.map(function(x, i){ var pv = p[x]; return '<label><input class="inp" type="number" min="0" max="120" inputmode="numeric" data-'+scope+'="'+x+'" data-num value="'+(pv==null?'':esc(pv))+'" placeholder="'+esc(pph[i])+'" aria-label="'+esc(label)+' '+pnames[i]+'"><span>'+pnames[i]+'</span></label>'; }).join('')
         + '</div>'+(extra.hint?'<div class="hint">'+esc(extra.hint)+'</div>':'')+'</div>';
-    case 'range': var un = extra[3] != null ? extra[3] : (k==='stars'||k==='max'?'':'px'); return w('<div class="rng"><input type="range" '+a+' data-num data-unit="'+un+'" min="'+extra[0]+'" max="'+extra[1]+'" step="'+extra[2]+'" value="'+(v==null||v===''?extra[0]:v)+'"><span>'+(v==null||v===''?extra[0]:v)+un+'</span></div>');
+    case 'range': var un = extra[3] != null ? extra[3] : (k==='stars'||k==='max'?'':'px'), rdef = extra[4] == null ? extra[0] : (typeof extra[4] === 'function' ? extra[4]() : extra[4]); return w('<div class="rng"><input type="range" '+a+' data-num data-unit="'+un+'" min="'+extra[0]+'" max="'+extra[1]+'" step="'+extra[2]+'" value="'+(v==null||v===''?rdef:v)+'"><span>'+(v==null||v===''?rdef:v)+un+'</span></div>');
     case 'font': return w(fontSelect(scope, k, v || '', true));
     case 'select': return w('<select class="inp" '+a+' data-rp>'+extra.map(function(o){ return '<option value="'+o[0]+'"'+(String(v)===String(o[0])?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select>');
     case 'seg': return w('<div class="segf">'+extra.map(function(o){ return '<button data-a="seg" data-scope="'+scope+'" data-k="'+k+'" data-v="'+esc(o[0])+'" data-t="'+(typeof o[0])+'" class="'+(String(v==null?'':v)===String(o[0])?'on':'')+'">'+esc(o[1])+'</button>'; }).join('')+'</div>');
@@ -784,7 +786,8 @@ function panelPage(){
     + '<label class="tgl"><span>Zurück-Button erlauben</span><input type="checkbox" data-pp="allowBack" data-bool data-inv'+(pg.allowBack===false?'':' checked')+'><span class="sw"></span></label>'
     + (FP.hasButton(pg) || S.pi === f.pages.length-1 ? '' : '<label class="tgl"><span>Automatischer Weiter-Button</span><input type="checkbox" data-pp="autoButton" data-bool data-inv data-rp'+(pg.autoButton===false?'':' checked')+'><span class="sw"></span></label>' + (pg.autoButton===false?'':'<div class="fld"><label>Button-Text</label><input class="inp" data-pp="buttonLabel" value="'+esc(pg.buttonLabel||'')+'" placeholder="'+esc(f.theme.nextLabel||'Weiter')+'"></div>'))
     + '</div>';
-  h += '<div class="psec"><h5>'+I('branch',13)+'Weiterleitung</h5><div class="fld"><label>Nach dieser Seite</label><select class="inp" data-pp="next">'+pageOptions(pg.next,'Nächste Seite (Standard)')+'</select><div class="hint">Antwort-Verzweigungen haben Vorrang.</div></div>'
+  var lgN = (pg.logic||[]).filter(function(r){ return r.goto; }).length;
+  h += '<div class="psec"><h5>'+I('branch',13)+'Weiterleitung</h5><button class="btn sm" data-a="flow" style="width:100%;justify-content:center;margin-bottom:10px">'+I('branch',13)+(lgN ? 'Logik bearbeiten ('+lgN+(lgN===1?' Regel':' Regeln')+')' : 'Logik-Builder öffnen')+'</button><div class="fld"><label>Nach dieser Seite</label><select class="inp" data-pp="next">'+pageOptions(pg.next,'Nächste Seite (Standard)')+'</select><div class="hint">Regeln aus dem Logik-Builder und Antwort-Verzweigungen haben Vorrang.</div></div>'
     + '<div class="flab">Weiterleitung nach Punktzahl (Quiz)</div>' + (pg.scoreRoutes||[]).map(function(r, i){ return '<div class="strl" style="align-items:center"><input class="inp" type="number" style="width:58px" data-sr="'+i+'" data-sk="min" value="'+r.min+'" title="von"><span style="color:var(--mut)">–</span><input class="inp" type="number" style="width:58px" data-sr="'+i+'" data-sk="max" value="'+r.max+'" title="bis"><select class="inp" data-sr="'+i+'" data-sk="goto">'+pageOptions(r.goto,'Seite wählen')+'</select><button class="ibtn" data-a="srDel" data-i="'+i+'">'+I('x')+'</button></div>'; }).join('')
     + '<button class="btn sm" data-a="srAdd">'+I('plus',13)+'Regel hinzufügen</button><div class="hint">Summe der Punkte aller gewählten Antworten.</div></div>';
   h += '<div class="psec"><h5>Hintergrund</h5><div class="fld"><label>Hintergrundfarbe (nur diese Seite)</label><div style="display:flex;gap:6px">'+colorField('pp','bg',pg.bg||'')+(pg.bg?'<button class="ibtn" data-a="clearProp" data-scope="pp" data-k="bg">'+I('x')+'</button>':'')+'</div></div>'
@@ -874,7 +877,7 @@ function panelDesign(){
     + '<div class="fontbar"><button class="btn sm" data-a="fontAdd">'+I('plus',13)+'Google Font</button><label class="btn sm">'+I('upload',13)+'Schrift hochladen<input type="file" accept=".woff2,.woff,.ttf,.otf" data-fontup></label></div>'
     + rng('scale','Schriftgröße gesamt',[80,125,5,'%',100])
     + seg('headingWeight','Stärke Überschriften',[[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']])
-    + '<div class="row2">' + rng('headingLs','Laufweite Überschr.',[-6,10,1,'',-2]) + rng('lineHeight','Zeilenhöhe Text',[1.2,2,0.05,'',1.55]) + '</div>'
+    + '<div class="row2">' + rng('headingLs','Laufweite Überschr.',[-6,10,1,'',-2]) + rng('lineHeight','Zeilenhöhe Text',[1.2,2,0.05,'',1.55]) + '</div><div class="row2">' + rng('headingLh','Zeilenhöhe Überschr.',[0.9,1.8,0.05,'',1.15]) + '<span></span></div>'
     + tgl('headingUpper','Überschriften in Großbuchstaben') + hlPicker(t.hlStyle || 'swoosh') + '</div>';
   h += '<div class="psec"><h5>Buttons</h5>' + field(['btnVariant','select','Standard-Stil',[['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen']]], t, 't')
     + '<div class="row2">' + rng('btnPad','Innen oben/unten',[4,28,1,'px',16]) + rng('btnPadX','Innen links/rechts',[8,48,1,'px',22]) + '</div>'
@@ -909,10 +912,11 @@ function panelDesign(){
     + '<div class="sphint"><span class="hint">Gilt für alle Seiten. Eigene Abstände einzelner Elemente haben Vorrang.</span>' + (spSet ? '<button class="btn ghost sm" data-a="spReset">'+I('refresh',13)+'Zurücksetzen</button>' : '') + '</div></div>';
   h += '<div class="psec"><h5>Desktop</h5>' + tgl('split','Geteilter Bildschirm am Rechner','Ein großes Bild auf einer Seite, die Fragen auf der anderen. Auf dem Handy bleibt alles wie gewohnt.')
     + (t.split ? field(['splitImg','image','Bild (pro Seite im Tab „Seite“ änderbar)'], t, 't') + seg('splitSide','Bild auf der',[['left','Linken Seite'],['right','Rechten Seite']]) : '') + '</div>';
-  h += '<div class="psec"><h5>Kontakt-Knopf</h5>' + tgl('fab','Anruf- und WhatsApp-Knopf zeigen','Schwebt unten rechts. Mit einer Nummer öffnet er direkt, mit beiden ein kleines Menü. Nicht bei Einbettung in fremde Websites.')
+  h += '<div class="psec"><h5>Kontakt-Knopf</h5>' + tgl('fab','Anruf- und WhatsApp-Knopf zeigen','Schwebt in der Ecke. Mit einer Nummer öffnet er direkt, mit beiden ein kleines Menü. Nicht bei Einbettung in fremde Websites.')
     + (t.fab ? '<div class="row2"><div class="fld"><label>Telefon</label><input class="inp" data-t="fabPhone" value="'+esc(t.fabPhone||'')+'" placeholder="+49 221 123456" inputmode="tel"></div><div class="fld"><label>WhatsApp</label><input class="inp" data-t="fabWa" value="'+esc(t.fabWa||'')+'" placeholder="+49 151 1234567" inputmode="tel"></div></div>'
       + '<div class="fld"><label>Erste WhatsApp-Nachricht (optional)</label><input class="inp" data-t="fabText" value="'+esc(t.fabText||'')+'" placeholder="Hallo, ich habe eine Frage zu …"></div>'
       + '<div class="fld"><label>Hinweis neben dem Knopf (optional)</label><input class="inp" data-t="fabLabel" value="'+esc(t.fabLabel||'')+'" placeholder="Fragen? Ruf uns an"></div>'
+      + seg('fabStyle','Aussehen',[['white','Weiß'],['green','WhatsApp-Grün'],['brand','Markenfarbe']]) + '<div class="row2">' + seg('fabSide','Position',[['right','Rechts'],['left','Links']]) + seg('fabSize','Größe',[['','Normal'],['sm','Klein']]) + '</div>'
       + field(['fabImg','image','Foto im Knopf (optional)'], t, 't') : '') + '</div>';
   h += '<div class="psec"><h5>Chat-Modus</h5>' + tgl('chat','Funnel als Chat anzeigen','Überschriften und Texte erscheinen als Nachrichten, davor kurz „schreibt …“. Bisherige Antworten stehen als Verlauf darüber.')
     + (t.chat ? '<div class="row2"><div class="fld"><label>Name</label><input class="inp" data-t="chatName" value="'+esc(t.chatName||'')+'" placeholder="z. B. Lisa"></div><div class="fld"><label>Untertitel</label><input class="inp" data-t="chatRole" value="'+esc(t.chatRole||'')+'" placeholder="Antwortet in der Regel sofort"></div></div>' + field(['chatAvatar','image','Foto (sonst Initialen)'], t, 't') : '') + '</div>';
@@ -1046,7 +1050,7 @@ function delPage(i){
   var f = F(); if(f.pages.length < 2) return;
   confirmBox('Seite löschen?','„'+f.pages[i].name+'“ und alle Elemente darauf werden gelöscht.','Löschen',function(){
     snap(true); var id = f.pages[i].id; f.pages.splice(i,1);
-    f.pages.forEach(function(p){ if(p.next === id) p.next = ''; (p.scoreRoutes||[]).forEach(function(r){ if(r.goto === id) r.goto = ''; }); p.blocks.forEach(function(b){ if(b.props.target === id) b.props.target = ''; (b.props.options||[]).forEach(function(o){ if(o.goto === id) o.goto = ''; }); (b.props.routes||[]).forEach(function(r){ if(r.goto === id) r.goto = ''; }); }); });
+    f.pages.forEach(function(p){ if(p.next === id) p.next = ''; (p.logic||[]).forEach(function(r){ if(r.goto === id) r.goto = ''; }); (p.scoreRoutes||[]).forEach(function(r){ if(r.goto === id) r.goto = ''; }); p.blocks.forEach(function(b){ if(b.props.target === id) b.props.target = ''; (b.props.options||[]).forEach(function(o){ if(o.goto === id) o.goto = ''; }); (b.props.routes||[]).forEach(function(r){ if(r.goto === id) r.goto = ''; }); }); });
     S.pi = Math.max(0, Math.min(i, f.pages.length-1)); S.sel = null; touch(); renderLeft(); renderCanvas(); renderRight();
   }, true);
 }
@@ -1240,6 +1244,8 @@ document.addEventListener('click', function(e){
   if(e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom){ e.stopPropagation(); setTimeout(function(){ if(!inl) inlStart(id, e.clientX, e.clientY); }, 0); }
 }, true);
 
+/* Zeilenhöhe, die gerade gilt (Theme oder Vorlage), als Platzhalter */
+function b0lh(p){ var t = (F() && F().theme) || {}, b = selBlock(); if(b && b.type === 'heading'){ var m = /\.fp-h1,\.fp-h2,\.fp-h3\{line-height:([\d.]+)/.exec(t.customCss || ''); return t.headingLh || (m ? m[1] : 1.15); } return t.lineHeight || 1.55; }
 function selectBlock(id){ S.sel = id; S.rtab = 'el'; S.openOpts = {}; $$('#scr .fp-b.sel').forEach(function(e){ e.classList.remove('sel'); }); var el = $('#scr .fp-b[data-bid="'+id+'"]'); if(el){ el.classList.add('sel'); placeTool(el); } renderRight(); }
 
 /* ---- fonts ---- */
@@ -1452,6 +1458,7 @@ function flowEdges(f){
   var ids = f.pages.map(function(p){ return p.id; }), n = f.pages.length;
   return f.pages.map(function(p, i){
     var out = [], idx = function(id){ return ids.indexOf(id); }, coversAll = false;
+    (p.logic||[]).forEach(function(r){ if(r.goto && (r.cond||[]).some(function(c){ return c.bid; })) out.push({to:idx(r.goto), label:lgRuleLabel(f, r), kind:'if', logic:true}); });
     p.blocks.forEach(function(b){
       var pr = b.props || {};
       if(b.type === 'choice' && !pr.multi){
@@ -1480,20 +1487,149 @@ function flowReach(f){
   while(q.length){ var i = q.shift(); (E[i]||[]).forEach(function(e){ if(e.to >= 0 && !seen[e.to]){ seen[e.to] = true; q.push(e.to); } }); }
   return seen;
 }
-function flowModal(){
-  var f = F(), E = flowEdges(f), reach = flowReach(f);
-  var body = '<div class="flow">' + f.pages.map(function(p, i){
-    var es = E[i], end = !es.length, un = !reach[i];
-    return '<div class="fnode'+(i===S.pi?' on':'')+(un?' un':'')+'" data-fl="'+i+'"><div class="fh"><span class="n">'+(i+1)+'</span><b>'+esc(p.name)+'</b><span class="c">'+p.blocks.length+' Elemente</span>'+(un?'<span class="fw">'+I('info',12)+'Nicht erreichbar</span>':'')+'</div>'
-      + '<div class="fe">' + (end ? '<span class="fx end">'+I('check',12)+'Ende des Funnels</span>' : es.map(function(e){ var t = f.pages[e.to]; return '<span class="fx '+e.kind+(t?'':' bad')+'"><em>'+esc(e.label)+'</em>'+I('right',12)+(t?(e.to+1)+' · '+esc(t.name):'Seite fehlt')+'</span>'; }).join('')) + '</div></div>';
-  }).join('') + '</div>';
-  var uncount = f.pages.filter(function(p, i){ return !reach[i]; }).length;
-  modal({title:'Ablauf', sub:f.pages.length+' Seiten'+(uncount?' · '+uncount+' nicht erreichbar':'')+' – klicke auf eine Seite, um sie zu bearbeiten.', size:'mid', body:body,
-    onOpen:function(el, close){ el.addEventListener('click', function(e){ var n = e.target.closest('[data-fl]'); if(n){ close(); S.ltab = 'pages'; selectPage(+n.getAttribute('data-fl')); renderLeft(); } }); }});
+/* ================= Logik-Builder =================
+   Alle Seiten als Karten mit Verbindungslinien. Klick auf eine Seite: „Falls … gehe zu …, sonst …“.
+   Regeln liegen pro Seite in page.logic = [{cond:[{bid, op, val}], join:'and'|'or', goto:pageId}] und haben Vorrang vor allen anderen Verzweigungen. */
+var LQ = {choice:1, rating:1, slider:1, input:1, checkbox:1, date:1, calendar:1, upload:0};
+function logicFields(f, upto){
+  var out = [];
+  f.pages.forEach(function(p, i){ if(upto != null && i > upto) return; p.blocks.forEach(function(b){ if(LQ[b.type]) out.push({b:b, pi:i}); }); });
+  return out;
 }
+function lgBlock(f, id){ return FP.allBlocks(f).filter(function(x){ return x.id === id; })[0] || null; }
+function lgName(b){ var p = (b && b.props) || {}; return String(p.question || p.label || p.text || p.key || (b ? BNAME[b.type] : '') || 'Feld').replace(/[*_=+\[\]{}|]/g, '').replace(/\s+/g, ' ').trim().slice(0, 70) || (b ? BNAME[b.type] : 'Feld'); }
+var LOPS = {choice:[['is','ist'],['isnot','ist nicht']], num:[['eq','ist gleich'],['gte','mindestens'],['lte','höchstens'],['gt','größer als'],['lt','kleiner als']], text:[['is','ist'],['isnot','ist nicht'],['contains','enthält'],['filled','ist ausgefüllt'],['empty','ist leer']]};
+function lgKind(b){ return !b ? 'text' : b.type === 'choice' ? 'choice' : (b.type === 'rating' || b.type === 'slider') ? 'num' : 'text'; }
+function lgOpName(k, op){ var o = (LOPS[k] || []).filter(function(x){ return x[0] === op; })[0]; return o ? o[1] : op; }
+function lgValName(b, c){ if(c.op === 'filled' || c.op === 'empty') return ''; if(b && b.type === 'choice'){ var o = (b.props.options || []).filter(function(x){ return x.id === c.val; })[0]; return o ? '„' + o.label + '“' : '…'; } return c.val === '' || c.val == null ? '…' : String(c.val); }
+function lgRuleLabel(f, r){
+  var cs = r.cond || [], c = cs[0]; if(!c) return 'Regel ohne Bedingung';
+  var b = lgBlock(f, c.bid), s = b && b.type === 'choice' && c.val ? 'Falls ' + (c.op === 'isnot' ? 'nicht ' : '') + lgValName(b, c) : 'Falls ' + (b ? lgName(b) : 'Feld fehlt') + ' ' + lgOpName(lgKind(b), c.op) + (lgValName(b, c) ? ' ' + lgValName(b, c) : '');
+  return cs.length > 1 ? s + (r.join === 'or' ? ' oder …' : ' und …') : s;
+}
+/* Ebenen von oben nach unten (längster Weg ab der Startseite); Sprünge über mehrere Ebenen und Rücksprünge laufen über seitliche Bahnen */
+function lgLayout(f){
+  var E = flowEdges(f), n = f.pages.length, depth = [], i, mxd = 0;
+  for(i = 0; i < n; i++) depth[i] = i ? -1 : 0;
+  for(i = 0; i < n; i++){
+    if(depth[i] < 0) depth[i] = mxd + 1; /* nicht erreichbar oder nur per Rücksprung: darunter einreihen */
+    mxd = Math.max(mxd, depth[i]);
+    (E[i] || []).forEach(function(e){ if(e.to > i) depth[e.to] = Math.max(depth[e.to], depth[i] + 1); });
+  }
+  var rows = {}, pos = [], W = 224, H = 66, GX = 36, GY = 70, maxRow = 0, R, L = 0, Rn = 0, edges = [];
+  for(i = 0; i < n; i++){ rows[depth[i]] = rows[depth[i]] || []; rows[depth[i]].push(i); }
+  Object.keys(rows).forEach(function(d){ maxRow = Math.max(maxRow, rows[d].length); });
+  E.forEach(function(es, i){ es.forEach(function(e){ if(e.to < 0) return; var kind = depth[e.to] === depth[i] + 1 ? 'adj' : depth[e.to] > depth[i] ? 'skip' : 'back'; edges.push({from:i, to:e.to, e:e, route:kind, lane:kind === 'skip' ? Rn++ : kind === 'back' ? L++ : 0}); }); });
+  var inner = Math.max(1, maxRow) * (W + GX) - GX, left = 40 + L * 16, width = left + inner + 40 + Rn * 16;
+  Object.keys(rows).forEach(function(d){ R = rows[d]; var rw = R.length * (W + GX) - GX; R.forEach(function(pi, k){ pos[pi] = {x:left + (inner - rw) / 2 + k * (W + GX), y:40 + d * (H + GY)}; }); });
+  var maxD = Math.max.apply(null, depth);
+  return {E:E, pos:pos, W:W, H:H, width:width, height:40 + (maxD + 1) * (H + GY) + 20, edges:edges, laneL:left - 24, laneR:left + inner + 24};
+}
+function logicModal(focus){
+  var f = F(); if(!f) return;
+  var L = {pi:focus != null ? focus : S.pi};
+  var drawCanvas = function(){
+    var g = lgLayout(f), reach = flowReach(f), c = L.el.querySelector('#lgc'), W = g.W, H = g.H;
+    var paths = '', labels = '';
+    g.edges.forEach(function(ed){
+      var e = ed.e, a = g.pos[ed.from], b = g.pos[ed.to]; if(!a || !b) return;
+      var d, mx, my, r = 10;
+      if(ed.route === 'adj'){
+        var sx = a.x + W / 2, sy = a.y + H, tx = b.x + W / 2, ty = b.y, dy = Math.max(30, (ty - sy) / 2);
+        d = 'M'+sx+' '+sy+' C'+sx+' '+(sy+dy)+' '+tx+' '+(ty-dy)+' '+tx+' '+(ty-6); mx = (sx + tx) / 2; my = (sy + ty) / 2;
+      } else {
+        /* rechts nach unten, links nach oben – mit runden Ecken */
+        var right = ed.route === 'skip', lx = right ? g.laneR + ed.lane * 16 : g.laneL - ed.lane * 16, sgn = right ? 1 : -1;
+        var sx2 = right ? a.x + W : a.x, sy2 = a.y + H / 2, tx2 = right ? b.x + W : b.x, ty2 = b.y + H / 2, vd = ty2 > sy2 ? 1 : -1;
+        d = 'M'+sx2+' '+sy2+' H'+(lx - sgn*r)+' Q'+lx+' '+sy2+' '+lx+' '+(sy2 + vd*r)+' V'+(ty2 - vd*r)+' Q'+lx+' '+ty2+' '+(lx - sgn*r)+' '+ty2+' H'+(tx2 + sgn*6);
+        mx = lx; my = (sy2 + ty2) / 2;
+      }
+      paths += '<path class="lge '+e.kind+'" d="'+d+'" marker-end="url(#lgm-'+e.kind+')"/>';
+      if(e.kind === 'if' || e.kind === 'btn') labels += '<span class="lgl '+e.kind+'" style="left:'+mx+'px;top:'+my+'px" title="'+esc(e.label)+'">'+esc(e.label.length > 30 ? e.label.slice(0, 29) + '…' : e.label)+'</span>';
+    });
+    var mk = function(k){ return '<marker id="lgm-'+k+'" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1.5L8 5L1 8.5" class="lgmk '+k+'"/></marker>'; };
+    var nodes = f.pages.map(function(p, i){
+      var es = g.E[i] || [], rules = (p.logic || []).filter(function(r){ return r.goto; }).length, un = !reach[i];
+      var meta = !es.length ? I('check',11)+'Ende' : rules ? I('branch',11)+rules+(rules === 1 ? ' Regel' : ' Regeln') : es.some(function(e){ return e.kind !== 'next'; }) ? I('branch',11)+'Verzweigt' : 'Weiter zu '+(es[0].to + 1);
+      return '<button type="button" class="lgn'+(i === L.pi ? ' on' : '')+(un ? ' un' : '')+'" data-lgn="'+i+'" style="left:'+g.pos[i].x+'px;top:'+g.pos[i].y+'px;width:'+W+'px;height:'+H+'px"><span class="lgt"><span class="n">'+(i+1)+'</span><b>'+esc(p.name)+'</b></span><span class="lgm'+(un ? ' warn' : '')+'">'+(un ? I('info',11)+'Nicht erreichbar' : meta)+'</span></button>';
+    }).join('');
+    c.innerHTML = '<div class="lgs" style="width:'+g.width+'px;height:'+g.height+'px"><svg class="lgsv" width="'+g.width+'" height="'+g.height+'" aria-hidden="true"><defs>'+mk('if')+mk('next')+mk('btn')+'</defs>'+paths+'</svg>'+nodes+labels+'</div>';
+  };
+  var fieldOpts = function(sel){
+    var by = {}, order = [];
+    logicFields(f, L.pi).forEach(function(x){ if(!by[x.pi]){ by[x.pi] = []; order.push(x.pi); } by[x.pi].push(x.b); });
+    if(!order.length) return '<option value="">Noch keine Fragen bis hier</option>';
+    return '<option value="">Feld wählen …</option>' + order.map(function(pi){ return '<optgroup label="'+(pi+1)+'. '+esc(f.pages[pi].name)+'">' + by[pi].map(function(b){ return '<option value="'+b.id+'"'+(b.id === sel ? ' selected' : '')+'>'+esc(lgName(b))+'</option>'; }).join('') + '</optgroup>'; }).join('');
+  };
+  var drawPanel = function(){
+    var p = f.pages[L.pi], el = L.el.querySelector('#lgp'); if(!p){ el.innerHTML = ''; return; }
+    var rules = p.logic || [];
+    var h = '<div class="lgph"><span class="n">'+(L.pi+1)+'</span><div><b>'+esc(p.name)+'</b><small>Wohin geht es nach dieser Seite?</small></div></div>';
+    h += rules.map(function(r, ri){
+      var cs = r.cond && r.cond.length ? r.cond : [{bid:'', op:'is', val:''}];
+      return '<div class="lgrule"><div class="lgrh"><span class="lgw">Falls</span><button type="button" class="ibtn" data-lga="delRule" data-ri="'+ri+'" title="Regel löschen">'+I('trash',13)+'</button></div>'
+        + cs.map(function(c, ci){
+            var b = lgBlock(f, c.bid), k = lgKind(b), noVal = c.op === 'filled' || c.op === 'empty', val;
+            if(!b || noVal) val = '';
+            else if(k === 'choice') val = '<select class="inp" data-lgf="val" data-ri="'+ri+'" data-ci="'+ci+'"><option value="">Antwort wählen …</option>'+(b.props.options || []).map(function(o){ return '<option value="'+o.id+'"'+(o.id === c.val ? ' selected' : '')+'>'+esc(o.label)+'</option>'; }).join('')+'</select>';
+            else val = '<input class="inp" '+(k === 'num' ? 'type="number" step="any"' : 'type="text"')+' data-lgf="val" data-ri="'+ri+'" data-ci="'+ci+'" value="'+esc(c.val == null ? '' : c.val)+'" placeholder="Wert">';
+            return (ci ? '<div class="lgjoin"><button type="button" class="'+(r.join !== 'or' ? 'on' : '')+'" data-lga="join" data-v="and" data-ri="'+ri+'">und</button><button type="button" class="'+(r.join === 'or' ? 'on' : '')+'" data-lga="join" data-v="or" data-ri="'+ri+'">oder</button></div>' : '')
+              + '<div class="lgcond"><select class="inp" data-lgf="bid" data-ri="'+ri+'" data-ci="'+ci+'">'+fieldOpts(c.bid)+'</select>'
+              + (b ? '<div class="lgcr"><select class="inp" data-lgf="op" data-ri="'+ri+'" data-ci="'+ci+'">'+LOPS[k].map(function(o){ return '<option value="'+o[0]+'"'+(o[0] === c.op ? ' selected' : '')+'>'+o[1]+'</option>'; }).join('')+'</select>'+val+'</div>' : '')
+              + (cs.length > 1 ? '<button type="button" class="ibtn lgx" data-lga="delCond" data-ri="'+ri+'" data-ci="'+ci+'" title="Bedingung entfernen">'+I('x',12)+'</button>' : '') + '</div>';
+          }).join('')
+        + '<button type="button" class="btn ghost sm" data-lga="addCond" data-ri="'+ri+'">'+I('plus',13)+'Bedingung</button>'
+        + '<div class="lgto"><span class="lgw">Gehe zu</span><select class="inp" data-lgf="goto" data-ri="'+ri+'">'+pageOptions(r.goto, 'Seite wählen …')+'</select></div></div>';
+    }).join('');
+    h += '<button type="button" class="btn sm lgadd" data-lga="addRule">'+I('plus',13)+(rules.length ? 'Weitere Regel' : 'Regel hinzufügen')+'</button>';
+    h += '<div class="lgelse"><span class="lgw">'+(rules.length ? 'Sonst gehe zu' : 'Danach gehe zu')+'</span><select class="inp" data-lgf="next">'+pageOptions(p.next, L.pi < f.pages.length - 1 ? 'Nächste Seite ('+(L.pi+2)+'. '+f.pages[L.pi+1].name+')' : 'Ende – Anfrage absenden')+'</select></div>';
+    var other = (flowEdges(f)[L.pi] || []).filter(function(e){ return !e.logic && e.kind !== 'next'; });
+    if(other.length) h += '<div class="lgoth"><div class="flab">Weitere Verzweigungen auf dieser Seite</div>' + other.map(function(e){ var t = f.pages[e.to]; return '<div class="lgo">'+esc(e.label)+I('right',12)+(t ? (e.to+1)+'. '+esc(t.name) : 'Seite fehlt')+'</div>'; }).join('') + '<div class="hint">Diese stellst du direkt am Element ein (z. B. bei den Antworten). Regeln oben haben Vorrang.</div></div>';
+    h += '<button type="button" class="btn ghost sm lgopen" data-lga="open">'+I('pen',13)+'Seite im Editor öffnen</button>';
+    el.innerHTML = h;
+  };
+  var redraw = function(panel){ drawCanvas(); if(panel !== false) drawPanel(); };
+  var rule = function(ri){ var p = f.pages[L.pi]; p.logic = p.logic || []; return p.logic[+ri]; };
+  modal({title:'Logik', sub:'Klicke auf eine Seite und lege fest, wohin es je nach Antwort weitergeht.', size:'logic',
+    body:'<div class="lgb"><div class="lgc" id="lgc"></div><aside class="lgp" id="lgp"></aside></div>',
+    onOpen:function(el, close){
+      L.el = el; redraw();
+      var on = el.querySelector('.lgn.on'); if(on) on.scrollIntoView({block:'center', inline:'center'});
+      el.addEventListener('click', function(e){
+        var n = e.target.closest('[data-lgn]'); if(n){ L.pi = +n.getAttribute('data-lgn'); redraw(); return; }
+        var a = e.target.closest('[data-lga]'); if(!a) return; var act = a.getAttribute('data-lga'), ri = a.getAttribute('data-ri'), p = f.pages[L.pi];
+        if(act === 'open'){ close(); S.ltab = 'pages'; selectPage(L.pi); renderLeft(); return; }
+        snap(true);
+        if(act === 'addRule'){ var fl = logicFields(f, L.pi), last = fl[fl.length - 1]; p.logic = (p.logic || []).concat([{cond:[{bid:last ? last.b.id : '', op:last ? LOPS[lgKind(last.b)][0][0] : 'is', val:''}], join:'and', goto:''}]); }
+        else if(act === 'delRule'){ p.logic.splice(+ri, 1); }
+        else if(act === 'addCond'){ var r = rule(ri); r.cond = (r.cond || []).concat([{bid:'', op:'is', val:''}]); }
+        else if(act === 'delCond'){ rule(ri).cond.splice(+a.getAttribute('data-ci'), 1); }
+        else if(act === 'join'){ rule(ri).join = a.getAttribute('data-v'); }
+        touch(); redraw();
+      });
+      var upd = function(e, live){
+        var x = e.target, k = x.getAttribute && x.getAttribute('data-lgf'); if(!k) return; var p = f.pages[L.pi];
+        if(k === 'next'){ snap(true); p.next = x.value; touch(); redraw(); return; }
+        var r = rule(x.getAttribute('data-ri')); if(!r) return;
+        if(k === 'goto'){ snap(true); r.goto = x.value; touch(); redraw(); return; }
+        r.cond = r.cond && r.cond.length ? r.cond : [{bid:'', op:'is', val:''}];
+        var c = r.cond[+x.getAttribute('data-ci')]; if(!c) return;
+        if(k === 'val'){ snap(); c.val = x.type === 'number' && x.value !== '' ? +x.value : x.value; touch(); redraw(!live); return; }
+        snap(true);
+        if(k === 'bid'){ c.bid = x.value; var b = lgBlock(f, c.bid); c.op = LOPS[lgKind(b)][0][0]; c.val = ''; }
+        if(k === 'op') c.op = x.value;
+        touch(); redraw();
+      };
+      el.addEventListener('change', function(e){ upd(e, false); });
+      el.addEventListener('input', function(e){ if(e.target.matches('input[data-lgf="val"]')) upd(e, true); });
+    },
+    onClose:function(){ renderLeft(); renderCanvas(true); renderRight(); }
+  });
+}
+function flowModal(){ logicModal(); }
 function pageJump(anchor){
   var f = F();
-  dropdown(anchor, f.pages.map(function(p, i){ return {k:'p'+i, ic:i===S.pi?'check':'file', l:(i+1)+' · '+p.name, fn:function(){ selectPage(i); }}; }).concat(['-', {k:'add', ic:'plus', l:'Seite hinzufügen', fn:addPage}, {k:'flow', ic:'branch', l:'Ablauf anzeigen', fn:flowModal}]));
+  dropdown(anchor, f.pages.map(function(p, i){ return {k:'p'+i, ic:i===S.pi?'check':'file', l:(i+1)+' · '+p.name, fn:function(){ selectPage(i); }}; }).concat(['-', {k:'add', ic:'plus', l:'Seite hinzufügen', fn:addPage}, {k:'flow', ic:'branch', l:'Logik öffnen', fn:flowModal}]));
 }
 
 /* ---- Veröffentlichen: Checkliste → Live → Teilen ---- */
