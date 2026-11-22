@@ -1105,11 +1105,11 @@ function uniqueSlug(base, exceptId){ base = slug(base).slice(0, 48) || 'funnel';
 function linkBase(){ return publicUrl({slug:''}).replace(/\/$/, '') + '/'; }
 function loadFontsFor(f){ FP.usedFonts(f).forEach(function(n){ var u = FP.fontLink(n); if(!u || document.querySelector('link[data-ff="'+n+'"]')) return; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; l.setAttribute('data-ff', n); document.head.appendChild(l); }); }
 function newFunnelModal(){
-  var W = {step:1, tpl:null, d:null, name:'', slug:'', slugEdited:false, clientId:'', shared:false, q:''};
+  var W = {step:1, tpl:null, d:null, name:'', slug:'', slugEdited:false, clientId:'', shared:false, q:'', ai:{prompt:'', company:'', brand:'', address:'du', busy:false, err:'', note:''}};
   var tplList = T.TEMPLATES.map(function(t){ return {id:t.id, d:t.make()}; });
   var m = modal({title:'Neuen Funnel erstellen', size:'wide wiz', body:'', foot:'<span></span>'});
   var el = m.el, mb = el.querySelector('.mb'), mf = el.querySelector('.mf'), mh = el.querySelector('.mh > div');
-  var steps = function(){ return '<div class="wsteps">'+[['1','Vorlage wählen'],['2','Details & Vorschau']].map(function(s, i){ return '<span class="ws'+(W.step===i+1?' on':'')+(W.step>i+1?' done':'')+'"><b>'+(W.step>i+1?I('check',12):s[0])+'</b>'+s[1]+'</span>'; }).join('<i></i>')+'</div>'; };
+  var steps = function(){ var cur = W.step === 'ai' ? 1 : W.step; return '<div class="wsteps">'+[['1', W.step === 'ai' || W.tpl === 'ai' ? 'Mit KI beschreiben' : 'Vorlage wählen'],['2','Details & Vorschau']].map(function(s, i){ return '<span class="ws'+(cur===i+1?' on':'')+(cur>i+1?' done':'')+'"><b>'+(cur>i+1?I('check',12):s[0])+'</b>'+s[1]+'</span>'; }).join('<i></i>')+'</div>'; };
   function grid(){
     var q = W.q.toLowerCase();
     var shown = tplList.filter(function(x){ return (S.tcat === 'Alle' || x.d.cats.indexOf(S.tcat) >= 0 || x.id === 'blank') && (!q || (x.d.name+' '+x.d.desc).toLowerCase().indexOf(q) >= 0); });
@@ -1118,8 +1118,10 @@ function newFunnelModal(){
   }
   function render(){
     mh.innerHTML = '<h2>Neuen Funnel erstellen</h2>' + steps();
+    if(W.step === 'ai'){ renderAi(); return; }
     if(W.step === 1){
-      mb.innerHTML = '<div class="wbar"><label class="search" style="min-width:0;flex:1;max-width:320px;height:36px">'+I('search')+'<input id="wq" placeholder="Vorlage suchen …" value="'+esc(W.q)+'"></label><div class="tfil" style="margin:0">'+T.CATS.map(function(c){ return '<button class="chip'+(S.tcat===c?' on':'')+'" data-w="cat" data-v="'+c+'">'+c+'</button>'; }).join('')+'</div></div><div id="wgrid">'+grid()+'</div>';
+      mb.innerHTML = '<button class="aicard" data-w="ai"><span class="aic">'+I('sparkles',20)+'</span><span class="ait"><b>Mit KI erstellen</b><span>Beschreibe in einem Satz, was der Funnel können soll. Fragen, Texte, Logik, Bilder und Design entstehen automatisch.</span></span>'+I('right',16)+'</button>'
+        + '<div class="wbar"><label class="search" style="min-width:0;flex:1;max-width:320px;height:36px">'+I('search')+'<input id="wq" placeholder="Vorlage suchen …" value="'+esc(W.q)+'"></label><div class="tfil" style="margin:0">'+T.CATS.map(function(c){ return '<button class="chip'+(S.tcat===c?' on':'')+'" data-w="cat" data-v="'+c+'">'+c+'</button>'; }).join('')+'</div></div><div id="wgrid">'+grid()+'</div>';
       mf.innerHTML = '<span class="hint" style="margin:0 auto 0 0">Inhalte, Design und Logik kannst du danach frei anpassen.</span><button class="btn" data-close>Abbrechen</button>';
       var qi = mb.querySelector('#wq'); qi.oninput = function(){ W.q = qi.value; mb.querySelector('#wgrid').innerHTML = grid(); }; setTimeout(function(){ qi.focus(); }, 30);
       return;
@@ -1127,12 +1129,12 @@ function newFunnelModal(){
     var d = W.d, f = {pages:d.pages, theme:d.theme, settings:d.settings||{}};
     var serr = slugError(W.slug);
     mb.innerHTML = '<div class="wz2"><div class="wzprev"><div class="wzph"><span>'+I('play',13)+'Vorschau – klick dich durch</span><button class="btn ghost sm" data-w="restart">'+I('refresh',13)+'Neu starten</button></div><div class="phone wzphone"><div class="notch"></div><div class="scr" data-fp-scroll style="background:'+esc(d.theme.bg)+'"><div class="sbar" style="color:'+esc(d.theme.text)+'"><span>9:41</span><i></i></div><div class="fp-host" id="wzhost"></div></div></div></div>'
-      + '<div class="wzform"><div class="wztpl"><span class="tag a">Vorlage</span><b>'+esc(d.name)+'</b><p>'+esc(d.desc)+'</p><div class="wzpages">'+d.pages.map(function(p, i){ return '<span>'+(i+1)+' · '+esc(p.name)+'</span>'; }).join('')+'</div></div>'
+      + '<div class="wzform"><div class="wztpl"><span class="tag a">'+(W.tpl === 'ai' ? 'KI-Entwurf' : 'Vorlage')+'</span><b>'+esc(d.name)+'</b><p>'+esc(d.desc)+'</p><div class="wzpages">'+d.pages.map(function(p, i){ return '<span>'+(i+1)+' · '+esc(p.name)+'</span>'; }).join('')+'</div></div>'
       + '<div class="fld"><label>Name des Funnels</label><input class="inp" id="wname" value="'+esc(W.name)+'" placeholder="z. B. Tischkonfigurator Frühjahr"><div class="hint">Nur intern sichtbar – im Dashboard und im Kundenportal.</div></div>'
       + '<div class="fld"><label>Kunde</label><select class="inp" id="wclient"><option value="">– Intern (kein Kunde) –</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(W.clientId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select>'
       + (W.clientId ? '<label class="tgl" style="margin-top:8px"><span>Direkt im Kundenportal freischalten</span><input type="checkbox" id="wshare"'+(W.shared?' checked':'')+'><span class="sw"></span></label>' : '<div class="hint">Optional. Zugeordnete Funnels kann der Kunde in seinem Login sehen, sobald du sie freischaltest.</div>') + '</div>'
       + '<div class="fld"><label>Link-Adresse</label><div class="slugf'+(serr?' err':'')+'"><span>'+esc(linkBase())+'</span><input id="wslug" value="'+esc(W.slug)+'" spellcheck="false"></div><div class="hint'+(serr?' errt':'')+'">'+(serr || 'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.')+'</div></div></div></div>';
-    mf.innerHTML = '<button class="btn" data-w="back" style="margin-right:auto">'+I('left',14)+'Andere Vorlage</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="create"'+(serr||!W.name.trim()?' disabled':'')+'>Funnel erstellen'+I('right',14)+'</button>';
+    mf.innerHTML = '<button class="btn" data-w="back" style="margin-right:auto">'+I('left',14)+(W.tpl === 'ai' ? 'Neu beschreiben' : 'Andere Vorlage')+'</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="create"'+(serr||!W.name.trim()?' disabled':'')+'>Funnel erstellen'+I('right',14)+'</button>';
     mountPreview();
     var ni = mb.querySelector('#wname'), si = mb.querySelector('#wslug'), ci = mb.querySelector('#wclient'), sh = mb.querySelector('#wshare');
     var refreshState = function(){ var e = slugError(W.slug); si.parentNode.classList.toggle('err', !!e); var h = si.parentNode.nextElementSibling; h.classList.toggle('errt', !!e); h.textContent = e || 'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.'; mf.querySelector('[data-w="create"]').disabled = !!e || !W.name.trim(); };
@@ -1144,6 +1146,53 @@ function newFunnelModal(){
     if(sh) sh.onchange = function(){ W.shared = sh.checked; };
     setTimeout(function(){ ni.focus(); ni.select(); }, 30);
   }
+  /* ---- KI-Erstellung: Beschreibung → Entwurf (Supabase-Funktion ai-funnel, sonst passende Vorlage) ---- */
+  var AI_EX = ['Konfigurator für Carports aus Holz oder Alu, Preise ab 3.900 €, mit Kontaktformular','Feedback-Funnel für ein Café: Zufriedene zu Google, Kritik an uns','Bewerbung für Elektriker in 60 Sekunden, ohne Lebenslauf','Terminbuchung für eine Physiotherapie-Praxis mit Wunschtermin'];
+  function renderAi(){
+    var A = W.ai;
+    if(A.busy){
+      mb.innerHTML = '<div class="aibusy"><div class="fp" style="--p:var(--acc);--tx:var(--ink);--mt:var(--mut);background:transparent">'+FP.renderBlock({id:'aild', type:'loader', props:{anim:'orbit', size:140, duration:9, texts:['Struktur planen …','Fragen formulieren …','Antworten und Logik festlegen …','Bilder und Farben wählen …','Texte auf Conversion trimmen …'], showBar:true}}, {f:{theme:{}, settings:{}, pages:[]}, answers:{}})+'</div><b>Dein Funnel entsteht</b><span>Das dauert meist 20 bis 60 Sekunden.</span></div>';
+      mf.innerHTML = '<span></span>';
+      FP.playLoaders(mb, {theme:{}});
+      return;
+    }
+    mb.innerHTML = '<div class="aiform">'
+      + '<div class="fld"><label>Was soll der Funnel können?</label><textarea class="inp" id="aiprompt" rows="4" placeholder="z. B. Konfigurator für Badsanierungen mit Preisspanne, für Hausbesitzer im Raum Köln. Am Ende Rückruf anfragen.">'+esc(A.prompt)+'</textarea>'
+      + '<div class="aiex">'+AI_EX.map(function(x){ return '<button class="chip" data-w="aiex" data-v="'+esc(x)+'">'+esc(x.length > 46 ? x.slice(0, 44) + ' …' : x)+'</button>'; }).join('')+'</div></div>'
+      + '<div class="row2"><div class="fld"><label>Firmenname (optional)</label><input class="inp" id="aicompany" value="'+esc(A.company)+'" placeholder="z. B. Bad & Raum GmbH"></div>'
+      + '<div class="fld"><label>Markenfarbe (optional)</label><div style="display:flex;gap:8px"><input type="color" id="aibrandc" value="'+esc(A.brand || '#2563eb')+'" class="aicolor"><input class="inp" id="aibrand" value="'+esc(A.brand)+'" placeholder="Automatisch"></div></div></div>'
+      + '<div class="fld"><label>Anrede</label><div class="segf" style="max-width:240px"><button data-w="aiaddr" data-v="du" class="'+(A.address !== 'sie' ? 'on' : '')+'">Du</button><button data-w="aiaddr" data-v="sie" class="'+(A.address === 'sie' ? 'on' : '')+'">Sie</button></div></div>'
+      + (A.err ? '<div class="aierr">'+I('help',15)+'<div><b>'+esc(A.err)+'</b><span>Du kannst stattdessen eine passende Vorlage als Entwurf verwenden.</span><button class="btn sm" data-w="aifallback">Passende Vorlage verwenden</button></div></div>' : '')
+      + (!REMOTE ? '<div class="hint" style="margin-top:4px">Demo-Modus: Ohne KI-Anbindung wird die passende Branchen-Vorlage mit deinen Angaben angepasst.</div>' : '')
+      + '</div>';
+    mf.innerHTML = '<button class="btn" data-w="aiback" style="margin-right:auto">'+I('left',14)+'Zu den Vorlagen</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="aigo"'+(A.prompt.trim().length < 8 ? ' disabled' : '')+'>'+I('sparkles',14)+'Funnel erstellen</button>';
+    var pi = mb.querySelector('#aiprompt'), ci = mb.querySelector('#aicompany'), bi = mb.querySelector('#aibrand'), bc = mb.querySelector('#aibrandc');
+    pi.oninput = function(){ A.prompt = pi.value; mf.querySelector('[data-w="aigo"]').disabled = A.prompt.trim().length < 8; };
+    pi.onkeydown = function(e){ if(e.key === 'Enter' && (e.metaKey || e.ctrlKey) && A.prompt.trim().length >= 8) aiGenerate(); };
+    ci.oninput = function(){ A.company = ci.value; };
+    bi.oninput = function(){ var v = bi.value.trim(); A.brand = /^#[0-9a-f]{6}$/i.test(v) ? v : ''; if(A.brand) bc.value = A.brand; };
+    bc.oninput = function(){ A.brand = bc.value; bi.value = bc.value; };
+    setTimeout(function(){ pi.focus(); }, 30);
+  }
+  function aiApply(spec, note){
+    var d = T.fromSpec(spec);
+    W.tpl = 'ai'; W.d = d; W.ai.note = note || ''; W.name = uniqueName(d.name); W.slug = uniqueSlug(W.name); W.slugEdited = false; W.step = 2; render(); mb.scrollTop = 0;
+    if(note) toast(note);
+  }
+  function aiUseFallback(){ var A = W.ai, r = T.aiFallback(A.prompt, A); aiApply(r.spec, r.matched ? 'Entwurf aus der passenden Vorlage erstellt' : 'Keine passende Branche erkannt – Entwurf aus einer allgemeinen Vorlage'); }
+  async function aiGenerate(){
+    var A = W.ai; if(A.busy || A.prompt.trim().length < 8) return;
+    if(!REMOTE || !sb){ aiUseFallback(); return; }
+    A.busy = true; A.err = ''; render();
+    try{
+      var r = await sb.functions.invoke('ai-funnel', {body:{prompt:A.prompt, company:A.company, brand:A.brand, address:A.address}});
+      if(r.error){ var msg = ''; try{ msg = (await r.error.context.json()).error; }catch(x){} throw new Error(msg || 'Die KI ist gerade nicht erreichbar.'); }
+      if(!r.data || !r.data.spec) throw new Error('Die KI hat keinen Entwurf geliefert.');
+      A.busy = false;
+      if(!el.isConnected) return;
+      aiApply(r.data.spec, '');
+    }catch(e){ A.busy = false; A.err = e.message || 'Die KI ist gerade nicht erreichbar.'; if(el.isConnected) render(); }
+  }
   function mountPreview(){
     var old = mb.querySelector('#wzhost'); if(!old) return;
     var host = document.createElement('div'); host.className = 'fp-host'; host.id = 'wzhost'; old.replaceWith(host); /* frisches Element: keine doppelten Klick-Handler */
@@ -1154,7 +1203,8 @@ function newFunnelModal(){
   function pick(id){ W.tpl = id; W.d = tplList.filter(function(x){ return x.id === id; })[0].d; W.name = uniqueName(W.d.name); W.slug = uniqueSlug(W.name); W.slugEdited = false; W.step = 2; render(); mb.scrollTop = 0; }
   function create(){
     if(!W.name.trim() || !W.slug || slugTaken(W.slug)) return;
-    var f = T.newFunnel(W.tpl, {name:W.name.trim(), slug:W.slug, clientId:W.clientId || null, shared:!!(W.clientId && W.shared)});
+    var ov = {name:W.name.trim(), slug:W.slug, clientId:W.clientId || null, shared:!!(W.clientId && W.shared)};
+    var f = W.tpl === 'ai' ? T.newFunnelFrom(T.clone(W.d), 'ai', ov) : T.newFunnel(W.tpl, ov);
     if(db.defaults && db.defaults.webhook && !f.settings.webhook) f.settings.webhook = db.defaults.webhook;
     db.funnels.unshift(f); save(true);
     m.close();
@@ -1166,7 +1216,13 @@ function newFunnelModal(){
     var a = w.getAttribute('data-w');
     if(a === 'cat'){ S.tcat = w.getAttribute('data-v'); $$('[data-w="cat"]', el).forEach(function(b){ b.classList.toggle('on', b === w); }); mb.querySelector('#wgrid').innerHTML = grid(); }
     else if(a === 'pick') pick(w.getAttribute('data-id'));
-    else if(a === 'back'){ W.step = 1; render(); }
+    else if(a === 'back'){ W.step = W.tpl === 'ai' ? 'ai' : 1; render(); }
+    else if(a === 'ai'){ W.step = 'ai'; W.ai.err = ''; render(); }
+    else if(a === 'aiback'){ W.step = 1; render(); }
+    else if(a === 'aiex'){ W.ai.prompt = w.getAttribute('data-v'); render(); }
+    else if(a === 'aiaddr'){ W.ai.address = w.getAttribute('data-v'); $$('[data-w="aiaddr"]', el).forEach(function(b){ b.classList.toggle('on', b === w); }); }
+    else if(a === 'aigo') aiGenerate();
+    else if(a === 'aifallback') aiUseFallback();
     else if(a === 'restart') mountPreview();
     else if(a === 'create') create();
   });

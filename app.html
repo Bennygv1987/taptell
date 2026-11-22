@@ -1266,6 +1266,27 @@ pre.code,textarea.code{background:var(--n900);color:#d6d9e4;border-radius:var(--
 .wsteps .ws.on{color:var(--ink)}.wsteps .ws.on b{background:var(--a);color:var(--pt)}
 .wsteps .ws.done b{background:var(--ok);color:#fff}
 .wbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+/* KI-Erstellung */
+.aicard{appearance:none;width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;margin-bottom:18px;border:1px solid color-mix(in srgb,var(--acc) 35%,var(--line));border-radius:var(--r-lg);background:linear-gradient(120deg,color-mix(in srgb,var(--acc) 10%,var(--card)),var(--card) 60%);color:var(--ink);text-align:left;cursor:pointer;transition:transform var(--dur-press) var(--ease-out),border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease}
+.aicard:active{transform:scale(.99)}
+@media (hover:hover) and (pointer:fine){.aicard:hover{border-color:var(--acc);box-shadow:0 8px 24px -14px color-mix(in srgb,var(--acc) 60%,transparent)}}
+.aicard:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.aicard .aic{flex:none;width:40px;height:40px;border-radius:var(--r-md);display:grid;place-items:center;background:var(--acc);color:#fff}
+.aicard .ait{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.aicard .ait b{font-size:var(--fs-14);font-weight:650}
+.aicard .ait span{font-size:var(--fs-13);color:var(--mut);line-height:1.4}
+.aiform{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:4px}
+.aiform textarea.inp{min-height:110px;font-size:var(--fs-14);line-height:1.5}
+.aiex{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.aiex .chip{font-size:var(--fs-12)}
+.aicolor{flex:none;width:40px;height:34px;padding:2px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);cursor:pointer}
+.aierr{display:flex;gap:10px;padding:12px 14px;margin-top:6px;border-radius:var(--r-md);background:color-mix(in srgb,var(--warn,#d97706) 10%,var(--card));border:1px solid color-mix(in srgb,var(--warn,#d97706) 30%,var(--line));color:var(--ink)}
+.aierr>div{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.aierr span{font-size:var(--fs-13);color:var(--mut)}
+.aibusy{min-height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+.aibusy>b{font-size:var(--fs-16);margin-top:4px}
+.aibusy>span{font-size:var(--fs-13);color:var(--mut)}
+.aibusy .fp{min-height:0;display:block;width:min(360px,100%)}
 .wempty{padding:50px 0;text-align:center;color:var(--mut);display:flex;gap:10px;justify-content:center;align-items:center}
 .modal.wiz .mb{min-height:420px}
 .wz2{display:grid;grid-template-columns:auto minmax(0,1fr);gap:32px;align-items:start}
@@ -2833,7 +2854,7 @@ var SECTIONS = [
 ];
 
 /* ---------- templates ---------- */
-var CATS = ['Alle','Konfigurator','Leads','Termine','Recruiting','Feedback','Verkauf'];
+var CATS = ['Alle','Konfigurator','Leads','Termine','Recruiting','Feedback','Verkauf','Handwerk','Dienstleistung','Gesundheit','Gastro & Events'];
 
 /* ---------- Moderne Vorlagen ----------
    Clean wie die Onepage-Importe: Inter, kleinere Schrift (scale 92 %), ruhige Neutraltöne,
@@ -2865,7 +2886,7 @@ function tTerrasse(){
   var extras = B('choice',{question:'Welche Extras sollen dazu?', desc:'Mehrfachauswahl möglich', key:'extras', layout:'checklist', multi:true, autoNext:false, required:false, showPrices:true, options:[
     O('Alu-Unterkonstruktion','',{unitPrice:25, unitLabel:'m²'}), O('LED-Beleuchtung','',{price:890}), O('Treppe / Stufen','',{price:650}), O('Sichtschutz','',{price:1200}), O('Montage durch Fachbetrieb','',{unitPrice:35, unitLabel:'m²'})]});
   var when = B('choice',{question:'Wann soll es losgehen?', key:'zeitraum', options:[O('So schnell wie möglich'),O('In 1–3 Monaten'),O('In 3–6 Monaten'),O('Ich informiere mich nur')]});
-  return {name:'Terrassen-Konfigurator', desc:'Material, Fläche & Extras wählen – mit Live-Preis und Angebotsanfrage.', cats:['Konfigurator','Leads'],
+  return {name:'Terrassen-Konfigurator', desc:'Material, Fläche & Extras wählen – mit Live-Preis und Angebotsanfrage.', cats:['Konfigurator','Leads','Handwerk'],
     theme:modern({primary:'#2f5d46', logoText:'Terrassenbau Muster'}), settings:{currency:'EUR', basePrice:0},
     pages:[
       P('Start',[hero('1787491581115-1d9a0e9f11ec'), B('badge',{text:'Preis in 60 Sekunden', align:'left'}), B('heading',{text:'Konfiguriere deine ==Traumterrasse==', level:1}), B('text',{text:'Wähle Material, Größe und Extras – und erhalte sofort eine unverbindliche Preisschätzung.', mb:22}), B('button',{label:'Jetzt konfigurieren', sub:'Kostenlos & unverbindlich'}), B('reviews',{score:4.9, count:127, source:'Google', align:'center'})]),
@@ -2881,7 +2902,7 @@ function tTerrasse(){
 }
 
 function tSolar(){
-  return {name:'Solar-Angebot', desc:'Hausart, Dach & Verbrauch abfragen – qualifizierte Solar-Leads.', cats:['Leads','Termine'],
+  return {name:'Solar-Angebot', desc:'Hausart, Dach & Verbrauch abfragen – qualifizierte Solar-Leads.', cats:['Leads','Termine','Handwerk'],
     theme:modern({primary:'#0f6fd6', logoText:'SonnenPlus'}), settings:{currency:'EUR'},
     pages:[
       P('Start',[hero('1655300256486-4ec7251bf84e'), B('badge',{text:'Kostenloser Solar-Check', align:'left'}), B('heading',{text:'Wie viel kannst du mit Solar ==sparen==?'}), B('text',{text:'In 4 kurzen Schritten prüfen, ob sich eine Photovoltaik-Anlage für dein Haus lohnt.', mb:22}), B('button',{label:'Ersparnis berechnen', sub:'Dauert nur 60 Sekunden'})]),
@@ -2955,7 +2976,7 @@ function tQuiz(){
 }
 
 function tFeedback(){
-  return {name:'Kundenfeedback', desc:'Sterne, NPS und Freitext – mit Weiterleitung zu Google bei 5 Sternen.', cats:['Feedback'],
+  return {name:'Kundenfeedback', desc:'Sterne, NPS und Freitext – mit Weiterleitung zu Google bei 5 Sternen.', cats:['Feedback','Gesundheit'],
     theme:modern({primary:'#111113', logoText:'Salon Mia'}), settings:{currency:'EUR'},
     pages:[
       P('Bewertung',[hero('1600948836101-f9ffda59d250'), B('heading',{text:'Wie war dein Besuch bei uns?', align:'center', level:2}), B('text',{text:'Dein Feedback hilft uns, jeden Tag besser zu werden.', align:'center', mb:22}), B('rating',{label:'', autoNext:true, minLabel:'Schlecht', maxLabel:'Hervorragend'})]),
@@ -2966,7 +2987,7 @@ function tFeedback(){
 }
 
 function tAbnahme(){
-  return {name:'Montage-Abnahme', desc:'Digitales Abnahmeprotokoll mit Checkliste, Foto & Unterschrift.', cats:['Feedback'],
+  return {name:'Montage-Abnahme', desc:'Digitales Abnahmeprotokoll mit Checkliste, Foto & Unterschrift.', cats:['Feedback','Handwerk'],
     theme:modern({primary:'#111113', logoText:'Abnahmeprotokoll'}), settings:{currency:'EUR'},
     pages:[
       P('Auftrag',[hero('1786204697642-328c597b6f05', {ratio:'21:9', mb:20}), B('heading',{text:'Montage-Abnahme', level:2}), B('text',{text:'Bitte gemeinsam mit dem Kunden ausfüllen.', mb:16}), B('input',{label:'Auftragsnummer', placeholder:'A-2026-0142', key:'auftrag'}), B('input',{label:'Name des Kunden', placeholder:'Max Mustermann', key:'name'}), B('input',{label:'Datum der Montage', inputType:'date', key:'datum'}), B('button',{label:'Weiter'})]),
@@ -3029,7 +3050,7 @@ function tMontage(){
     B('button',{label:'Mein Feedback absenden', action:'submit', target:thanks.id, variant:'gradient', btnBg:'#000000', icon:'plane', iconLeft:true})
   ];
   thanks.blocks = done('Vielen Dank für Ihr Feedback!', 'Ihre Rückmeldung hilft uns, jeden Tag ein Stück besser zu werden.');
-  return {name:'Montage-Feedback', desc:'Emoji-Bewertung mit Verzweigung: positiv → Lob, negativ → Rückruf-Angebot.', cats:['Feedback'],
+  return {name:'Montage-Feedback', desc:'Emoji-Bewertung mit Verzweigung: positiv → Lob, negativ → Rückruf-Angebot.', cats:['Feedback','Handwerk'],
     theme:modern({primary:'#5b8c2a', logoText:'Ihr Logo', backButton:false}), settings:{currency:'EUR', address:'sie'}, pages:[start, pos, neg, back, cont, thanks]};
 }
 
@@ -3396,11 +3417,277 @@ function tBlank(){
     pages:[P('Seite 1',[B('heading',{text:'Deine erste Seite'}), B('text',{}), B('button',{})]), P('Danke',[B('heading',{text:'Vielen Dank!', align:'center'})],{hideProgress:true})]};
 }
 
+var TEMPLATES_EXTRA = [];
+/* ================= Baukasten: Funnel aus kompakter Beschreibung (für Vorlagen und die KI-Erstellung) =================
+   spec = {name, desc, cats, brand, logo, style, start:{badge,title,text,image,cta,ctaSub,proof}, steps:[…], loader, pricing, contact, thanks}
+   Schritt-Typen: cards (Bildkarten) · icons (Liste/Kacheln mit Icons) · slider · faces (Smileys) · calendar · text */
+var IMG = {
+  bath:'1584622650111-993a426fbf0a', bathTub:'1620626011761-996317b8d101', bathMarble:'1771681278369-e2a5480b8c29', bathWc:'1631889993959-41b4e9c6e3c5', bathDouble:'1781344334947-60c704bafd51',
+  roof:'1563993356056-b23a9cd265ad', roofTiles:'1605450099279-533bd3ce379a', roofHouse:'1587061633437-187ac80e8e7a',
+  heatPump:'1776860155275-eee24bfb1dee', heatPump2:'1776860150272-653efc74193c',
+  houseModern:'1766603636700-e9d80473f40f', houseGlass:'1748063578185-3d68121b11ff', houseClassic:'1513584684374-8bab748fbf90', houseWood:'1591474200742-8e512e6f98f8',
+  kitchen:'1556911220-bff31c812dba', kitchenIsland:'1617228069096-4638a7ffc906', kitchenWood:'1786053538161-501fbdd89629', kitchenBar:'1632583824020-937ae9564495', kitchenWhite:'1507089947368-19c1da9775ae',
+  garden:'1597201278257-3687be27d954', gardenLawn:'1668120089662-42642838cfef', gardenPath:'1700689807667-82630348b301', gardenWork:'1734079692160-fcbe4be6ab96',
+  painter:'1693985120993-e9b203ce7631', painterWall:'1688372199140-cade7ae820fe',
+  moving:'1714647211902-bb711d643a17', movingBoxes:'1766040923580-16ad32fae8b4', movingRoom:'1730154838368-c37b1fdebcf6',
+  cleaning:'1581578731548-c64695cc6952', cleaningOffice:'1497366754035-f200968a6e72', cleaningVacuum:'1781637590564-01c65dbf2039',
+  gym:'1534258936925-c58bed479fcb', gymBarbell:'1517836357463-d25dfeac3438', gymRopes:'1758875569612-94d5e0f1a35f', gymWoman:'1574680096145-d05b474e2155', yoga:'1552196563-55cd4e45efb3',
+  spa:'1570172619644-dfd03ed5d881', spaMassage:'1570174006382-148305ce4972', spaProducts:'1540555700478-4be289fbecef', spaFace:'1598901986949-f593ff2a31a6', salon:'1600948836101-f9ffda59d250',
+  wedding:'1519741497674-611481863552', weddingWalk:'1779475501433-69a3a0b310f8', weddingHands:'1520854221256-17451cc331bf',
+  catering:'1555244162-803834f70033', cateringFood:'1576842546422-60562b9242ae', restaurant:'1744776411221-702f2848b0b2', restaurantRed:'1771574205963-0c1d84ac7354',
+  cars:'1777175013302-eaf4b3ef785a', carLot:'1621808752171-531c30903889',
+  laptop:'1498050108023-c5249f4df085', laptopDesk:'1496181133206-80ce9b88a853', consulting:'1780733066519-df99b3123d30', meeting:'1758518727613-00192aed759b', signing:'1562564055-71e051d33c19',
+  workshop:'1597058557804-95ac4ee36e66', workshopTeam:'1759662232622-6c0754a379f4', plumber:'1676210134188-4c05dd172f89',
+  nurse:'1765896387387-0538bc9f997e', nurse2:'1765896387398-1e1ae8d2eb85',
+  cabin:'1645131687573-56a55f7288e4', cabinSnow:'1598709597551-4ae514c1b297',
+  terrace:'1787491581115-1d9a0e9f11ec', solar:'1655300256486-4ec7251bf84e', estate:'1771366260867-7e07094579d7', coffee:'1760175445000-0e01e193d1cd', construction:'1672627170267-fca17bb54156'
+};
+/* Bildquelle: Schlüssel aus IMG, Unsplash-Foto-ID oder vollständige Adresse */
+var IMGSRC = function(v, w){ if(!v) return ''; if(/^(https?:|data:|\/)/.test(v)) return v; return U(IMG[v] || v, w); };
+var inkOn = function(hex){ var h = String(hex||'').replace('#',''); if(h.length === 3) h = h.replace(/./g,'$&$&'); var n = parseInt(h, 16); if(isNaN(n)) return '#ffffff'; var l = [n>>16&255, n>>8&255, n&255].map(function(c){ c /= 255; return c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4); }); return (.2126*l[0] + .7152*l[1] + .0722*l[2]) > .45 ? '#111113' : '#ffffff'; };
+function fromSpec(s){
+  s = s || {}; var st = s.start || {}, pages = [], pr = s.pricing || null, keys = {}, sie = s.address === 'sie';
+  /* Standardtexte passend zur Anrede */
+  var D = sie ? {sub:'Kostenlos & unverbindlich', ctitle:'Wohin dürfen wir Ihr Angebot senden?', ctext:'Ihre Daten nutzen wir nur für Ihre Anfrage.', thanks:'Vielen Dank!', thx:'Ihre Anfrage ist eingegangen. Wir melden uns schnellstmöglich bei Ihnen.', steps:['Anfrage eingegangen | Gerade eben','Persönliche Rückmeldung | Innerhalb von 24 Stunden','Ihr Angebot | Passend zu Ihren Angaben'], recap:'Ihre Angaben', ltext:'Wir stellen Ihr persönliches Ergebnis zusammen.', est:'Ihre Schätzung', lines:['Wir prüfen Ihre Angaben …','Gleich geschafft …'], answer:'Ihre Antwort'}
+    : {sub:'Kostenlos & unverbindlich', ctitle:'Wohin dürfen wir dein Angebot senden?', ctext:'Deine Daten nutzen wir nur für deine Anfrage. Kein Spam, versprochen.', thanks:'Danke, {{vorname|dir}}!', thx:'Deine Anfrage ist eingegangen. Wir melden uns schnellstmöglich bei dir.', steps:['Anfrage eingegangen | Gerade eben','Persönliche Rückmeldung | Innerhalb von 24 Stunden','Dein Angebot | Passend zu deinen Angaben'], recap:'Deine Angaben', ltext:'Wir stellen dein persönliches Ergebnis zusammen.', est:'Deine Schätzung', lines:['Wir prüfen deine Angaben …','Gleich geschafft …'], answer:'Deine Antwort'};
+  var key = function(k, t){ var b = String(k || t || 'feld').toLowerCase().replace(/[äöüß]/g, function(c){ return {'ä':'ae','ö':'oe','ü':'ue','ß':'ss'}[c]; }).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,28) || 'feld'; var x = b, i = 2; while(keys[x]) x = b + '_' + (i++); keys[x] = 1; return x; };
+  var opt = function(o){ o = o || {}; var extra = {}; if(o.sub) extra.sub = o.sub; if(o.image) extra.img = IMGSRC(o.image, 600); if(o.icon) extra.ic = o.icon; if(+o.price) extra.price = +o.price; if(+o.unitPrice){ extra.unitPrice = +o.unitPrice; extra.unitLabel = o.unit || ''; } return O(o.label || 'Option', '', extra); };
+  /* Startseite: Bild, Hinweis, Überschrift, Nutzen, Button, Vertrauen */
+  var start = [];
+  if(st.image) start.push(hero(IMG[st.image] || st.image, {src:IMGSRC(st.image), ratio:'16:10'}));
+  if(st.badge) start.push(B('badge', {text:st.badge, align:'left'}));
+  start.push(B('heading', {text:st.title || s.name || 'Dein Angebot in 60 Sekunden', level:1}));
+  if(st.text) start.push(B('text', {text:st.text, mb:22}));
+  start.push(B('button', {label:st.cta || 'Jetzt starten', sub:st.ctaSub || D.sub}));
+  var pf = st.proof || {type:'reviews'};
+  if(pf.type === 'avatars') start.push(B('avatars', {text:pf.text || 'Über **500** zufriedene Kunden', align:'center', mt:6}));
+  else if(pf.type !== 'none') start.push(B('reviews', {score:pf.score || 4.9, count:pf.count || 127, source:pf.source || 'Google', align:'center', mt:6}));
+  pages.push(P('Start', start));
+  /* Fragen: eine pro Seite, Einzelauswahl geht automatisch weiter */
+  (s.steps || []).forEach(function(q, i){
+    var t = q.type || 'cards', k = key(q.key, q.name || q.title), blocks = [];
+    if(t === 'cards' || t === 'icons'){
+      var lay = t === 'cards' ? 'image' : (q.layout === 'grid' ? 'grid' : (q.multi ? 'checklist' : 'list'));
+      /* Gleiche Icons bei allen Antworten bringen nichts – dann ohne Icons, wirkt ruhiger */
+      var icSet = (q.options || []).map(function(o){ return o.icon || ''; }).filter(function(x, i, a){ return a.indexOf(x) === i; });
+      if(t === 'icons' && (q.options || []).length > 1 && icSet.length === 1) q = Object.assign({}, q, {options:q.options.map(function(o){ return Object.assign({}, o, {icon:''}); })});
+      blocks.push(B('choice', {question:q.title, desc:q.desc || '', key:k, layout:lay, ratio:q.ratio || '4:3', cols:q.cols || (lay === 'grid' ? 2 : undefined), multi:!!q.multi, autoNext:!q.multi, required:q.required !== false, showPrices:!!(pr && pr.show), options:(q.options || []).map(opt)}));
+    } else if(t === 'slider'){
+      blocks.push(B('heading', {text:q.title, level:2, mb:q.text ? 6 : 18}));
+      if(q.text) blocks.push(B('text', {text:q.text, mb:20}));
+      blocks.push(B('slider', {label:'', min:+q.min || 0, max:+q.max || 100, step:+q.step || 1, def:q.def != null ? +q.def : Math.round(((+q.min||0)+(+q.max||100))/2), unit:q.unit || '', key:k, isQuantity:!!q.quantity}));
+      if(pr && q.quantity) blocks.push(B('summary', {compact:true, title:'Geschätzter Preis', prefix:pr.prefix || 'ab', note:''}));
+    } else if(t === 'faces'){
+      blocks.push(B('heading', {text:q.title, level:2, align:'center', mb:20}));
+      blocks.push(B('rating', {label:'', style:'faces', max:5, key:k, autoNext:true, required:true, align:'center'}));
+    } else if(t === 'calendar'){
+      blocks.push(B('heading', {text:q.title, level:2, mb:16}));
+      blocks.push(B('calendar', {label:'', key:k}));
+    } else if(t === 'text'){
+      blocks.push(B('heading', {text:q.title, level:2, mb:q.text ? 6 : 16}));
+      if(q.text) blocks.push(B('text', {text:q.text, mb:18}));
+      blocks.push(B('input', {label:'', placeholder:q.placeholder || D.answer, inputType:q.multiline ? 'textarea' : 'text', key:k, required:q.required !== false}));
+    }
+    pages.push(P(q.name || ('Frage ' + (i + 1)), blocks));
+  });
+  /* Ladeseite vor dem Ergebnis */
+  if(s.loader) pages.push(P('Auswertung', [B('loader', {anim:s.loader.anim || 'orbit', duration:s.loader.duration || 3, texts:(s.loader.lines && s.loader.lines.length) ? s.loader.lines : D.lines}),
+    B('heading', {text:s.loader.title || 'Einen Moment …', level:2, align:'center', mb:6}), B('text', {text:s.loader.text || D.ltext, align:'center'})], {hideProgress:true, vcenter:true, allowBack:false}));
+  /* Preisübersicht */
+  if(pr && pr.summary !== false) pages.push(P('Zusammenfassung', [B('heading', {text:pr.title || D.est, level:2}), B('summary', {title:'Deine Auswahl', totalLabel:'Geschätzter Preis', prefix:pr.prefix || '', note:pr.note || 'Unverbindliche Schätzung inkl. MwSt.'}), B('button', {label:pr.cta || 'Angebot anfordern'})]));
+  /* Kontakt: wenige Felder, Vertrauen direkt am Formular */
+  var c = s.contact || {};
+  var extra = [];
+  if(c.zip) extra.push(B('input', {label:'Postleitzahl', placeholder:'12345', inputType:'text', key:'plz', required:false, half:false}));
+  if(c.message) extra.push(B('input', {label:'Nachricht (optional)', placeholder:'Was sollen wir noch wissen?', inputType:'textarea', key:'nachricht', required:false}));
+  var cb = contact(c.title || D.ctitle, c.text || D.ctext, c.button || 'Anfrage absenden', extra);
+  if(c.phone === false) cb = cb.filter(function(b){ return !(b.type === 'input' && b.props.key === 'telefon'); });
+  pages.push(P('Kontakt', cb));
+  /* Danke: Auswahl-Karte und nächste Schritte */
+  var th = s.thanks || {}, more = [];
+  if(th.recap !== false && (s.steps || []).some(function(q){ return q.type === 'cards' || q.type === 'icons' || q.type === 'slider'; })) more.push(B('recap', {title:th.recapTitle || D.recap, mt:8, mb:22}));
+  more.push(B('steps', {items:(th.steps && th.steps.length) ? th.steps : D.steps}));
+  pages.push(P('Danke', done(th.title || D.thanks, th.text || D.thx, more), {hideProgress:true, allowBack:false}));
+  var brand = s.brand || '#2563eb';
+  return {name:s.name || 'KI-Funnel', desc:s.desc || '', cats:s.cats || ['Leads'],
+    theme:modern({primary:brand, primaryText:inkOn(brand), logoText:s.logo || '', optStyle:s.style || 'shadow', progFill:'solid', progAnim:'smooth'}),
+    settings:Object.assign({currency:'EUR', basePrice:0, address:sie ? 'sie' : 'du'}, pr ? {basePrice:+pr.base || 0, priceMode:pr.mode || 'range'} : {}),
+    pages:pages};
+}
+
+/* ---------- Vorlagen für viele Branchen (alle über den Baukasten) ---------- */
+var SPECS = {
+  bad:{name:'Badsanierung', desc:'Bad-Typ, Größe und Ausstattung wählen – mit Preisspanne und Beratungstermin.', cats:['Konfigurator','Handwerk'], brand:'#0f766e', logo:'Bad & Raum',
+    start:{badge:'Preis in 60 Sekunden', title:'Dein __Traumbad__ – was kostet es wirklich?', text:'Beantworte vier kurze Fragen und erhalte sofort eine realistische Preisspanne für deine Badsanierung.', image:'bathMarble', cta:'Kosten berechnen'},
+    steps:[{type:'cards', name:'Umfang', title:'Was möchtest du sanieren?', options:[{label:'Komplettsanierung', sub:'Alles neu, vom Boden bis zur Decke', image:'bathDouble', unitPrice:1450, unit:'m²'},{label:'Teilsanierung', sub:'Dusche, Wanne oder Fliesen', image:'bath', unitPrice:780, unit:'m²'},{label:'Barrierefreies Bad', sub:'Bodengleich & sicher', image:'bathTub', unitPrice:1650, unit:'m²'},{label:'Gäste-WC', sub:'Klein, aber fein', image:'bathWc', unitPrice:1100, unit:'m²'}]},
+      {type:'slider', name:'Größe', title:'Wie groß ist dein Bad?', text:'Eine grobe Schätzung reicht völlig.', min:2, max:20, step:1, def:7, unit:'m²', quantity:true},
+      {type:'icons', name:'Ausstattung', title:'Was soll rein?', desc:'Mehrfachauswahl möglich', multi:true, required:false, options:[{label:'Bodengleiche Dusche', icon:'drop', price:1900},{label:'Freistehende Wanne', icon:'sparkle', price:2400},{label:'Fußbodenheizung', icon:'flame', price:1300},{label:'Doppelwaschtisch', icon:'users', price:950},{label:'Dusch-WC', icon:'shield', price:1700}]},
+      {type:'icons', name:'Zeitraum', title:'Wann soll es losgehen?', options:[{label:'So schnell wie möglich', icon:'rocket'},{label:'In 1–3 Monaten', icon:'calendar'},{label:'In 3–6 Monaten', icon:'clock'},{label:'Ich informiere mich nur', icon:'question'}]}],
+    loader:{anim:'cube', title:'Einen Moment …', text:'Wir berechnen die Preisspanne für dein Bad.', lines:['Wir prüfen deine Auswahl …','Wir vergleichen aktuelle Preise …','Fast fertig …']},
+    pricing:{show:false, mode:'range', title:'Deine Preisspanne', cta:'Beratung anfragen'},
+    contact:{title:'Wohin dürfen wir dein Angebot senden?', zip:true},
+    thanks:{steps:['Anfrage eingegangen | Gerade eben','Rückruf vom Bad-Experten | Innerhalb von 24 Stunden','Kostenloser Termin vor Ort | Aufmaß & Beratung','Dein Festpreis-Angebot | Ohne versteckte Kosten']}},
+  dach:{name:'Dachsanierung-Check', desc:'Dachform, Zustand und Fläche – qualifizierte Anfragen für Dachdecker.', cats:['Leads','Handwerk'], brand:'#9a3412', logo:'Dach Meister',
+    start:{badge:'Kostenloser Dach-Check', title:'Ist dein Dach __fit für die Zukunft__?', text:'In 60 Sekunden zur Einschätzung – inklusive Hinweis auf mögliche Förderung.', image:'roofHouse', cta:'Dach-Check starten'},
+    steps:[{type:'icons', name:'Dachform', title:'Welche Dachform hat dein Haus?', layout:'grid', options:[{label:'Satteldach', icon:'home'},{label:'Flachdach', icon:'building'},{label:'Walmdach', icon:'home'},{label:'Pultdach', icon:'factory'}]},
+      {type:'icons', name:'Anliegen', title:'Was ist dein Anliegen?', options:[{label:'Komplette Neueindeckung', icon:'hammer'},{label:'Dämmung verbessern', icon:'flame'},{label:'Undichte Stelle / Reparatur', icon:'drop'},{label:'Dachfenster einbauen', icon:'sun'}]},
+      {type:'slider', name:'Fläche', title:'Wie groß ist die Dachfläche ungefähr?', text:'Faustregel: Wohnfläche × 1,3', min:40, max:400, step:10, def:150, unit:'m²'},
+      {type:'icons', name:'Baujahr', title:'Wann wurde das Haus gebaut?', options:[{label:'Vor 1970', icon:'clock'},{label:'1970 – 1995', icon:'clock'},{label:'1995 – 2010', icon:'clock'},{label:'Nach 2010', icon:'clock'}]}],
+    loader:{anim:'stack', title:'Wir werten deinen Dach-Check aus …', lines:['Dachform und Fläche prüfen …','Fördermöglichkeiten prüfen …']},
+    contact:{title:'Wohin dürfen wir deine Einschätzung senden?', zip:true}},
+  waermepumpe:{name:'Wärmepumpen-Check', desc:'Prüft in 5 Fragen, ob sich eine Wärmepumpe lohnt – mit Förderhinweis.', cats:['Leads','Handwerk'], brand:'#059669', logo:'Wärme Plus',
+    start:{badge:'Bis zu 70 % Förderung', title:'Lohnt sich eine __Wärmepumpe__ für dein Haus?', text:'Finde in 60 Sekunden heraus, wie viel du sparen kannst und welche Förderung du bekommst.', image:'heatPump', cta:'Jetzt prüfen'},
+    steps:[{type:'cards', name:'Gebäude', title:'Welche Art von Gebäude?', options:[{label:'Einfamilienhaus', image:'houseModern'},{label:'Doppel-/Reihenhaus', image:'houseClassic'},{label:'Mehrfamilienhaus', image:'houseGlass'},{label:'Altbau / Bestand', image:'houseWood'}]},
+      {type:'icons', name:'Heizung', title:'Wie heizt du aktuell?', options:[{label:'Gas', icon:'flame'},{label:'Öl', icon:'drop'},{label:'Strom / Nachtspeicher', icon:'bolt'},{label:'Anderes', icon:'question'}]},
+      {type:'slider', name:'Wohnfläche', title:'Wie groß ist die Wohnfläche?', min:60, max:400, step:10, def:150, unit:'m²'},
+      {type:'icons', name:'Eigentum', title:'Bist du Eigentümer der Immobilie?', options:[{label:'Ja, ich bin Eigentümer', icon:'key'},{label:'Nein, ich miete', icon:'home'}]}],
+    loader:{anim:'orbit', title:'Wir berechnen dein Sparpotenzial …', lines:['Heizbedarf schätzen …','Förderung prüfen …','Ergebnis vorbereiten …']},
+    contact:{title:'Wohin dürfen wir deine Auswertung senden?', zip:true},
+    thanks:{steps:['Check eingegangen | Gerade eben','Persönliche Auswertung | Innerhalb von 24 Stunden','Vor-Ort-Termin | Heizlast & Standort prüfen','Angebot inkl. Förderantrag | Wir kümmern uns']}},
+  fenster:{name:'Fenster & Türen', desc:'Anzahl, Material und Zeitraum – Angebotsanfrage für Fensterbauer.', cats:['Leads','Handwerk'], brand:'#1d4ed8', logo:'Fensterwerk',
+    start:{badge:'Angebot in 24 Stunden', title:'Neue Fenster – __besser dämmen__, Heizkosten senken', text:'Sag uns kurz, was du brauchst. Wir melden uns mit einem passenden Angebot.', image:'houseModern', cta:'Angebot anfordern'},
+    steps:[{type:'icons', name:'Produkt', title:'Was suchst du?', layout:'grid', multi:true, options:[{label:'Fenster', icon:'sun'},{label:'Haustür', icon:'key'},{label:'Terrassentür', icon:'home'},{label:'Rollläden', icon:'shield'}]},
+      {type:'icons', name:'Material', title:'Welches Material bevorzugst du?', options:[{label:'Kunststoff', sub:'Günstig & pflegeleicht', icon:'shield'},{label:'Holz', sub:'Natürlich & warm', icon:'tree'},{label:'Aluminium', sub:'Schlank & modern', icon:'sparkle'},{label:'Weiß ich noch nicht', icon:'question'}]},
+      {type:'slider', name:'Anzahl', title:'Wie viele Fenster bzw. Türen?', min:1, max:30, step:1, def:6, unit:'Stück'},
+      {type:'icons', name:'Zeitraum', title:'Wann soll eingebaut werden?', options:[{label:'So schnell wie möglich', icon:'rocket'},{label:'In 1–3 Monaten', icon:'calendar'},{label:'Später', icon:'clock'}]}],
+    contact:{zip:true, message:true}},
+  kueche:{name:'Küchenplanung', desc:'Stil, Form und Budget – Beratungstermin für Küchenstudios.', cats:['Termine','Verkauf'], brand:'#111827', logo:'Küchenhaus',
+    start:{badge:'Kostenlose 3D-Planung', title:'Deine __neue Küche__ – geplant in 3 Schritten', text:'Erzähl uns, wovon du träumst. Wir planen deine Küche kostenlos in 3D.', image:'kitchenIsland', cta:'Planung starten', proof:{type:'avatars', text:'Über **1.200** geplante Küchen'}},
+    steps:[{type:'cards', name:'Stil', title:'Welcher Stil gefällt dir?', options:[{label:'Modern & grifflos', image:'kitchen'},{label:'Landhaus', image:'kitchenWhite'},{label:'Natur & Holz', image:'kitchenWood'},{label:'Mit Theke', image:'kitchenBar'}]},
+      {type:'icons', name:'Form', title:'Welche Form schwebt dir vor?', layout:'grid', options:[{label:'Küchenzeile', icon:'ruler'},{label:'L-Form', icon:'ruler'},{label:'U-Form', icon:'ruler'},{label:'Mit Insel', icon:'sparkle'}]},
+      {type:'icons', name:'Budget', title:'Welches Budget hast du eingeplant?', options:[{label:'Bis 10.000 €', icon:'euro'},{label:'10.000 – 20.000 €', icon:'euro'},{label:'20.000 – 35.000 €', icon:'euro'},{label:'Über 35.000 €', icon:'euro'}]},
+      {type:'calendar', name:'Termin', title:'Wann passt dir die Beratung?'}],
+    contact:{title:'Fast geschafft! Wie erreichen wir dich?', button:'Termin anfragen'},
+    thanks:{title:'Dein Termin ist angefragt!', text:'Wir bestätigen dir den Termin innerhalb von 24 Stunden.', steps:['Anfrage eingegangen | Gerade eben','Terminbestätigung | Per E-Mail','Beratung & 3D-Planung | Im Studio oder online']}},
+  garten:{name:'Garten- & Landschaftsbau', desc:'Projekt, Fläche und Budget – Anfragen für GaLaBau-Betriebe.', cats:['Leads','Handwerk'], brand:'#3f6212', logo:'Grünwerk',
+    start:{badge:'Planung kostenlos', title:'Mach aus deinem Garten deine __Lieblingsoase__', text:'Wähle dein Projekt und wir melden uns mit einem ersten Konzept.', image:'garden', cta:'Projekt starten'},
+    steps:[{type:'cards', name:'Projekt', title:'Was möchtest du umsetzen?', multi:true, options:[{label:'Neuanlage', image:'gardenLawn'},{label:'Wege & Pflaster', image:'gardenPath'},{label:'Bepflanzung', image:'garden'},{label:'Pflege & Rückschnitt', image:'gardenWork'}]},
+      {type:'slider', name:'Fläche', title:'Wie groß ist die Fläche?', min:20, max:2000, step:10, def:250, unit:'m²'},
+      {type:'icons', name:'Budget', title:'Welchen Rahmen hast du eingeplant?', options:[{label:'Bis 5.000 €', icon:'euro'},{label:'5.000 – 15.000 €', icon:'euro'},{label:'15.000 – 40.000 €', icon:'euro'},{label:'Über 40.000 €', icon:'euro'}]}],
+    contact:{zip:true, message:true}},
+  maler:{name:'Maler-Kostenrechner', desc:'Räume, Fläche und Zustand – Preisspanne für Malerarbeiten.', cats:['Konfigurator','Handwerk'], brand:'#ea580c', logo:'Farbwerk',
+    start:{badge:'Festpreis-Garantie', title:'Was kostet der __Maler__ für deine Räume?', text:'Berechne in 30 Sekunden eine Preisspanne – sauber, pünktlich, zum Festpreis.', image:'painter', cta:'Preis berechnen'},
+    steps:[{type:'icons', name:'Arbeiten', title:'Was soll gemacht werden?', options:[{label:'Wände & Decken streichen', icon:'paint', unitPrice:14, unit:'m²'},{label:'Tapezieren & streichen', icon:'paint', unitPrice:24, unit:'m²'},{label:'Fassade', icon:'home', unitPrice:42, unit:'m²'}]},
+      {type:'slider', name:'Fläche', title:'Wie groß ist die Fläche?', text:'Wohnfläche reicht als Schätzung.', min:10, max:300, step:5, def:80, unit:'m²', quantity:true},
+      {type:'icons', name:'Zustand', title:'Wie ist der Zustand der Wände?', options:[{label:'Gut, nur neu streichen', icon:'check'},{label:'Kleine Risse & Löcher', icon:'wrench'},{label:'Stark beschädigt', icon:'hammer'}]}],
+    pricing:{mode:'range', title:'Deine Preisspanne', cta:'Festpreis-Angebot anfordern'},
+    contact:{zip:true}},
+  umzug:{name:'Umzugskosten-Rechner', desc:'Wohnungsgröße, Strecke und Extras – Umzugsangebot mit Preisspanne.', cats:['Konfigurator','Dienstleistung'], brand:'#4f46e5', logo:'Umzug Express',
+    start:{badge:'Festpreis in 60 Sekunden', title:'Was kostet dein __Umzug__?', text:'Stressfrei umziehen: Berechne jetzt deinen Preis und sichere dir deinen Wunschtermin.', image:'moving', cta:'Umzug berechnen'},
+    steps:[{type:'icons', name:'Größe', title:'Wie groß ist deine aktuelle Wohnung?', layout:'grid', options:[{label:'1–2 Zimmer', icon:'box', price:690},{label:'3 Zimmer', icon:'box', price:1090},{label:'4 Zimmer', icon:'box', price:1490},{label:'Haus', icon:'home', price:2190}]},
+      {type:'slider', name:'Entfernung', title:'Wie weit ziehst du?', min:1, max:800, step:1, def:25, unit:'km'},
+      {type:'icons', name:'Extras', title:'Welche Extras brauchst du?', desc:'Mehrfachauswahl möglich', multi:true, required:false, options:[{label:'Ein- & Auspacken', icon:'box', price:390},{label:'Möbelmontage', icon:'wrench', price:290},{label:'Halteverbotszone', icon:'truck', price:120},{label:'Entrümpelung', icon:'x', price:350}]},
+      {type:'calendar', name:'Termin', title:'Wann ist dein Wunschtermin?'}],
+    loader:{anim:'flip', title:'Wir berechnen deinen Festpreis …', lines:['Volumen schätzen …','Strecke berechnen …','Preis vorbereiten …']},
+    pricing:{mode:'from', prefix:'ab', title:'Dein Umzug', cta:'Festpreis sichern'},
+    contact:{title:'Wohin dürfen wir dein Angebot senden?'}},
+  reinigung:{name:'Gebäudereinigung', desc:'Objektart, Fläche und Turnus – Angebotsanfrage für Reinigungsfirmen.', cats:['Leads','Dienstleistung'], brand:'#0284c7', logo:'Klar & Rein',
+    start:{badge:'Angebot in 24 Stunden', title:'Saubere Räume, __ohne Aufwand__', text:'Professionelle Reinigung für Büro, Praxis und Treppenhaus – planbar und zuverlässig.', image:'cleaningOffice', cta:'Angebot anfordern'},
+    steps:[{type:'icons', name:'Objekt', title:'Was sollen wir reinigen?', layout:'grid', options:[{label:'Büro', icon:'building'},{label:'Praxis', icon:'heart'},{label:'Treppenhaus', icon:'home'},{label:'Gewerbe / Halle', icon:'factory'}]},
+      {type:'slider', name:'Fläche', title:'Wie groß ist die Fläche?', min:50, max:5000, step:50, def:400, unit:'m²'},
+      {type:'icons', name:'Turnus', title:'Wie oft soll gereinigt werden?', options:[{label:'Täglich', icon:'calendar'},{label:'2–3× pro Woche', icon:'calendar'},{label:'Wöchentlich', icon:'calendar'},{label:'Einmalig', icon:'sparkle'}]}],
+    contact:{zip:true, message:true}},
+  fitness:{name:'Probetraining Fitnessstudio', desc:'Ziel, Erfahrung und Termin – Probetrainings-Buchung für Studios.', cats:['Termine','Gesundheit'], brand:'#dc2626', logo:'Pulse Gym',
+    start:{badge:'Probetraining gratis', title:'Starte jetzt mit deinem __Wunschziel__', text:'Sichere dir dein kostenloses Probetraining inklusive persönlicher Beratung.', image:'gym', cta:'Probetraining sichern', proof:{type:'avatars', text:'Über **2.000** Mitglieder trainieren schon'}},
+    steps:[{type:'cards', name:'Ziel', title:'Was ist dein Ziel?', options:[{label:'Muskeln aufbauen', image:'gymBarbell'},{label:'Abnehmen & fitter werden', image:'gymRopes'},{label:'Kraft & Gesundheit', image:'gymWoman'},{label:'Beweglichkeit & Entspannung', image:'yoga'}]},
+      {type:'icons', name:'Erfahrung', title:'Wie viel Trainingserfahrung hast du?', options:[{label:'Ich fange gerade an', icon:'rocket'},{label:'Ich habe schon trainiert', icon:'thumb'},{label:'Ich trainiere regelmäßig', icon:'star'}]},
+      {type:'calendar', name:'Termin', title:'Wann möchtest du vorbeikommen?'}],
+    contact:{title:'Auf welchen Namen dürfen wir buchen?', button:'Probetraining buchen'},
+    thanks:{title:'Du bist dabei, {{vorname|dir}}!', text:'Wir freuen uns auf dich. Die Bestätigung kommt per E-Mail.', steps:['Buchung eingegangen | Gerade eben','Bestätigung | Per E-Mail','Probetraining | Mit persönlichem Coach']}},
+  beauty:{name:'Kosmetik-Terminbuchung', desc:'Behandlung, Hauttyp und Termin – Buchungsanfrage für Kosmetikstudios.', cats:['Termine','Gesundheit'], brand:'#be185d', logo:'Studio Lumi',
+    start:{badge:'Neukunden −15 %', title:'Gönn dir eine __Auszeit__', text:'Wähle deine Behandlung und deinen Wunschtermin – in unter einer Minute.', image:'spa', cta:'Termin wählen'},
+    steps:[{type:'cards', name:'Behandlung', title:'Welche Behandlung wünschst du dir?', options:[{label:'Gesichtsbehandlung', sub:'60 Min.', image:'spa'},{label:'Massage', sub:'45 Min.', image:'spaMassage'},{label:'Pflege & Wellness', sub:'90 Min.', image:'spaProducts'},{label:'Anti-Aging', sub:'75 Min.', image:'spaFace'}]},
+      {type:'icons', name:'Besuch', title:'Warst du schon einmal bei uns?', options:[{label:'Nein, ich bin neu', icon:'sparkle'},{label:'Ja, ich komme wieder', icon:'heart'}]},
+      {type:'calendar', name:'Termin', title:'Wann passt es dir?'}],
+    contact:{title:'Auf welchen Namen dürfen wir buchen?', button:'Termin anfragen'},
+    thanks:{title:'Danke, {{vorname|dir}}!', text:'Wir bestätigen deinen Termin in Kürze per E-Mail.', steps:['Anfrage eingegangen | Gerade eben','Terminbestätigung | Per E-Mail','Deine Behandlung | Wir freuen uns auf dich']}},
+  hochzeit:{name:'Hochzeitsfotograf', desc:'Datum, Paket und Location – Anfragen für Hochzeitsfotografen.', cats:['Leads','Gastro & Events'], brand:'#a16207', logo:'Lichtmomente',
+    start:{badge:'Termine 2027 noch frei', title:'Eure Hochzeit, __für immer festgehalten__', text:'Erzählt uns kurz von eurem Tag – wir melden uns mit einem persönlichen Angebot.', image:'wedding', cta:'Verfügbarkeit prüfen'},
+    steps:[{type:'cards', name:'Paket', title:'Wie viel soll begleitet werden?', options:[{label:'Trauung', sub:'ca. 2 Stunden', image:'weddingHands'},{label:'Halber Tag', sub:'Trauung bis Feier', image:'weddingWalk'},{label:'Ganzer Tag', sub:'Vom Getting Ready bis zur Party', image:'wedding'}]},
+      {type:'text', name:'Datum', title:'Wann ist euer großer Tag?', placeholder:'z. B. 12. Juni 2027', required:false},
+      {type:'text', name:'Location', title:'Wo feiert ihr?', placeholder:'Ort oder Location', required:false},
+      {type:'icons', name:'Budget', title:'Welches Budget habt ihr eingeplant?', options:[{label:'Bis 1.500 €', icon:'euro'},{label:'1.500 – 2.500 €', icon:'euro'},{label:'Über 2.500 €', icon:'euro'}]}],
+    contact:{title:'Wie erreichen wir euch?', message:true}},
+  catering:{name:'Catering-Anfrage', desc:'Anlass, Gäste und Budget – Angebotsanfragen für Caterer und Eventlocations.', cats:['Leads','Gastro & Events'], brand:'#b45309', logo:'Tafelwerk',
+    start:{badge:'Angebot in 24 Stunden', title:'Genuss für dein __Event__', text:'Vom Firmenevent bis zur Hochzeit – erzähl uns kurz, was du planst.', image:'catering', cta:'Angebot anfragen'},
+    steps:[{type:'icons', name:'Anlass', title:'Was ist der Anlass?', layout:'grid', options:[{label:'Firmenevent', icon:'building'},{label:'Hochzeit', icon:'heart'},{label:'Geburtstag', icon:'gift'},{label:'Sonstiges', icon:'sparkle'}]},
+      {type:'slider', name:'Gäste', title:'Mit wie vielen Gästen rechnest du?', min:10, max:500, step:5, def:60, unit:'Gäste'},
+      {type:'icons', name:'Stil', title:'Welcher Stil passt?', options:[{label:'Fingerfood', icon:'star'},{label:'Buffet', icon:'users'},{label:'Gesetztes Menü', icon:'sparkle'},{label:'BBQ', icon:'flame'}]},
+      {type:'calendar', name:'Datum', title:'Wann findet dein Event statt?'}],
+    contact:{message:true}},
+  autoankauf:{name:'Auto verkaufen', desc:'Marke, Kilometer und Zustand – Ankaufsanfragen für Autohäuser.', cats:['Leads','Verkauf'], brand:'#0f172a', logo:'Autohaus Nord',
+    start:{badge:'Angebot in 24 Stunden', title:'Verkauf dein Auto __zum Bestpreis__', text:'Kostenlose Bewertung, faire Preise und sofortige Auszahlung.', image:'cars', cta:'Auto bewerten'},
+    steps:[{type:'text', name:'Fahrzeug', title:'Welches Auto möchtest du verkaufen?', placeholder:'z. B. VW Golf 1.5 TSI', required:true},
+      {type:'slider', name:'Baujahr', title:'Aus welchem Jahr ist es?', min:2000, max:2026, step:1, def:2018, unit:''},
+      {type:'slider', name:'Kilometer', title:'Wie viele Kilometer hat es?', min:0, max:300000, step:5000, def:80000, unit:'km'},
+      {type:'faces', name:'Zustand', title:'Wie ist der Zustand?'}],
+    loader:{anim:'globe', title:'Wir prüfen den Marktwert …', lines:['Vergleichsfahrzeuge suchen …','Marktpreise prüfen …','Bewertung vorbereiten …']},
+    contact:{title:'Wohin dürfen wir dein Angebot senden?'},
+    thanks:{steps:['Bewertung eingegangen | Gerade eben','Dein Ankaufsangebot | Innerhalb von 24 Stunden','Besichtigung & Auszahlung | Am selben Tag']}},
+  webdesign:{name:'Website-Projektanfrage', desc:'Projektart, Umfang, Budget – qualifizierte Anfragen für Agenturen.', cats:['Leads','Verkauf'], brand:'#7c3aed', logo:'Studio Pixel',
+    start:{badge:'Antwort in 24 Stunden', title:'Deine neue Website, die __Kunden gewinnt__', text:'Beantworte 4 Fragen und erhalte eine erste Einschätzung zu Umfang, Zeit und Budget.', image:'laptop', cta:'Projekt anfragen', proof:{type:'reviews', score:5, count:64, source:'Google'}},
+    steps:[{type:'icons', name:'Projekt', title:'Was dürfen wir für dich bauen?', layout:'grid', options:[{label:'Neue Website', icon:'rocket'},{label:'Relaunch', icon:'sparkle'},{label:'Online-Shop', icon:'box'},{label:'Landingpage', icon:'chart'}]},
+      {type:'icons', name:'Umfang', title:'Wie umfangreich ist das Projekt?', options:[{label:'Bis 5 Seiten', icon:'check'},{label:'5 – 15 Seiten', icon:'check'},{label:'Mehr als 15 Seiten', icon:'check'}]},
+      {type:'icons', name:'Budget', title:'Welches Budget hast du eingeplant?', options:[{label:'Bis 3.000 €', icon:'euro'},{label:'3.000 – 8.000 €', icon:'euro'},{label:'8.000 – 20.000 €', icon:'euro'},{label:'Über 20.000 €', icon:'euro'}]},
+      {type:'icons', name:'Start', title:'Wann soll es losgehen?', options:[{label:'Sofort', icon:'rocket'},{label:'In 1–2 Monaten', icon:'calendar'},{label:'Später', icon:'clock'}]}],
+    contact:{title:'Wie erreichen wir dich?', message:true}},
+  steuer:{name:'Steuerberatung Erstgespräch', desc:'Situation, Anliegen und Termin – Mandantenanfragen für Kanzleien.', cats:['Termine','Dienstleistung'], brand:'#1e3a8a', logo:'Kanzlei Weber',
+    start:{badge:'Erstgespräch kostenlos', title:'Steuern __entspannt erledigen__', text:'Sag uns kurz, worum es geht – wir melden uns für ein unverbindliches Erstgespräch.', image:'consulting', cta:'Erstgespräch anfragen'},
+    steps:[{type:'icons', name:'Situation', title:'Wer bist du?', options:[{label:'Privatperson', icon:'user'},{label:'Selbstständig / Freiberufler', icon:'rocket'},{label:'GmbH / Unternehmen', icon:'building'},{label:'Gründer', icon:'sparkle'}]},
+      {type:'icons', name:'Anliegen', title:'Wobei können wir helfen?', desc:'Mehrfachauswahl möglich', multi:true, options:[{label:'Steuererklärung', icon:'check'},{label:'Buchhaltung', icon:'chart'},{label:'Lohnabrechnung', icon:'users'},{label:'Gründungsberatung', icon:'rocket'},{label:'Steuern optimieren', icon:'piggy'}]},
+      {type:'calendar', name:'Termin', title:'Wann passt dir das Erstgespräch?'}],
+    contact:{title:'Wie erreichen wir dich?', button:'Termin anfragen'},
+    thanks:{title:'Danke, {{vorname|dir}}!', text:'Wir bestätigen dein Erstgespräch in Kürze.', steps:['Anfrage eingegangen | Gerade eben','Terminbestätigung | Per E-Mail','Erstgespräch | Kostenlos und unverbindlich']}},
+  restaurant:{name:'Restaurant-Feedback', desc:'Smiley-Bewertung, Lob und Kritik – Zufriedene landen bei Google.', cats:['Feedback','Gastro & Events'], brand:'#9f1239', logo:'Trattoria Sole',
+    start:{badge:'Dauert nur 30 Sekunden', title:'Wie hat es dir __bei uns geschmeckt__?', text:'Dein Feedback hilft uns, jeden Abend ein bisschen besser zu werden.', image:'restaurant', cta:'Feedback geben', proof:{type:'none'}},
+    steps:[{type:'faces', name:'Bewertung', title:'Wie war dein Besuch insgesamt?'},
+      {type:'icons', name:'Highlights', title:'Was hat dir am besten gefallen?', multi:true, required:false, options:[{label:'Essen', icon:'star'},{label:'Service', icon:'users'},{label:'Ambiente', icon:'sparkle'},{label:'Preis/Leistung', icon:'euro'}]},
+      {type:'text', name:'Kommentar', title:'Möchtest du uns noch etwas sagen?', placeholder:'Lob, Kritik, Wünsche …', multiline:true, required:false}],
+    contact:{title:'Möchtest du eine Antwort von uns?', text:'Optional – lass uns deine E-Mail da, wenn wir uns melden dürfen.', phone:false, button:'Feedback senden'},
+    thanks:{title:'Grazie mille!', text:'Danke für dein ehrliches Feedback. Wir freuen uns auf deinen nächsten Besuch.', recap:false, steps:['Feedback eingegangen | Gerade eben','Wir lesen jede Nachricht | Persönlich vom Team']}},
+  azubi:{name:'Azubi-Bewerbung', desc:'Ausbildungsberuf, Abschluss und Start – Bewerbung ohne Anschreiben.', cats:['Recruiting'], brand:'#ea580c', logo:'Muster Bau',
+    start:{badge:'Ausbildung 2027', title:'Starte deine Ausbildung bei uns – __in 60 Sekunden beworben__', text:'Kein Anschreiben, kein Lebenslauf nötig. Wir melden uns innerhalb von 48 Stunden.', image:'workshopTeam', cta:'Jetzt bewerben', proof:{type:'avatars', text:'**12** Azubis starten jedes Jahr bei uns'}},
+    steps:[{type:'icons', name:'Beruf', title:'Welche Ausbildung interessiert dich?', options:[{label:'Anlagenmechaniker/in SHK', icon:'wrench'},{label:'Elektroniker/in', icon:'bolt'},{label:'Kaufmann/-frau für Büromanagement', icon:'chart'},{label:'Noch unsicher', icon:'question'}]},
+      {type:'icons', name:'Abschluss', title:'Welchen Schulabschluss hast du (bald)?', options:[{label:'Hauptschulabschluss', icon:'check'},{label:'Mittlere Reife', icon:'check'},{label:'Abitur / Fachabitur', icon:'check'}]},
+      {type:'icons', name:'Start', title:'Wann möchtest du starten?', options:[{label:'August 2026', icon:'calendar'},{label:'August 2027', icon:'calendar'},{label:'Erst Praktikum', icon:'rocket'}]}],
+    contact:{title:'Wie erreichen wir dich?', text:'Am liebsten per WhatsApp oder Telefon.', button:'Bewerbung absenden'},
+    thanks:{title:'Stark, {{vorname|danke}}!', text:'Deine Bewerbung ist da. Wir melden uns innerhalb von 48 Stunden.', recap:false, steps:['Bewerbung eingegangen | Gerade eben','Kurzes Telefonat | Innerhalb von 48 Stunden','Kennenlernen im Betrieb | Mit Probetag']}},
+  pflege:{name:'Pflegekräfte-Recruiting', desc:'Qualifikation, Arbeitszeit und Bereich – Bewerbung in 60 Sekunden.', cats:['Recruiting','Gesundheit'], brand:'#0e7490', logo:'Pflege mit Herz',
+    start:{badge:'Bis zu 4.200 € brutto', title:'Pflege, die __wertgeschätzt__ wird', text:'Feste Dienstpläne, faires Gehalt, echtes Team. Bewirb dich in 60 Sekunden – ohne Lebenslauf.', image:'nurse', cta:'Jetzt bewerben'},
+    steps:[{type:'icons', name:'Qualifikation', title:'Welche Qualifikation hast du?', options:[{label:'Pflegefachkraft (examiniert)', icon:'shield'},{label:'Pflegehelfer/in', icon:'heart'},{label:'In Ausbildung', icon:'rocket'},{label:'Quereinsteiger/in', icon:'sparkle'}]},
+      {type:'icons', name:'Arbeitszeit', title:'Welche Arbeitszeit wünschst du dir?', options:[{label:'Vollzeit', icon:'clock'},{label:'Teilzeit', icon:'clock'},{label:'Minijob', icon:'clock'}]},
+      {type:'icons', name:'Bereich', title:'In welchem Bereich möchtest du arbeiten?', options:[{label:'Ambulant', icon:'car'},{label:'Stationär', icon:'building'},{label:'Egal', icon:'thumb'}]}],
+    contact:{title:'Wie erreichen wir dich?', button:'Bewerbung absenden'},
+    thanks:{title:'Danke, {{vorname|dir}}!', text:'Wir melden uns innerhalb von 48 Stunden bei dir.', recap:false, steps:['Bewerbung eingegangen | Gerade eben','Kurzes Telefonat | Innerhalb von 48 Stunden','Kennenlernen & Hospitation | Ganz entspannt']}},
+  ferienhaus:{name:'Ferienhaus-Anfrage', desc:'Zeitraum, Gäste und Wünsche – Buchungsanfragen für Ferienhäuser und Hotels.', cats:['Leads','Gastro & Events'], brand:'#166534', logo:'Waldhaus am See',
+    start:{badge:'Direkt buchen & sparen', title:'Deine __Auszeit__ im Grünen', text:'Frag jetzt deinen Wunschzeitraum an – ohne Buchungsgebühr.', image:'cabin', cta:'Verfügbarkeit prüfen'},
+    steps:[{type:'text', name:'Zeitraum', title:'Wann möchtest du anreisen?', placeholder:'z. B. 14.–21. August', required:true},
+      {type:'slider', name:'Gäste', title:'Wie viele Personen reisen?', min:1, max:10, step:1, def:2, unit:'Personen'},
+      {type:'icons', name:'Wünsche', title:'Hast du besondere Wünsche?', multi:true, required:false, options:[{label:'Hund dabei', icon:'heart'},{label:'Sauna', icon:'flame'},{label:'Frühstück', icon:'sun'},{label:'Kinderbett', icon:'users'}]}],
+    contact:{title:'Wohin dürfen wir dein Angebot senden?', message:true}}
+};
+/* Ohne KI-Anbindung: passende Branchen-Vorlage per Stichwort finden und mit Firmenname/Farbe anpassen */
+var AI_WORDS = {bad:'bad badezimmer dusche wanne sanitär fliesen', dach:'dach dachdecker ziegel dachsanierung', waermepumpe:'wärmepumpe heizung heizungsbauer energie', fenster:'fenster tür türen rollladen glas', kueche:'küche küchenstudio küchenplanung', garten:'garten galabau landschaft pflaster rasen', maler:'maler streichen tapezieren fassade farbe', umzug:'umzug umzüge spedition möbel', reinigung:'reinigung gebäudereinigung putzen büro sauber', fitness:'fitness studio gym training probetraining sport', beauty:'kosmetik beauty spa massage nagel friseur', hochzeit:'hochzeit fotograf foto fotografie', catering:'catering event feier party buffet location', autoankauf:'auto autohaus fahrzeug ankauf kfz', webdesign:'website webdesign agentur marketing online shop', steuer:'steuer steuerberater kanzlei buchhaltung anwalt beratung', restaurant:'restaurant café gastronomie bewertung feedback essen', azubi:'azubi ausbildung lehrling auszubildende', pflege:'pflege pflegekraft altenpflege krankenpflege', ferienhaus:'ferienhaus ferienwohnung hotel urlaub unterkunft'};
+function aiFallback(prompt, o){
+  o = o || {}; var p = String(prompt || '').toLowerCase(), best = 'webdesign', score = 0;
+  Object.keys(AI_WORDS).forEach(function(k){ var sc = 0; AI_WORDS[k].split(' ').forEach(function(w){ if(w && p.indexOf(w) >= 0) sc += w.length; }); if(sc > score){ score = sc; best = k; } });
+  var sp = JSON.parse(JSON.stringify(SPECS[best]));
+  if(o.company) sp.logo = o.company;
+  if(o.brand) sp.brand = o.brand;
+  sp.address = o.address === 'sie' ? 'sie' : 'du';
+  sp.name = (o.company ? o.company + ' – ' : '') + sp.name;
+  return {spec:sp, base:best, matched:score > 0};
+}
+Object.keys(SPECS).forEach(function(k){ var sp = SPECS[k]; TEMPLATES_EXTRA.push({id:k, make:function(){ return fromSpec(sp); }}); });
+
 var TEMPLATES = [
   {id:'gehlen-tisch', make:tGehlen}, {id:'gehlen-feedback', make:tGehlenFeedback}, {id:'koelner-zoo', make:tZoo}, {id:'schwimmbad', make:tSchwimmbad}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
   {id:'montage', make:tMontage}, {id:'recruiting', make:tRecruiting}, {id:'quiz', make:tQuiz}, {id:'feedback', make:tFeedback}, {id:'abnahme', make:tAbnahme},
   {id:'freebie', make:tFreebie}, {id:'blank', make:tBlank}
 ];
+/* Branchen-Vorlagen vor „Leerer Funnel“ einreihen */
+Array.prototype.splice.apply(TEMPLATES, [TEMPLATES.length - 1, 0].concat(TEMPLATES_EXTRA));
+
 
 /* Feste Layout-Werte aus Vorlagen-CSS in Theme-Einstellungen übernehmen, damit „Abstand oben“, Fortschrittsbalken und
    Button-Größe im Design-Tab wirken (eigenes CSS hätte sonst Vorrang). Ergebnis sieht identisch aus. Gibt true zurück, wenn etwas übernommen wurde. */
@@ -3423,12 +3710,15 @@ TEMPLATES.forEach(function(tp){ var mk = tp.make; tp.make = function(){ var d = 
 
 function newFunnel(tplId, overrides){
   var t = TEMPLATES.filter(function(x){return x.id===tplId;})[0] || TEMPLATES[TEMPLATES.length-1];
-  var d = t.make();
+  return newFunnelFrom(t.make(), tplId, overrides);
+}
+/* Funnel aus fertigen Vorlagen-Daten (z. B. aus der KI-Erstellung) */
+function newFunnelFrom(d, tplId, overrides){
   var now = Date.now();
   return Object.assign({id:uid()+uid().slice(0,4), name:d.name, template:tplId, status:'draft', createdAt:now, updatedAt:now, theme:d.theme, settings:Object.assign({currency:'EUR', basePrice:0, baseLabel:'Grundpreis', webhook:'', redirect:'', pixel:''}, d.settings||{}), pages:d.pages, stats:{views:0, starts:0, completes:0, pages:{}, daily:{}}}, overrides||{});
 }
 
-window.FS_T = {uid:uid, clone:clone, THEMES:THEMES, THEME_BASE:THEME_BASE, theme:theme, DEF:DEF, LIB:LIB, SECTIONS:SECTIONS, B:B, P:P, O:O, fromLib:fromLib, TEMPLATES:TEMPLATES, CATS:CATS, newFunnel:newFunnel, art:art, liftCss:liftCss};
+window.FS_T = {uid:uid, clone:clone, THEMES:THEMES, THEME_BASE:THEME_BASE, theme:theme, DEF:DEF, LIB:LIB, SECTIONS:SECTIONS, B:B, P:P, O:O, fromLib:fromLib, TEMPLATES:TEMPLATES, CATS:CATS, newFunnel:newFunnel, newFunnelFrom:newFunnelFrom, art:art, liftCss:liftCss, fromSpec:fromSpec, IMG:IMG, SPECS:SPECS, aiFallback:aiFallback};
 })();
 
 </script>
@@ -4540,11 +4830,11 @@ function uniqueSlug(base, exceptId){ base = slug(base).slice(0, 48) || 'funnel';
 function linkBase(){ return publicUrl({slug:''}).replace(/\/$/, '') + '/'; }
 function loadFontsFor(f){ FP.usedFonts(f).forEach(function(n){ var u = FP.fontLink(n); if(!u || document.querySelector('link[data-ff="'+n+'"]')) return; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; l.setAttribute('data-ff', n); document.head.appendChild(l); }); }
 function newFunnelModal(){
-  var W = {step:1, tpl:null, d:null, name:'', slug:'', slugEdited:false, clientId:'', shared:false, q:''};
+  var W = {step:1, tpl:null, d:null, name:'', slug:'', slugEdited:false, clientId:'', shared:false, q:'', ai:{prompt:'', company:'', brand:'', address:'du', busy:false, err:'', note:''}};
   var tplList = T.TEMPLATES.map(function(t){ return {id:t.id, d:t.make()}; });
   var m = modal({title:'Neuen Funnel erstellen', size:'wide wiz', body:'', foot:'<span></span>'});
   var el = m.el, mb = el.querySelector('.mb'), mf = el.querySelector('.mf'), mh = el.querySelector('.mh > div');
-  var steps = function(){ return '<div class="wsteps">'+[['1','Vorlage wählen'],['2','Details & Vorschau']].map(function(s, i){ return '<span class="ws'+(W.step===i+1?' on':'')+(W.step>i+1?' done':'')+'"><b>'+(W.step>i+1?I('check',12):s[0])+'</b>'+s[1]+'</span>'; }).join('<i></i>')+'</div>'; };
+  var steps = function(){ var cur = W.step === 'ai' ? 1 : W.step; return '<div class="wsteps">'+[['1', W.step === 'ai' || W.tpl === 'ai' ? 'Mit KI beschreiben' : 'Vorlage wählen'],['2','Details & Vorschau']].map(function(s, i){ return '<span class="ws'+(cur===i+1?' on':'')+(cur>i+1?' done':'')+'"><b>'+(cur>i+1?I('check',12):s[0])+'</b>'+s[1]+'</span>'; }).join('<i></i>')+'</div>'; };
   function grid(){
     var q = W.q.toLowerCase();
     var shown = tplList.filter(function(x){ return (S.tcat === 'Alle' || x.d.cats.indexOf(S.tcat) >= 0 || x.id === 'blank') && (!q || (x.d.name+' '+x.d.desc).toLowerCase().indexOf(q) >= 0); });
@@ -4553,8 +4843,10 @@ function newFunnelModal(){
   }
   function render(){
     mh.innerHTML = '<h2>Neuen Funnel erstellen</h2>' + steps();
+    if(W.step === 'ai'){ renderAi(); return; }
     if(W.step === 1){
-      mb.innerHTML = '<div class="wbar"><label class="search" style="min-width:0;flex:1;max-width:320px;height:36px">'+I('search')+'<input id="wq" placeholder="Vorlage suchen …" value="'+esc(W.q)+'"></label><div class="tfil" style="margin:0">'+T.CATS.map(function(c){ return '<button class="chip'+(S.tcat===c?' on':'')+'" data-w="cat" data-v="'+c+'">'+c+'</button>'; }).join('')+'</div></div><div id="wgrid">'+grid()+'</div>';
+      mb.innerHTML = '<button class="aicard" data-w="ai"><span class="aic">'+I('sparkles',20)+'</span><span class="ait"><b>Mit KI erstellen</b><span>Beschreibe in einem Satz, was der Funnel können soll. Fragen, Texte, Logik, Bilder und Design entstehen automatisch.</span></span>'+I('right',16)+'</button>'
+        + '<div class="wbar"><label class="search" style="min-width:0;flex:1;max-width:320px;height:36px">'+I('search')+'<input id="wq" placeholder="Vorlage suchen …" value="'+esc(W.q)+'"></label><div class="tfil" style="margin:0">'+T.CATS.map(function(c){ return '<button class="chip'+(S.tcat===c?' on':'')+'" data-w="cat" data-v="'+c+'">'+c+'</button>'; }).join('')+'</div></div><div id="wgrid">'+grid()+'</div>';
       mf.innerHTML = '<span class="hint" style="margin:0 auto 0 0">Inhalte, Design und Logik kannst du danach frei anpassen.</span><button class="btn" data-close>Abbrechen</button>';
       var qi = mb.querySelector('#wq'); qi.oninput = function(){ W.q = qi.value; mb.querySelector('#wgrid').innerHTML = grid(); }; setTimeout(function(){ qi.focus(); }, 30);
       return;
@@ -4562,12 +4854,12 @@ function newFunnelModal(){
     var d = W.d, f = {pages:d.pages, theme:d.theme, settings:d.settings||{}};
     var serr = slugError(W.slug);
     mb.innerHTML = '<div class="wz2"><div class="wzprev"><div class="wzph"><span>'+I('play',13)+'Vorschau – klick dich durch</span><button class="btn ghost sm" data-w="restart">'+I('refresh',13)+'Neu starten</button></div><div class="phone wzphone"><div class="notch"></div><div class="scr" data-fp-scroll style="background:'+esc(d.theme.bg)+'"><div class="sbar" style="color:'+esc(d.theme.text)+'"><span>9:41</span><i></i></div><div class="fp-host" id="wzhost"></div></div></div></div>'
-      + '<div class="wzform"><div class="wztpl"><span class="tag a">Vorlage</span><b>'+esc(d.name)+'</b><p>'+esc(d.desc)+'</p><div class="wzpages">'+d.pages.map(function(p, i){ return '<span>'+(i+1)+' · '+esc(p.name)+'</span>'; }).join('')+'</div></div>'
+      + '<div class="wzform"><div class="wztpl"><span class="tag a">'+(W.tpl === 'ai' ? 'KI-Entwurf' : 'Vorlage')+'</span><b>'+esc(d.name)+'</b><p>'+esc(d.desc)+'</p><div class="wzpages">'+d.pages.map(function(p, i){ return '<span>'+(i+1)+' · '+esc(p.name)+'</span>'; }).join('')+'</div></div>'
       + '<div class="fld"><label>Name des Funnels</label><input class="inp" id="wname" value="'+esc(W.name)+'" placeholder="z. B. Tischkonfigurator Frühjahr"><div class="hint">Nur intern sichtbar – im Dashboard und im Kundenportal.</div></div>'
       + '<div class="fld"><label>Kunde</label><select class="inp" id="wclient"><option value="">– Intern (kein Kunde) –</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(W.clientId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select>'
       + (W.clientId ? '<label class="tgl" style="margin-top:8px"><span>Direkt im Kundenportal freischalten</span><input type="checkbox" id="wshare"'+(W.shared?' checked':'')+'><span class="sw"></span></label>' : '<div class="hint">Optional. Zugeordnete Funnels kann der Kunde in seinem Login sehen, sobald du sie freischaltest.</div>') + '</div>'
       + '<div class="fld"><label>Link-Adresse</label><div class="slugf'+(serr?' err':'')+'"><span>'+esc(linkBase())+'</span><input id="wslug" value="'+esc(W.slug)+'" spellcheck="false"></div><div class="hint'+(serr?' errt':'')+'">'+(serr || 'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.')+'</div></div></div></div>';
-    mf.innerHTML = '<button class="btn" data-w="back" style="margin-right:auto">'+I('left',14)+'Andere Vorlage</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="create"'+(serr||!W.name.trim()?' disabled':'')+'>Funnel erstellen'+I('right',14)+'</button>';
+    mf.innerHTML = '<button class="btn" data-w="back" style="margin-right:auto">'+I('left',14)+(W.tpl === 'ai' ? 'Neu beschreiben' : 'Andere Vorlage')+'</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="create"'+(serr||!W.name.trim()?' disabled':'')+'>Funnel erstellen'+I('right',14)+'</button>';
     mountPreview();
     var ni = mb.querySelector('#wname'), si = mb.querySelector('#wslug'), ci = mb.querySelector('#wclient'), sh = mb.querySelector('#wshare');
     var refreshState = function(){ var e = slugError(W.slug); si.parentNode.classList.toggle('err', !!e); var h = si.parentNode.nextElementSibling; h.classList.toggle('errt', !!e); h.textContent = e || 'Unter dieser Adresse ist der Funnel erreichbar, sobald er live ist.'; mf.querySelector('[data-w="create"]').disabled = !!e || !W.name.trim(); };
@@ -4579,6 +4871,53 @@ function newFunnelModal(){
     if(sh) sh.onchange = function(){ W.shared = sh.checked; };
     setTimeout(function(){ ni.focus(); ni.select(); }, 30);
   }
+  /* ---- KI-Erstellung: Beschreibung → Entwurf (Supabase-Funktion ai-funnel, sonst passende Vorlage) ---- */
+  var AI_EX = ['Konfigurator für Carports aus Holz oder Alu, Preise ab 3.900 €, mit Kontaktformular','Feedback-Funnel für ein Café: Zufriedene zu Google, Kritik an uns','Bewerbung für Elektriker in 60 Sekunden, ohne Lebenslauf','Terminbuchung für eine Physiotherapie-Praxis mit Wunschtermin'];
+  function renderAi(){
+    var A = W.ai;
+    if(A.busy){
+      mb.innerHTML = '<div class="aibusy"><div class="fp" style="--p:var(--acc);--tx:var(--ink);--mt:var(--mut);background:transparent">'+FP.renderBlock({id:'aild', type:'loader', props:{anim:'orbit', size:140, duration:9, texts:['Struktur planen …','Fragen formulieren …','Antworten und Logik festlegen …','Bilder und Farben wählen …','Texte auf Conversion trimmen …'], showBar:true}}, {f:{theme:{}, settings:{}, pages:[]}, answers:{}})+'</div><b>Dein Funnel entsteht</b><span>Das dauert meist 20 bis 60 Sekunden.</span></div>';
+      mf.innerHTML = '<span></span>';
+      FP.playLoaders(mb, {theme:{}});
+      return;
+    }
+    mb.innerHTML = '<div class="aiform">'
+      + '<div class="fld"><label>Was soll der Funnel können?</label><textarea class="inp" id="aiprompt" rows="4" placeholder="z. B. Konfigurator für Badsanierungen mit Preisspanne, für Hausbesitzer im Raum Köln. Am Ende Rückruf anfragen.">'+esc(A.prompt)+'</textarea>'
+      + '<div class="aiex">'+AI_EX.map(function(x){ return '<button class="chip" data-w="aiex" data-v="'+esc(x)+'">'+esc(x.length > 46 ? x.slice(0, 44) + ' …' : x)+'</button>'; }).join('')+'</div></div>'
+      + '<div class="row2"><div class="fld"><label>Firmenname (optional)</label><input class="inp" id="aicompany" value="'+esc(A.company)+'" placeholder="z. B. Bad & Raum GmbH"></div>'
+      + '<div class="fld"><label>Markenfarbe (optional)</label><div style="display:flex;gap:8px"><input type="color" id="aibrandc" value="'+esc(A.brand || '#2563eb')+'" class="aicolor"><input class="inp" id="aibrand" value="'+esc(A.brand)+'" placeholder="Automatisch"></div></div></div>'
+      + '<div class="fld"><label>Anrede</label><div class="segf" style="max-width:240px"><button data-w="aiaddr" data-v="du" class="'+(A.address !== 'sie' ? 'on' : '')+'">Du</button><button data-w="aiaddr" data-v="sie" class="'+(A.address === 'sie' ? 'on' : '')+'">Sie</button></div></div>'
+      + (A.err ? '<div class="aierr">'+I('help',15)+'<div><b>'+esc(A.err)+'</b><span>Du kannst stattdessen eine passende Vorlage als Entwurf verwenden.</span><button class="btn sm" data-w="aifallback">Passende Vorlage verwenden</button></div></div>' : '')
+      + (!REMOTE ? '<div class="hint" style="margin-top:4px">Demo-Modus: Ohne KI-Anbindung wird die passende Branchen-Vorlage mit deinen Angaben angepasst.</div>' : '')
+      + '</div>';
+    mf.innerHTML = '<button class="btn" data-w="aiback" style="margin-right:auto">'+I('left',14)+'Zu den Vorlagen</button><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-w="aigo"'+(A.prompt.trim().length < 8 ? ' disabled' : '')+'>'+I('sparkles',14)+'Funnel erstellen</button>';
+    var pi = mb.querySelector('#aiprompt'), ci = mb.querySelector('#aicompany'), bi = mb.querySelector('#aibrand'), bc = mb.querySelector('#aibrandc');
+    pi.oninput = function(){ A.prompt = pi.value; mf.querySelector('[data-w="aigo"]').disabled = A.prompt.trim().length < 8; };
+    pi.onkeydown = function(e){ if(e.key === 'Enter' && (e.metaKey || e.ctrlKey) && A.prompt.trim().length >= 8) aiGenerate(); };
+    ci.oninput = function(){ A.company = ci.value; };
+    bi.oninput = function(){ var v = bi.value.trim(); A.brand = /^#[0-9a-f]{6}$/i.test(v) ? v : ''; if(A.brand) bc.value = A.brand; };
+    bc.oninput = function(){ A.brand = bc.value; bi.value = bc.value; };
+    setTimeout(function(){ pi.focus(); }, 30);
+  }
+  function aiApply(spec, note){
+    var d = T.fromSpec(spec);
+    W.tpl = 'ai'; W.d = d; W.ai.note = note || ''; W.name = uniqueName(d.name); W.slug = uniqueSlug(W.name); W.slugEdited = false; W.step = 2; render(); mb.scrollTop = 0;
+    if(note) toast(note);
+  }
+  function aiUseFallback(){ var A = W.ai, r = T.aiFallback(A.prompt, A); aiApply(r.spec, r.matched ? 'Entwurf aus der passenden Vorlage erstellt' : 'Keine passende Branche erkannt – Entwurf aus einer allgemeinen Vorlage'); }
+  async function aiGenerate(){
+    var A = W.ai; if(A.busy || A.prompt.trim().length < 8) return;
+    if(!REMOTE || !sb){ aiUseFallback(); return; }
+    A.busy = true; A.err = ''; render();
+    try{
+      var r = await sb.functions.invoke('ai-funnel', {body:{prompt:A.prompt, company:A.company, brand:A.brand, address:A.address}});
+      if(r.error){ var msg = ''; try{ msg = (await r.error.context.json()).error; }catch(x){} throw new Error(msg || 'Die KI ist gerade nicht erreichbar.'); }
+      if(!r.data || !r.data.spec) throw new Error('Die KI hat keinen Entwurf geliefert.');
+      A.busy = false;
+      if(!el.isConnected) return;
+      aiApply(r.data.spec, '');
+    }catch(e){ A.busy = false; A.err = e.message || 'Die KI ist gerade nicht erreichbar.'; if(el.isConnected) render(); }
+  }
   function mountPreview(){
     var old = mb.querySelector('#wzhost'); if(!old) return;
     var host = document.createElement('div'); host.className = 'fp-host'; host.id = 'wzhost'; old.replaceWith(host); /* frisches Element: keine doppelten Klick-Handler */
@@ -4589,7 +4928,8 @@ function newFunnelModal(){
   function pick(id){ W.tpl = id; W.d = tplList.filter(function(x){ return x.id === id; })[0].d; W.name = uniqueName(W.d.name); W.slug = uniqueSlug(W.name); W.slugEdited = false; W.step = 2; render(); mb.scrollTop = 0; }
   function create(){
     if(!W.name.trim() || !W.slug || slugTaken(W.slug)) return;
-    var f = T.newFunnel(W.tpl, {name:W.name.trim(), slug:W.slug, clientId:W.clientId || null, shared:!!(W.clientId && W.shared)});
+    var ov = {name:W.name.trim(), slug:W.slug, clientId:W.clientId || null, shared:!!(W.clientId && W.shared)};
+    var f = W.tpl === 'ai' ? T.newFunnelFrom(T.clone(W.d), 'ai', ov) : T.newFunnel(W.tpl, ov);
     if(db.defaults && db.defaults.webhook && !f.settings.webhook) f.settings.webhook = db.defaults.webhook;
     db.funnels.unshift(f); save(true);
     m.close();
@@ -4601,7 +4941,13 @@ function newFunnelModal(){
     var a = w.getAttribute('data-w');
     if(a === 'cat'){ S.tcat = w.getAttribute('data-v'); $$('[data-w="cat"]', el).forEach(function(b){ b.classList.toggle('on', b === w); }); mb.querySelector('#wgrid').innerHTML = grid(); }
     else if(a === 'pick') pick(w.getAttribute('data-id'));
-    else if(a === 'back'){ W.step = 1; render(); }
+    else if(a === 'back'){ W.step = W.tpl === 'ai' ? 'ai' : 1; render(); }
+    else if(a === 'ai'){ W.step = 'ai'; W.ai.err = ''; render(); }
+    else if(a === 'aiback'){ W.step = 1; render(); }
+    else if(a === 'aiex'){ W.ai.prompt = w.getAttribute('data-v'); render(); }
+    else if(a === 'aiaddr'){ W.ai.address = w.getAttribute('data-v'); $$('[data-w="aiaddr"]', el).forEach(function(b){ b.classList.toggle('on', b === w); }); }
+    else if(a === 'aigo') aiGenerate();
+    else if(a === 'aifallback') aiUseFallback();
     else if(a === 'restart') mountPreview();
     else if(a === 'create') create();
   });

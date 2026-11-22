@@ -58,6 +58,7 @@ Die SQL-Dateien liegen bewusst **außerhalb** von `supabase/migrations/`, damit 
 | `lead-notify` | `supabase functions deploy lead-notify --no-verify-jwt` | E-Mails bei neuem Lead, Bestätigung, Regeln, **Webhooks (inkl. Onepage-Format, server-seitig)** |
 | `invite-user` | `supabase functions deploy invite-user` | Kunden-Logins einladen/löschen |
 | `domain-manage` | `supabase functions deploy domain-manage` | Kundendomains anlegen/prüfen |
+| `ai-funnel` | `supabase functions deploy ai-funnel` | Funnel per KI aus einer Beschreibung erstellen (nur Admins, Claude Opus 5.5) |
 
 Deploy erst nach deiner Freigabe 🤖. `supabase login` führst du selbst im Terminal aus 👤.
 
@@ -71,6 +72,7 @@ Deploy erst nach deiner Freigabe 🤖. `supabase login` führst du selbst im Ter
 | `APP_URL` | Edge Function Secrets | `https://app.taptell.de` (Bilder in Mails, Link „Im Dashboard öffnen“) |
 | `DOMAIN_TARGET` | Edge Function Secrets | `cname.vercel-dns.com` |
 | `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` | optional | automatische Kundendomains inkl. SSL |
+| `ANTHROPIC_API_KEY` | Edge Function Secrets | aus der Claude Console (console.anthropic.com), für „Mit KI erstellen“. Ohne Schlüssel nutzt das Dashboard die passende Branchen-Vorlage als Entwurf. |
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY` und `SUPABASE_SERVICE_ROLE_KEY` stellt Supabase den Functions automatisch bereit. Die musst du nicht setzen.
 
