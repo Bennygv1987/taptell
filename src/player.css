@@ -905,3 +905,7 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp-b.oic-c .fp-opt .ico svg{stroke:var(--oic)}
 .fp-b[style*="--lic"] .fp-list .fp-li{color:var(--lic)}
 .fp-b[style*="--lic"] .fp-list .fp-li svg{stroke:var(--lic)}
+
+/* Konfetti */
+.fp-conf{position:fixed;inset:0;z-index:2147482000;pointer-events:none}
+.fp-conf.in{position:absolute;left:0;top:0}

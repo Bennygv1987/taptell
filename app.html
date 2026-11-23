@@ -918,6 +918,10 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp-b[style*="--lic"] .fp-list .fp-li{color:var(--lic)}
 .fp-b[style*="--lic"] .fp-list .fp-li svg{stroke:var(--lic)}
 
+/* Konfetti */
+.fp-conf{position:fixed;inset:0;z-index:2147482000;pointer-events:none}
+.fp-conf.in{position:absolute;left:0;top:0}
+
 </style>
 <style>
 :root{
@@ -2776,6 +2780,36 @@ FP.renderShell = function(f, idx, inner, opts){
   return '<div class="'+cls+'"'+(fsid?' data-fs="'+fsid+'"':'')+' style="'+style+'">'+css+ov+top+'<div class="fp-body">'+inner+'</div>'+foot+(opts.fab||'')+'</div>';
 };
 
+/* ---------- Konfetti: fällt von oben, nach erfolgreicher Anfrage auf der Danke-Seite ---------- */
+FP.confetti = function(host, f, opt){
+  opt = opt || {}; if(!host) return;
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var t = (f && f.theme) || {}, cols = [t.primary || '#3A86FF', '#FFC700', '#FF4D6D', '#2EC4B6', '#3A86FF', '#8338EC', '#FB5607', t.primary || '#2EC4B6'];
+  var cv = document.createElement('canvas'), ctx = cv.getContext('2d'); if(!ctx) return;
+  cv.className = 'fp-conf' + (opt.contained ? ' in' : ''); cv.setAttribute('aria-hidden', 'true');
+  host.appendChild(cv); if(opt.contained) cv.style.top = (host.scrollTop || 0) + 'px'; /* im Editor: sichtbarer Bereich des Handys */
+  var dpr = Math.min(2, window.devicePixelRatio || 1), W, H;
+  var size = function(){ var r = opt.contained ? host.getBoundingClientRect() : {width:innerWidth, height:innerHeight}; W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size();
+  var n = reduce ? 36 : Math.round(Math.min(180, Math.max(90, W / 2.6))), ps = [];
+  for(var i = 0; i < n; i++) ps.push({x:Math.random() * W, y:-20 - Math.random() * H * .45, w:6 + Math.random() * 6, h:8 + Math.random() * 10, c:cols[i % cols.length], vy:reduce ? 1 + Math.random() : 2 + Math.random() * 3, vx:(Math.random() - .5) * 1.4, r:Math.random() * 6.3, vr:(Math.random() - .5) * .25, sw:Math.random() * 6.3, k:Math.random() < .22 ? 'c' : 'r'});
+  var start = performance.now(), dur = reduce ? 2200 : 4200, raf;
+  var tick = function(now){
+    var el = now - start, fade = el > dur - 700 ? Math.max(0, (dur - el) / 700) : 1;
+    ctx.clearRect(0, 0, W, H);
+    ps.forEach(function(p){
+      p.vy = Math.min(p.vy + (reduce ? .01 : .045), reduce ? 2.2 : 5.2); p.y += p.vy; p.sw += .045; p.x += p.vx + Math.sin(p.sw) * (reduce ? .3 : .9); p.r += reduce ? 0 : p.vr;
+      if(p.y > H + 20) return;
+      ctx.save(); ctx.globalAlpha = fade; ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c;
+      if(p.k === 'c'){ ctx.beginPath(); ctx.arc(0, 0, p.w / 2, 0, 6.283); ctx.fill(); }
+      else { ctx.scale(1, Math.cos(p.sw * 2)); ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); } /* Drehen um die eigene Achse wirkt räumlich */
+      ctx.restore();
+    });
+    if(el < dur && cv.isConnected) raf = requestAnimationFrame(tick); else cv.remove();
+  };
+  raf = requestAnimationFrame(tick);
+  return function(){ cancelAnimationFrame(raf); cv.remove(); };
+};
 FP.renderPage = function(f, idx, ctx){
   var page = f.pages[idx]; if(!page) return '';
   ctx = ctx || {}; ctx.f = f; ctx.answers = ctx.answers || {};
@@ -2896,6 +2930,8 @@ FP.mount = function(root, f, opts){
     }
     if(!stay && !opts.still) root.querySelectorAll('[data-tot]').forEach(function(el){ countTo(el, st.lastTot != null ? st.lastTot : 0); });
     var lt = root.querySelector('[data-tot]'); if(lt) st.lastTot = +lt.getAttribute('data-tot');
+    /* Konfetti nur nach erfolgreich gesendeter Anfrage, einmal pro Seite */
+    if(!stay && page.confetti && st.done && !opts.still && !(st.confDone || {})[page.id]){ st.confDone = st.confDone || {}; st.confDone[page.id] = 1; setTimeout(function(){ if(root.isConnected) FP.confetti(root.querySelector('.fp') || root, f); }, 250); }
   }
   /* Auswahl direkt im DOM markieren – kein Neuaufbau, kein Flackern */
   function clearErr(b){ var w = root.querySelector('.fp-b[data-bid="'+b.id+'"]'); if(w && w.classList.contains('fp-err')){ w.classList.remove('fp-err'); var m = w.querySelector('.fp-errmsg'); if(m) m.remove(); } }
@@ -4609,7 +4645,6 @@ function render(){
   var html = '<div class="shell"><aside class="side">' + brand
     + (isAdmin() ? (function(){ var s = scopeId(), c = s && s !== '-' ? clientById(s) : null; return '<button class="scope" data-a="scope" title="Arbeitsbereich wechseln"><span class="sav">'+(c && c.logo ? '<i style="background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;)"></i>' : I(!s?'grid':s==='-'?'layers':'folder',14))+'</span><span class="stx"><small>Arbeitsbereich</small><b>'+esc(scopeLabel())+'</b></span>'+I('chevDown',14)+'</button>'; })() : '')
     + nav.map(function(n){ if(n[0] === '§') return '<div class="sec">'+n[1]+'</div>'; return '<button class="nav'+(S.view===n[0]?' on':'')+'" data-a="nav" data-v="'+n[0]+'">'+I(n[2])+n[1]+(n[3]?'<span class="ct">'+n[3]+'</span>':'')+'</button>'; }).join('')
-    + (isAdmin() && vf.length ? '<div class="sec">Zuletzt bearbeitet</div>' + vf.slice().sort(function(a,b){ return (b.updatedAt||0)-(a.updatedAt||0); }).slice(0,5).map(function(f){ return '<button class="nav" data-a="edit" data-id="'+f.id+'"><span style="width:7px;height:7px;border-radius:50%;background:'+(f.status==='live'?'var(--ok)':'var(--n300)')+';margin:0 4px 0 5px;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</span></button>'; }).join('') : '')
     + '<div class="foot"><div class="av">'+esc((S.user.name||S.user.email||'?')[0].toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="color:var(--ink);font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(S.user.name||S.user.email)+'</div><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(S.user.role==='admin'?'Administrator':'Kunde')+'</div></div><button class="btn ghost sm ic" data-a="theme" title="Hell oder dunkel">'+I(document.documentElement.getAttribute('data-theme')==='dark'?'sun':'moon',15)+'</button><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',15)+'</button></div></aside>'
     /* Handy: Kopfzeile + Tab-Leiste unten (die Seitenleiste ist dort ausgeblendet) */
     + '<header class="mtop">'+(cl ? '<b>'+esc(cl.name)+'</b>' : '<img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true">')+'<span style="flex:1"></span><button class="btn ghost sm ic" data-a="theme" title="Hell oder dunkel">'+I(document.documentElement.getAttribute('data-theme')==='dark'?'sun':'moon',16)+'</button><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',16)+'</button></header>'
@@ -5191,6 +5226,7 @@ function panelPage(){
     + '<label class="tgl"><span>Inhalt vertikal zentrieren</span><input type="checkbox" data-pp="vcenter" data-bool'+(pg.vcenter?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Fortschrittsbalken ausblenden</span><input type="checkbox" data-pp="hideProgress" data-bool'+(pg.hideProgress?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Logo ausblenden</span><input type="checkbox" data-pp="hideLogo" data-bool'+(pg.hideLogo?' checked':'')+'><span class="sw"></span></label>'
+    + '<label class="tgl"><span>Konfetti nach erfolgreicher Anfrage</span><input type="checkbox" data-pp="confetti" data-bool'+(pg.confetti?' checked':'')+'><span class="sw"></span></label>'+(pg.confetti?'<div class="hint" style="margin:-6px 0 12px">Fällt von oben, wenn diese Seite nach dem Absenden erscheint – z. B. auf der Danke-Seite.</div>':'')
     + '<label class="tgl"><span>Lead beim Öffnen speichern</span><input type="checkbox" data-pp="submitOnEnter" data-bool'+(pg.submitOnEnter?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Zurück-Button erlauben</span><input type="checkbox" data-pp="allowBack" data-bool data-inv'+(pg.allowBack===false?'':' checked')+'><span class="sw"></span></label>'
     + (FP.hasButton(pg) || S.pi === f.pages.length-1 ? '' : '<label class="tgl"><span>Automatischer Weiter-Button</span><input type="checkbox" data-pp="autoButton" data-bool data-inv data-rp'+(pg.autoButton===false?'':' checked')+'><span class="sw"></span></label>' + (pg.autoButton===false?'':'<div class="fld"><label>Button-Text</label><input class="inp" data-pp="buttonLabel" value="'+esc(pg.buttonLabel||'')+'" placeholder="'+esc(f.theme.nextLabel||'Weiter')+'"></div>'))
@@ -5401,7 +5437,7 @@ function makeFromLib(id){
 }
 function autoKey(b){ return uniqueKey(b.type === 'choice' ? 'frage' : b.type === 'slider' ? 'wert' : b.type); }
 function uniqueKey(base){ var f = F(), keys = FP.allBlocks(f).map(function(b){ return b.props.key; }); if(keys.indexOf(base) < 0) return base; var i = 2; while(keys.indexOf(base+i) >= 0) i++; return base + i; }
-var SECTION_PAGE = {'s-loader':{name:'Laden', extra:{hideProgress:true, vcenter:true, allowBack:false}}, 's-thanks':{name:'Danke', extra:{allowBack:false, autoButton:false}}, 's-hero':{name:'Start'}, 's-contact':{name:'Kontakt'}, 's-book':{name:'Termin'}};
+var SECTION_PAGE = {'s-loader':{name:'Laden', extra:{hideProgress:true, vcenter:true, allowBack:false}}, 's-thanks':{name:'Danke', extra:{allowBack:false, autoButton:false, confetti:true}}, 's-hero':{name:'Start'}, 's-contact':{name:'Kontakt'}, 's-book':{name:'Termin'}};
 function addSectionPage(id){
   var f = F(), sp = SECTION_PAGE[id] || {name:'Neue Seite'}; snap(true);
   var p = T.P(sp.name, makeFromLib(id), Object.assign({}, sp.extra||{}));
@@ -6992,6 +7028,7 @@ document.addEventListener('input', function(e){
     renderCanvas(true);
     if(scope === 'pp' && k === 'name'){ renderLeft(); }
     if(scope === 'pp' && (k === 'next')) renderLeft();
+    if(scope === 'pp' && k === 'confetti'){ renderRight(); if(v && $('#scr')) FP.confetti($('#scr'), F(), {contained:true}); } /* Vorschau direkt im Handy */
     if(el.hasAttribute('data-rp')) renderRight();
     return;
   }
