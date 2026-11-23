@@ -804,3 +804,6 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp-b.li-ring .fp-list .fp-li{background:none;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--p) 55%,transparent)}
 .fp-b.ix-surf :is(.fp-opt:not(.sel) .chk,.fp-opt:not(.sel) .ico){background:color-mix(in srgb,var(--tx) 7%,transparent)}
 .fp-b.ix-surf .fp-opt.sel .chk{background:var(--p)}
+
+/* Textfarbe aus dem Stil-Tab gilt auch für Elemente mit eigener Schriftfarbe */
+.fp-b.uc :is(.fp-badge,.fp-btn,.fp-sum.compact b,.fp-progl){color:var(--uc)}

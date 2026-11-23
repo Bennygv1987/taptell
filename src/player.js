@@ -766,7 +766,7 @@ FP.renderBlock = function(b, ctx){
   if(p.oCheck === false) cl0 += ' nochk';
   if(p.oIcon) cl0 += ' oic-'+esc(p.oIcon);
   if(p.liStyle) cl0 += ' li-'+esc(p.liStyle);
-  if(p.color && b.type !== 'heading' && b.type !== 'text') st += '--tx:'+p.color+';--mt:'+p.color+';color:'+p.color+';';
+  if(p.color && b.type !== 'heading' && b.type !== 'text'){ st += '--tx:'+p.color+';--mt:'+p.color+';color:'+p.color+';--uc:'+p.color+';'; cl0 += ' uc'; } /* --uc: auch Elemente, die ihre Schriftfarbe sonst aus der Markenfarbe nehmen (Badge, Button) */
   var boxed = p.bgc || +p.bwid || p.shd;
   if(p.bgc) st += 'background:'+p.bgc+';';
   if(+p.pad) st += 'padding:'+p.pad+'px;';
