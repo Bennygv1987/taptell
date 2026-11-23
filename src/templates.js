@@ -47,7 +47,7 @@ var DEF = {
   input:       function(){ return {label:'Dein Name', placeholder:'Max Mustermann', inputType:'text', key:'name', required:true}; },
   slider:      function(){ return {label:'Wie viel?', min:0, max:100, step:1, def:50, unit:'', key:'', isQuantity:false, align:'left'}; },
   rating:      function(){ return {label:'Wie zufrieden bist du?', max:5, style:'stars', key:'bewertung', required:true, autoNext:false, align:'center', minLabel:'', maxLabel:''}; },
-  calendar:    function(){ return {label:'Wähle deinen Wunschtermin', days:10, offset:1, excludeDays:[0,6], slots:['09:00','10:30','12:00','14:00','15:30','17:00'], key:'termin', required:true}; },
+  calendar:    function(){ return {label:'Wähle deinen Wunschtermin', days:30, offset:1, excludeDays:[0,6], slots:['09:00','10:30','12:00','14:00','15:30','17:00'], dur:'30 Min', where:'Telefon', key:'termin', required:true}; },
   upload:      function(){ return {label:'Foto hochladen', cta:'Datei auswählen', hint:'JPG, PNG oder PDF', accept:'image/*,.pdf', key:'upload', required:false}; },
   signature:   function(){ return {label:'Unterschrift', hint:'Hier mit dem Finger unterschreiben', key:'unterschrift', required:true}; },
   checkbox:    function(){ return {text:'Ich stimme der **Datenschutzerklärung** zu und möchte kontaktiert werden.', key:'einwilligung', required:true}; },
@@ -201,7 +201,7 @@ function tStrategy(){
       P('Video',[B('badge',{text:'Kostenloses Video-Training', align:'center'}), B('heading',{text:'Wie wir Agenturen zu ==planbaren Neukunden== verhelfen', align:'center', level:2}), B('video',{url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}), B('button',{label:'Kostenloses Erstgespräch sichern', sub:'Nur 4 Termine pro Woche'})]),
       P('Umsatz',[B('choice',{question:'Wie hoch ist dein aktueller Monatsumsatz?', key:'umsatz', options:[O('Unter 10.000 €','',{score:1}),O('10.000 – 30.000 €','',{score:2}),O('30.000 – 100.000 €','',{score:3}),O('Über 100.000 €','',{score:4})]})]),
       P('Herausforderung',[B('choice',{question:'Was ist aktuell deine größte Herausforderung?', desc:'Mehrfachauswahl möglich', key:'herausforderung', layout:'checklist', multi:true, autoNext:false, options:[O('Zu wenig Anfragen'),O('Unplanbarer Umsatz'),O('Keine Zeit für Vertrieb'),O('Team & Prozesse')]}), B('button',{label:'Weiter'})]),
-      P('Termin',[B('heading',{text:'Wähle deinen Wunschtermin', level:2}), B('text',{text:'30 Minuten · per Zoom · kostenlos'}), B('calendar',{label:''})]),
+      P('Termin',[B('heading',{text:'Wähle deinen Wunschtermin', level:2}), B('text',{text:'Kostenloses Erstgespräch – such dir einfach einen freien Termin aus.'}), B('calendar',{label:'', dur:'30 Min', where:'Zoom-Call'})]),
       P('Kontakt', contact('Fast geschafft!', 'Wohin dürfen wir die Einladung senden?', 'Termin verbindlich buchen')),
       P('Bestätigung', done('Termin bestätigt', 'Wir sehen uns am **{{termin}}**. Die Einladung kommt per E-Mail.', [B('faq',{items:[{q:'Wie bereite ich mich vor?', a:'Notiere dir deine wichtigsten Ziele für die nächsten 12 Monate.'},{q:'Kann ich den Termin verschieben?', a:'Ja, über den Link in deiner Bestätigungsmail.'}]})]), {hideProgress:true, allowBack:false})
     ]};

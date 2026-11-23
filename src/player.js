@@ -151,6 +151,54 @@ FP.money = function(n, cur){
 var WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 var fmtDate = function(iso){ if(!iso) return ''; var d = new Date(iso+'T12:00:00'); return WD[d.getDay()]+', '+d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); };
 FP.fmtDate = fmtDate;
+/* ---------- Termin: Monatskalender wie bei Calendly, danach die Uhrzeiten des Tages ---------- */
+FP.calView = {}; FP.calAnim = {};
+var isoOf = function(x){ return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+/* Bundesweite Feiertage (inkl. Ostern-abhängiger Tage), damit sie nicht buchbar sind */
+FP.holidays = function(y){
+  var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  var mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1, easter = new Date(y, mo - 1, da, 12);
+  var rel = function(n){ var x = new Date(easter); x.setDate(x.getDate() + n); return isoOf(x); };
+  return [y+'-01-01', rel(-2), rel(1), y+'-05-01', rel(39), rel(50), y+'-10-03', y+'-12-25', y+'-12-26'];
+};
+FP.calDays = function(p){
+  var out = [], d = new Date(), ex = p.excludeDays || [0], bl = (p.blocked || []).map(function(s){ return String(s).trim(); }), n = Math.max(1, Math.min(120, +p.days || 20)), guard = 0;
+  d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + (p.offset != null && p.offset !== '' ? +p.offset : 1));
+  var hol = {}; if(p.noHolidays !== false){ var y0 = d.getFullYear(); FP.holidays(y0).concat(FP.holidays(y0 + 1)).forEach(function(x){ hol[x] = 1; }); }
+  while(out.length < n && guard++ < 500){ var iso = isoOf(d); if(ex.indexOf(d.getDay()) < 0 && bl.indexOf(iso) < 0 && !hol[iso]) out.push(iso); d.setDate(d.getDate() + 1); }
+  return out;
+};
+FP.calMonth = function(b, p, v, ctx, label){
+  var avail = FP.calDays(p), cv = v || {}, set = {}; avail.forEach(function(x){ set[x] = 1; });
+  var selDate = cv.date || (ctx.edit && avail[0]) || '';
+  var first = avail[0] || isoOf(new Date()), last = avail[avail.length - 1] || first;
+  var view = FP.calView[b.id] || (selDate || first).slice(0, 7);
+  if(view < first.slice(0, 7)) view = first.slice(0, 7); if(view > last.slice(0, 7)) view = last.slice(0, 7);
+  var y = +view.slice(0, 4), m = +view.slice(5, 7) - 1, start = new Date(y, m, 1, 12), lead = (start.getDay() + 6) % 7, dim = new Date(y, m + 1, 0).getDate(), today = isoOf(new Date());
+  var anim = FP.calAnim[b.id] || ''; FP.calAnim[b.id] = '';
+  var cells = '';
+  for(var i = 0; i < lead; i++) cells += '<span></span>';
+  for(var dd = 1; dd <= dim; dd++){
+    var iso = view + '-' + String(dd).padStart(2, '0'), on = !!set[iso], sel = iso === selDate;
+    cells += on ? '<button type="button" class="cd'+(sel ? ' sel' : '')+(iso === today ? ' td' : '')+'" data-act="day" data-bid="'+b.id+'" data-v="'+iso+'" aria-pressed="'+sel+'" aria-label="'+esc(new Date(iso+'T12:00:00').toLocaleDateString('de-DE',{weekday:'long', day:'numeric', month:'long'}))+'">'+dd+'</button>'
+      : '<span class="cd off'+(iso === today ? ' td' : '')+'">'+dd+'</span>';
+  }
+  var mName = start.toLocaleDateString('de-DE', {month:'long', year:'numeric'});
+  var canPrev = view > first.slice(0, 7), canNext = view < last.slice(0, 7);
+  var chev = function(dir){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="'+(dir < 0 ? 'M15 18l-6-6 6-6' : 'M9 6l6 6-6 6')+'"/></svg>'; };
+  var meta = (p.dur ? '<span>'+FP.ICONS.clock+esc(p.dur)+'</span>' : '') + (p.where ? '<span>'+(/video|zoom|teams|online|meet/i.test(p.where) ? FP.ICONS.chat : /telefon|anruf/i.test(p.where) ? FP.ICONS.phone : FP.ICONS.map)+esc(p.where)+'</span>' : '');
+  var h = label(p.label) + '<div class="fp-cal" data-cal="'+b.id+'">'
+    + (meta ? '<div class="fp-calm">'+meta+'</div>' : '')
+    + '<div class="fp-calh"><b>'+esc(mName)+'</b><div><button type="button" class="cn" data-act="calnav" data-bid="'+b.id+'" data-v="-1" aria-label="Voriger Monat"'+(canPrev ? '' : ' disabled')+'>'+chev(-1)+'</button><button type="button" class="cn" data-act="calnav" data-bid="'+b.id+'" data-v="1" aria-label="Nächster Monat"'+(canNext ? '' : ' disabled')+'>'+chev(1)+'</button></div></div>'
+    + '<div class="fp-calw"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>'
+    + '<div class="fp-calg'+(anim === 'n' || anim === 'p' ? ' in-'+anim : '')+'">'+cells+'</div>';
+  if(selDate){
+    var slots = p.slots || [], dl = new Date(selDate+'T12:00:00').toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
+    h += '<div class="fp-calt'+(anim === 'd' ? ' in' : '')+'"><p class="fp-calth">'+esc(dl)+'</p><div class="fp-slots2">' + slots.map(function(sl, k){ return '<button type="button" class="fp-slot'+(cv.time === sl && cv.date === selDate ? ' sel' : '')+'" data-act="slot" data-bid="'+b.id+'" data-v="'+esc(sl)+'" style="--k:'+Math.min(k, 9)+'">'+esc(sl)+'</button>'; }).join('') + '</div></div>';
+  } else h += '<p class="fp-calhint">Wähle einen Tag, dann siehst du die freien Uhrzeiten.</p>';
+  if(cv.date && cv.time) h += '<div class="fp-calok">'+IC.ok+'<span>'+esc(fmtDate(cv.date))+' · '+esc(cv.time)+' Uhr</span></div>';
+  return h + '</div>';
+};
 
 FP.computeTotal = function(f, answers){
   var s = f.settings || {}, items = [], fixed = 0, unitSum = 0, qty = null, unit = '', score = 0;
@@ -632,6 +680,7 @@ FP.renderBlock = function(b, ctx){
       h = '<div class="fp-trust">' + (p.items||[]).map(function(it){ return '<span>'+esc(it)+'</span>'; }).join('') + '</div>';
       break;
     case 'calendar':
+      if(p.calStyle !== 'strip'){ h = FP.calMonth(b, p, v, ctx, label); break; }
       var days = [], d = new Date(), ex = p.excludeDays || [0];
       d.setDate(d.getDate() + (+p.offset || 1));
       while(days.length < (+p.days || 10)){ if(ex.indexOf(d.getDay()) < 0) days.push(new Date(d)); d.setDate(d.getDate()+1); }
@@ -1091,8 +1140,9 @@ FP.mount = function(root, f, opts){
     }
     else if(act === 'rate'){ setAns(b, +el.getAttribute('data-v')); markSelection(b); if(b.props.autoNext){ clearTimeout(timer); timer = setTimeout(function(){ go(); }, 300);} }
     else if(act === 'cb'){ setAns(b, !st.answers[keyOf(b)]); markSelection(b); }
-    else if(act === 'day'){ var cv = st.answers[keyOf(b)] || {}; setAns(b, {date:el.getAttribute('data-v'), time: cv.time}); render(true); }
+    else if(act === 'day'){ var cv = st.answers[keyOf(b)] || {}, nd = el.getAttribute('data-v'); if(cv.date !== nd) FP.calAnim[b.id] = 'd'; FP.calView[b.id] = nd.slice(0, 7); setAns(b, b.props.calStyle === 'strip' ? {date:nd, time:cv.time} : {date:nd}); render(true); }
     else if(act === 'slot'){ var cv2 = st.answers[keyOf(b)] || {}; if(!cv2.date) return; setAns(b, {date:cv2.date, time:el.getAttribute('data-v')}); render(true); }
+    else if(act === 'calnav'){ var cur = FP.calView[b.id] || ((st.answers[keyOf(b)] || {}).date || FP.calDays(b.props)[0] || '').slice(0, 7), dir = +el.getAttribute('data-v'); if(!cur) return; var dt = new Date(+cur.slice(0, 4), +cur.slice(5, 7) - 1 + dir, 1, 12); FP.calView[b.id] = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); FP.calAnim[b.id] = dir > 0 ? 'n' : 'p'; render(true); }
     else if(act === 'sigclr'){ e.preventDefault(); delete st.answers[keyOf(b)]; render(true); }
   });
 

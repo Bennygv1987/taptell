@@ -740,6 +740,47 @@ textarea.fp-in{min-height:110px;resize:vertical}
 @media (prefers-reduced-motion:reduce){.fp-fab{animation-name:fpFade}}
 .fp-btn svg.wa{width:20px;height:20px}
 
+/* Termin: Monatskalender + Uhrzeiten (Calendly-Stil) */
+.fp-cal{display:grid;gap:10px;padding:14px;border-radius:calc(var(--r,14px) + 4px);background:var(--bg);box-shadow:0 0 0 1px color-mix(in srgb,var(--tx) 9%,transparent),0 8px 24px -14px rgba(0,0,0,.18);text-align:left}
+.fp-calm{display:flex;flex-wrap:wrap;gap:6px}
+.fp-calm span{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:var(--sf);color:var(--mt);font:500 12.5px var(--ff)}
+.fp-calm svg{width:14px;height:14px}
+.fp-calh{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 0}
+.fp-calh b{font:650 calc(16px*var(--sc,1)) var(--hf);color:var(--tx);text-transform:capitalize;letter-spacing:-.01em}
+.fp-calh div{display:flex;gap:4px}
+.fp-calh .cn{appearance:none;width:34px;height:34px;border-radius:50%;border:0;background:color-mix(in srgb,var(--p) 9%,transparent);color:var(--p);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;transition:transform 160ms var(--ease-out),background-color 150ms ease,opacity 150ms ease}
+.fp-calh .cn svg{width:17px;height:17px}
+.fp-calh .cn:active{transform:scale(.92)}
+.fp-calh .cn:disabled{background:none;color:var(--mt);opacity:.35;cursor:default}
+.fp-calw,.fp-calg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));justify-items:center}
+.fp-calw span{font:600 11px var(--ff);letter-spacing:.06em;text-transform:uppercase;color:var(--mt);padding:2px 0}
+.fp-calg{row-gap:4px}
+.fp-calg .cd{position:relative;width:100%;max-width:44px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font:500 calc(15px*var(--sc,1)) var(--ff);color:var(--mt);opacity:.45}
+.fp-calg button.cd{appearance:none;border:0;opacity:1;cursor:pointer;color:var(--p);font-weight:700;background:color-mix(in srgb,var(--p) 10%,transparent);touch-action:manipulation;transition:transform 160ms var(--ease-out),background-color 150ms ease,color 150ms ease}
+.fp-calg button.cd:active{transform:scale(.92)}
+@media (hover:hover) and (pointer:fine){.fp-calg button.cd:not(.sel):hover{background:color-mix(in srgb,var(--p) 18%,transparent)}.fp-calh .cn:not(:disabled):hover{background:color-mix(in srgb,var(--p) 16%,transparent)}}
+.fp-calg button.cd.sel{background:var(--p);color:var(--pt);box-shadow:0 6px 16px -6px color-mix(in srgb,var(--p) 70%,transparent)}
+.fp-calg .cd.td::after{content:'';position:absolute;bottom:5px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor}
+.fp-calg.in-n{animation:fpCalN 240ms var(--ease-out)}
+.fp-calg.in-p{animation:fpCalP 240ms var(--ease-out)}
+@keyframes fpCalN{from{opacity:0;transform:translateX(14px)}}
+@keyframes fpCalP{from{opacity:0;transform:translateX(-14px)}}
+.fp-calt{display:grid;gap:10px;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--tx) 8%,transparent)}
+.fp-calth{margin:0;font:600 14px var(--ff);color:var(--tx)}
+.fp-slots2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fp-slots2 .fp-slot{padding:12px 0;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--p) 35%,transparent);background:var(--bg);color:var(--p);font:650 14.5px var(--ff);cursor:pointer;touch-action:manipulation;transition:transform 160ms var(--ease-out),background-color 150ms ease,color 150ms ease,border-color 150ms ease}
+.fp-slots2 .fp-slot:active{transform:scale(.96)}
+@media (hover:hover) and (pointer:fine){.fp-slots2 .fp-slot:not(.sel):hover{border-color:var(--p);background:color-mix(in srgb,var(--p) 6%,var(--bg))}}
+.fp-slots2 .fp-slot.sel{background:var(--p);border-color:var(--p);color:var(--pt)}
+.fp-calt.in .fp-slot{animation:fpUp 260ms var(--ease-out) both;animation-delay:calc(var(--k,0) * 28ms)}
+.fp-calt.in .fp-calth{animation:fpFade 200ms ease both}
+.fp-calhint{margin:2px 0 0;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--tx) 8%,transparent);font-size:13px;color:var(--mt);text-align:center}
+.fp-calok{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--p) 8%,var(--bg));color:var(--tx);font:600 13.5px var(--ff);animation:fpFade 200ms ease}
+.fp-calok svg{width:18px;height:18px;flex:none;stroke:var(--p)}
+.fp-err .fp-cal{box-shadow:0 0 0 1.5px #ef4444}
+.fp.is-edit .fp-cal *{animation:none !important}
+@media (prefers-reduced-motion:reduce){.fp-calg.in-n,.fp-calg.in-p,.fp-calt.in .fp-slot{animation-name:fpFade}}
+
 </style>
 <style>
 :root{
@@ -1821,6 +1862,54 @@ FP.money = function(n, cur){
 var WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 var fmtDate = function(iso){ if(!iso) return ''; var d = new Date(iso+'T12:00:00'); return WD[d.getDay()]+', '+d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); };
 FP.fmtDate = fmtDate;
+/* ---------- Termin: Monatskalender wie bei Calendly, danach die Uhrzeiten des Tages ---------- */
+FP.calView = {}; FP.calAnim = {};
+var isoOf = function(x){ return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+/* Bundesweite Feiertage (inkl. Ostern-abhängiger Tage), damit sie nicht buchbar sind */
+FP.holidays = function(y){
+  var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  var mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1, easter = new Date(y, mo - 1, da, 12);
+  var rel = function(n){ var x = new Date(easter); x.setDate(x.getDate() + n); return isoOf(x); };
+  return [y+'-01-01', rel(-2), rel(1), y+'-05-01', rel(39), rel(50), y+'-10-03', y+'-12-25', y+'-12-26'];
+};
+FP.calDays = function(p){
+  var out = [], d = new Date(), ex = p.excludeDays || [0], bl = (p.blocked || []).map(function(s){ return String(s).trim(); }), n = Math.max(1, Math.min(120, +p.days || 20)), guard = 0;
+  d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + (p.offset != null && p.offset !== '' ? +p.offset : 1));
+  var hol = {}; if(p.noHolidays !== false){ var y0 = d.getFullYear(); FP.holidays(y0).concat(FP.holidays(y0 + 1)).forEach(function(x){ hol[x] = 1; }); }
+  while(out.length < n && guard++ < 500){ var iso = isoOf(d); if(ex.indexOf(d.getDay()) < 0 && bl.indexOf(iso) < 0 && !hol[iso]) out.push(iso); d.setDate(d.getDate() + 1); }
+  return out;
+};
+FP.calMonth = function(b, p, v, ctx, label){
+  var avail = FP.calDays(p), cv = v || {}, set = {}; avail.forEach(function(x){ set[x] = 1; });
+  var selDate = cv.date || (ctx.edit && avail[0]) || '';
+  var first = avail[0] || isoOf(new Date()), last = avail[avail.length - 1] || first;
+  var view = FP.calView[b.id] || (selDate || first).slice(0, 7);
+  if(view < first.slice(0, 7)) view = first.slice(0, 7); if(view > last.slice(0, 7)) view = last.slice(0, 7);
+  var y = +view.slice(0, 4), m = +view.slice(5, 7) - 1, start = new Date(y, m, 1, 12), lead = (start.getDay() + 6) % 7, dim = new Date(y, m + 1, 0).getDate(), today = isoOf(new Date());
+  var anim = FP.calAnim[b.id] || ''; FP.calAnim[b.id] = '';
+  var cells = '';
+  for(var i = 0; i < lead; i++) cells += '<span></span>';
+  for(var dd = 1; dd <= dim; dd++){
+    var iso = view + '-' + String(dd).padStart(2, '0'), on = !!set[iso], sel = iso === selDate;
+    cells += on ? '<button type="button" class="cd'+(sel ? ' sel' : '')+(iso === today ? ' td' : '')+'" data-act="day" data-bid="'+b.id+'" data-v="'+iso+'" aria-pressed="'+sel+'" aria-label="'+esc(new Date(iso+'T12:00:00').toLocaleDateString('de-DE',{weekday:'long', day:'numeric', month:'long'}))+'">'+dd+'</button>'
+      : '<span class="cd off'+(iso === today ? ' td' : '')+'">'+dd+'</span>';
+  }
+  var mName = start.toLocaleDateString('de-DE', {month:'long', year:'numeric'});
+  var canPrev = view > first.slice(0, 7), canNext = view < last.slice(0, 7);
+  var chev = function(dir){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="'+(dir < 0 ? 'M15 18l-6-6 6-6' : 'M9 6l6 6-6 6')+'"/></svg>'; };
+  var meta = (p.dur ? '<span>'+FP.ICONS.clock+esc(p.dur)+'</span>' : '') + (p.where ? '<span>'+(/video|zoom|teams|online|meet/i.test(p.where) ? FP.ICONS.chat : /telefon|anruf/i.test(p.where) ? FP.ICONS.phone : FP.ICONS.map)+esc(p.where)+'</span>' : '');
+  var h = label(p.label) + '<div class="fp-cal" data-cal="'+b.id+'">'
+    + (meta ? '<div class="fp-calm">'+meta+'</div>' : '')
+    + '<div class="fp-calh"><b>'+esc(mName)+'</b><div><button type="button" class="cn" data-act="calnav" data-bid="'+b.id+'" data-v="-1" aria-label="Voriger Monat"'+(canPrev ? '' : ' disabled')+'>'+chev(-1)+'</button><button type="button" class="cn" data-act="calnav" data-bid="'+b.id+'" data-v="1" aria-label="Nächster Monat"'+(canNext ? '' : ' disabled')+'>'+chev(1)+'</button></div></div>'
+    + '<div class="fp-calw"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>'
+    + '<div class="fp-calg'+(anim === 'n' || anim === 'p' ? ' in-'+anim : '')+'">'+cells+'</div>';
+  if(selDate){
+    var slots = p.slots || [], dl = new Date(selDate+'T12:00:00').toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
+    h += '<div class="fp-calt'+(anim === 'd' ? ' in' : '')+'"><p class="fp-calth">'+esc(dl)+'</p><div class="fp-slots2">' + slots.map(function(sl, k){ return '<button type="button" class="fp-slot'+(cv.time === sl && cv.date === selDate ? ' sel' : '')+'" data-act="slot" data-bid="'+b.id+'" data-v="'+esc(sl)+'" style="--k:'+Math.min(k, 9)+'">'+esc(sl)+'</button>'; }).join('') + '</div></div>';
+  } else h += '<p class="fp-calhint">Wähle einen Tag, dann siehst du die freien Uhrzeiten.</p>';
+  if(cv.date && cv.time) h += '<div class="fp-calok">'+IC.ok+'<span>'+esc(fmtDate(cv.date))+' · '+esc(cv.time)+' Uhr</span></div>';
+  return h + '</div>';
+};
 
 FP.computeTotal = function(f, answers){
   var s = f.settings || {}, items = [], fixed = 0, unitSum = 0, qty = null, unit = '', score = 0;
@@ -2302,6 +2391,7 @@ FP.renderBlock = function(b, ctx){
       h = '<div class="fp-trust">' + (p.items||[]).map(function(it){ return '<span>'+esc(it)+'</span>'; }).join('') + '</div>';
       break;
     case 'calendar':
+      if(p.calStyle !== 'strip'){ h = FP.calMonth(b, p, v, ctx, label); break; }
       var days = [], d = new Date(), ex = p.excludeDays || [0];
       d.setDate(d.getDate() + (+p.offset || 1));
       while(days.length < (+p.days || 10)){ if(ex.indexOf(d.getDay()) < 0) days.push(new Date(d)); d.setDate(d.getDate()+1); }
@@ -2761,8 +2851,9 @@ FP.mount = function(root, f, opts){
     }
     else if(act === 'rate'){ setAns(b, +el.getAttribute('data-v')); markSelection(b); if(b.props.autoNext){ clearTimeout(timer); timer = setTimeout(function(){ go(); }, 300);} }
     else if(act === 'cb'){ setAns(b, !st.answers[keyOf(b)]); markSelection(b); }
-    else if(act === 'day'){ var cv = st.answers[keyOf(b)] || {}; setAns(b, {date:el.getAttribute('data-v'), time: cv.time}); render(true); }
+    else if(act === 'day'){ var cv = st.answers[keyOf(b)] || {}, nd = el.getAttribute('data-v'); if(cv.date !== nd) FP.calAnim[b.id] = 'd'; FP.calView[b.id] = nd.slice(0, 7); setAns(b, b.props.calStyle === 'strip' ? {date:nd, time:cv.time} : {date:nd}); render(true); }
     else if(act === 'slot'){ var cv2 = st.answers[keyOf(b)] || {}; if(!cv2.date) return; setAns(b, {date:cv2.date, time:el.getAttribute('data-v')}); render(true); }
+    else if(act === 'calnav'){ var cur = FP.calView[b.id] || ((st.answers[keyOf(b)] || {}).date || FP.calDays(b.props)[0] || '').slice(0, 7), dir = +el.getAttribute('data-v'); if(!cur) return; var dt = new Date(+cur.slice(0, 4), +cur.slice(5, 7) - 1 + dir, 1, 12); FP.calView[b.id] = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); FP.calAnim[b.id] = dir > 0 ? 'n' : 'p'; render(true); }
     else if(act === 'sigclr'){ e.preventDefault(); delete st.answers[keyOf(b)]; render(true); }
   });
 
@@ -2928,7 +3019,7 @@ var DEF = {
   input:       function(){ return {label:'Dein Name', placeholder:'Max Mustermann', inputType:'text', key:'name', required:true}; },
   slider:      function(){ return {label:'Wie viel?', min:0, max:100, step:1, def:50, unit:'', key:'', isQuantity:false, align:'left'}; },
   rating:      function(){ return {label:'Wie zufrieden bist du?', max:5, style:'stars', key:'bewertung', required:true, autoNext:false, align:'center', minLabel:'', maxLabel:''}; },
-  calendar:    function(){ return {label:'Wähle deinen Wunschtermin', days:10, offset:1, excludeDays:[0,6], slots:['09:00','10:30','12:00','14:00','15:30','17:00'], key:'termin', required:true}; },
+  calendar:    function(){ return {label:'Wähle deinen Wunschtermin', days:30, offset:1, excludeDays:[0,6], slots:['09:00','10:30','12:00','14:00','15:30','17:00'], dur:'30 Min', where:'Telefon', key:'termin', required:true}; },
   upload:      function(){ return {label:'Foto hochladen', cta:'Datei auswählen', hint:'JPG, PNG oder PDF', accept:'image/*,.pdf', key:'upload', required:false}; },
   signature:   function(){ return {label:'Unterschrift', hint:'Hier mit dem Finger unterschreiben', key:'unterschrift', required:true}; },
   checkbox:    function(){ return {text:'Ich stimme der **Datenschutzerklärung** zu und möchte kontaktiert werden.', key:'einwilligung', required:true}; },
@@ -3082,7 +3173,7 @@ function tStrategy(){
       P('Video',[B('badge',{text:'Kostenloses Video-Training', align:'center'}), B('heading',{text:'Wie wir Agenturen zu ==planbaren Neukunden== verhelfen', align:'center', level:2}), B('video',{url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}), B('button',{label:'Kostenloses Erstgespräch sichern', sub:'Nur 4 Termine pro Woche'})]),
       P('Umsatz',[B('choice',{question:'Wie hoch ist dein aktueller Monatsumsatz?', key:'umsatz', options:[O('Unter 10.000 €','',{score:1}),O('10.000 – 30.000 €','',{score:2}),O('30.000 – 100.000 €','',{score:3}),O('Über 100.000 €','',{score:4})]})]),
       P('Herausforderung',[B('choice',{question:'Was ist aktuell deine größte Herausforderung?', desc:'Mehrfachauswahl möglich', key:'herausforderung', layout:'checklist', multi:true, autoNext:false, options:[O('Zu wenig Anfragen'),O('Unplanbarer Umsatz'),O('Keine Zeit für Vertrieb'),O('Team & Prozesse')]}), B('button',{label:'Weiter'})]),
-      P('Termin',[B('heading',{text:'Wähle deinen Wunschtermin', level:2}), B('text',{text:'30 Minuten · per Zoom · kostenlos'}), B('calendar',{label:''})]),
+      P('Termin',[B('heading',{text:'Wähle deinen Wunschtermin', level:2}), B('text',{text:'Kostenloses Erstgespräch – such dir einfach einen freien Termin aus.'}), B('calendar',{label:'', dur:'30 Min', where:'Zoom-Call'})]),
       P('Kontakt', contact('Fast geschafft!', 'Wohin dürfen wir die Einladung senden?', 'Termin verbindlich buchen')),
       P('Bestätigung', done('Termin bestätigt', 'Wir sehen uns am **{{termin}}**. Die Einladung kommt per E-Mail.', [B('faq',{items:[{q:'Wie bereite ich mich vor?', a:'Notiere dir deine wichtigsten Ziele für die nächsten 12 Monate.'},{q:'Kann ich den Termin verschieben?', a:'Ja, über den Link in deiner Bestätigungsmail.'}]})]), {hideProgress:true, allowBack:false})
     ]};
@@ -4423,7 +4514,7 @@ var FIELDS = {
   input:[['label','text','Label'],['placeholder','text','Platzhalter'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['faces','Smileys flach mit Text'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='faces'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.style==='faces'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.style==='faces'; }],['faceLabels','strings','Texte unter den Smileys','Leer lassen für: Sehr schlecht, Schlecht, Okay, Gut, Super.',function(p){ return p.style==='faces' && !p.faceNoText; }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.style==='faces' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.style!=='faces' || (p.faceNoText && p.faceEnds); }],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  calendar:[['label','text','Label'],['row2','row',[['days','num','Anzahl Tage'],['offset','num','Ab Tag (+)']]],['excludeDays','days','Ausgeschlossene Wochentage'],['slots','strings','Uhrzeiten'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
+  calendar:[['label','text','Label'],['calStyle','seg','Ansicht',[['','Monatskalender'],['strip','Tagesleiste']]],['row2','row',[['dur','text','Dauer (optional)'],['where','text','Ort (optional)']]],['row2','row',[['days','num','Buchbare Tage'],['offset','num','Frühestens in … Tagen']]],['excludeDays','days','Geschlossen an'],['slots','strings','Uhrzeiten'],['noHolidays','toggle','Feiertage ausschließen','Bundesweite Feiertage wie Ostern oder Weihnachten sind nicht buchbar.',null,true],['blocked','strings','Gesperrte Tage (z. B. 2026-12-24)'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
@@ -4597,7 +4688,7 @@ function field(spec, p, scope){
     case 'select': return w('<select class="inp" '+a+' data-rp>'+extra.map(function(o){ return '<option value="'+o[0]+'"'+(String(v)===String(o[0])?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select>');
     case 'seg': return w('<div class="segf">'+extra.map(function(o){ return '<button data-a="seg" data-scope="'+scope+'" data-k="'+k+'" data-v="'+esc(o[0])+'" data-t="'+(typeof o[0])+'" class="'+(String(v==null?'':v)===String(o[0])?'on':'')+'">'+esc(o[1])+'</button>'; }).join('')+'</div>');
     case 'color': return w('<div style="display:flex;gap:6px">'+colorField(scope, k, v||'')+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Zurücksetzen">'+I('x')+'</button>':'')+'</div>');
-    case 'toggle': return '<label class="tgl"><span>'+esc(label)+'</span><input type="checkbox" '+a+' data-bool data-rp'+(v?' checked':'')+'><span class="sw"></span></label>'+(hint?'<div style="margin:-6px 0 12px">'+hint+'</div>':'');
+    case 'toggle': var inv = spec[5] === true; return '<label class="tgl"><span>'+esc(label)+'</span><input type="checkbox" '+a+' data-bool data-rp'+(inv ? ' data-inv' : '')+((inv ? v !== false : v)?' checked':'')+'><span class="sw"></span></label>'+(hint?'<div style="margin:-6px 0 12px">'+hint+'</div>':'');
     case 'image': return w('<div class="upl"><div class="pv" style="'+(v?'background-image:url(&quot;'+esc(v)+'&quot;)':'')+'">'+(v?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+(v?'Ersetzen':'Hochladen')+'<input type="file" accept="image/*" data-img="'+k+'" data-scope="'+scope+'"></label>'+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Entfernen">'+I('trash')+'</button>':'')+'</div>');
     case 'key': return '<div class="fld"><label>'+esc(label)+'</label><input class="inp" '+a+' value="'+esc(v)+'" placeholder="automatisch" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)"><div class="hint">Für Variablen ({{'+esc(v||'schluessel')+'}}), Webhook &amp; Export.</div></div>';
     case 'page': return w('<select class="inp" '+a+'>'+pageOptions(v, 'Nächste Seite (Standard)')+'</select>');
