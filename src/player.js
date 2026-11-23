@@ -187,7 +187,10 @@ FP.calMonth = function(b, p, v, ctx, label){
   var canPrev = view > first.slice(0, 7), canNext = view < last.slice(0, 7);
   var chev = function(dir){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="'+(dir < 0 ? 'M15 18l-6-6 6-6' : 'M9 6l6 6-6 6')+'"/></svg>'; };
   var meta = (p.dur ? '<span>'+FP.ICONS.clock+esc(p.dur)+'</span>' : '') + (p.where ? '<span>'+(/video|zoom|teams|online|meet/i.test(p.where) ? FP.ICONS.chat : /telefon|anruf/i.test(p.where) ? FP.ICONS.phone : FP.ICONS.map)+esc(p.where)+'</span>' : '');
-  var h = label(p.label) + '<div class="fp-cal" data-cal="'+b.id+'">'
+  /* Gestaltung: Farben, Form, Stil der Tage und Uhrzeiten, Karte, Schatten */
+  var cst = (p.calAcc ? '--ca:'+esc(p.calAcc)+';' : '') + (p.calAccText ? '--cat:'+esc(p.calAccText)+';' : '') + (p.calBg ? '--cbg:'+esc(p.calBg)+';' : '') + (p.calText ? '--ctx:'+esc(p.calText)+';' : '') + (p.calRadius != null && p.calRadius !== '' ? '--cr:'+(+p.calRadius)+'px;' : '') + (+p.slotCols ? '--scol:'+(+p.slotCols)+';' : '');
+  var ccl = ' cs-'+(p.calShape || 'circle')+' cd-'+(p.calDays || 'tint')+' cc-'+(p.calCard || 'card')+' ss-'+(p.slotStyle || 'outline')+(p.calDayShadow ? ' dsh' : '')+(p.calSelShadow === false ? ' nosh' : '');
+  var h = label(p.label) + '<div class="fp-cal'+ccl+'" data-cal="'+b.id+'"'+(cst ? ' style="'+cst+'"' : '')+'>'
     + (meta ? '<div class="fp-calm">'+meta+'</div>' : '')
     + '<div class="fp-calh"><b>'+esc(mName)+'</b><div><button type="button" class="cn" data-act="calnav" data-bid="'+b.id+'" data-v="-1" aria-label="Voriger Monat"'+(canPrev ? '' : ' disabled')+'>'+chev(-1)+'</button><button type="button" class="cn" data-act="calnav" data-bid="'+b.id+'" data-v="1" aria-label="Nächster Monat"'+(canNext ? '' : ' disabled')+'>'+chev(1)+'</button></div></div>'
     + '<div class="fp-calw"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>'
@@ -711,6 +714,21 @@ FP.renderBlock = function(b, ctx){
   if(p.lh) st += '--lh:'+p.lh+';line-height:'+p.lh+';';
   if(p.tt) st += '--htt:'+p.tt+';--btt:'+p.tt+';text-transform:'+p.tt+';';
   if(p.it) st += 'font-style:italic;';
+  /* Innere Gestaltung pro Element: überschreibt die Theme-Variablen nur für dieses Element */
+  var hv = function(x){ return x != null && x !== ''; };
+  if(hv(p.iAcc)) st += '--p:'+esc(p.iAcc)+';';
+  if(hv(p.iAccText)) st += '--pt:'+esc(p.iAccText)+';';
+  if(hv(p.iSurf)){ st += '--sf:'+esc(p.iSurf)+';--tile:'+esc(p.iSurf)+';--tile-on:color-mix(in srgb,var(--p) 16%,'+esc(p.iSurf)+');'; cl0 += ' ix-surf'; }
+  if(hv(p.iMut)) st += '--mt:'+esc(p.iMut)+';';
+  if(hv(p.iRad)){ st += '--r:'+(+p.iRad)+'px;'; cl0 += ' ix-rad'; }
+  if(hv(p.iLine) || hv(p.iBw)){ st += (hv(p.iLine) ? '--iline:'+esc(p.iLine)+';' : '') + (hv(p.iBw) ? '--ibw:'+(+p.iBw)+'px;' : ''); cl0 += ' ix-line'; }
+  if(p.iShd) cl0 += ' ix-sh-'+esc(p.iShd);
+  if(hv(p.iGap)){ st += '--igap:'+(+p.iGap)+'px;'; cl0 += ' ix-gap'; }
+  if(hv(p.inBg)){ st += '--inbg:'+esc(p.inBg)+';'; cl0 += ' ix-inbg'; }
+  if(hv(p.starColor)) st += '--star:'+esc(p.starColor)+';';
+  if(p.oCheck === false) cl0 += ' nochk';
+  if(p.oIcon) cl0 += ' oic-'+esc(p.oIcon);
+  if(p.liStyle) cl0 += ' li-'+esc(p.liStyle);
   if(p.color && b.type !== 'heading' && b.type !== 'text') st += '--tx:'+p.color+';--mt:'+p.color+';color:'+p.color+';';
   var boxed = p.bgc || +p.bwid || p.shd;
   if(p.bgc) st += 'background:'+p.bgc+';';

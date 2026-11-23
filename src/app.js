@@ -545,7 +545,18 @@ var FIELDS = {
   input:[['label','text','Label'],['placeholder','text','Platzhalter'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['faces','Smileys flach mit Text'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='faces'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.style==='faces'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.style==='faces'; }],['faceLabels','strings','Texte unter den Smileys','Leer lassen für: Sehr schlecht, Schlecht, Okay, Gut, Super.',function(p){ return p.style==='faces' && !p.faceNoText; }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.style==='faces' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.style!=='faces' || (p.faceNoText && p.faceEnds); }],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  calendar:[['label','text','Label'],['calStyle','seg','Ansicht',[['','Monatskalender'],['strip','Tagesleiste']]],['row2','row',[['dur','text','Dauer (optional)'],['where','text','Ort (optional)']]],['row2','row',[['days','num','Buchbare Tage'],['offset','num','Frühestens in … Tagen']]],['excludeDays','days','Geschlossen an'],['slots','strings','Uhrzeiten'],['noHolidays','toggle','Feiertage ausschließen','Bundesweite Feiertage wie Ostern oder Weihnachten sind nicht buchbar.',null,true],['blocked','strings','Gesperrte Tage (z. B. 2026-12-24)'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
+  calendar:[['label','text','Label'],['calStyle','seg','Ansicht',[['','Monatskalender'],['strip','Tagesleiste']]],['row2','row',[['dur','text','Dauer (optional)'],['where','text','Ort (optional)']]],['row2','row',[['days','num','Buchbare Tage'],['offset','num','Frühestens in … Tagen']]],['excludeDays','days','Geschlossen an'],['slots','strings','Uhrzeiten'],['noHolidays','toggle','Feiertage ausschließen','Bundesweite Feiertage wie Ostern oder Weihnachten sind nicht buchbar.',null,true],['blocked','strings','Gesperrte Tage (z. B. 2026-12-24)'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel'],
+    ['_g','sec','Gestaltung',null,function(p){ return p.calStyle !== 'strip'; }],
+    ['row2','row',[['calAcc','color','Farbe der Kreise'],['calAccText','color','Text auf Farbe']],null,function(p){ return p.calStyle !== 'strip'; }],
+    ['calShape','seg','Form',[['','Kreis'],['rounded','Abgerundet'],['square','Eckig'],['pill','Pillen']],function(p){ return p.calStyle !== 'strip'; }],
+    ['calDays','seg','Freie Tage',[['','Getönt'],['solid','Kräftig'],['outline','Umrandet'],['plain','Nur Text']],function(p){ return p.calStyle !== 'strip'; }],
+    ['calDayShadow','toggle','Schlagschatten an freien Tagen',null,function(p){ return p.calStyle !== 'strip'; }],
+    ['calSelShadow','toggle','Leuchten unter der Auswahl',null,function(p){ return p.calStyle !== 'strip'; },true],
+    ['slotStyle','seg','Uhrzeiten',[['','Umrandet'],['tint','Getönt'],['shadow','Mit Schatten']],function(p){ return p.calStyle !== 'strip'; }],
+    ['slotCols','seg','Uhrzeiten pro Reihe',[[0,'3'],[2,'2'],[4,'4']],function(p){ return p.calStyle !== 'strip'; }],
+    ['calCard','seg','Rahmen',[['','Karte'],['shadow','Schwebend'],['flat','Ohne']],function(p){ return p.calStyle !== 'strip'; }],
+    ['row2','row',[['calBg','color','Hintergrund'],['calText','color','Textfarbe']],null,function(p){ return p.calStyle !== 'strip'; }],
+    ['calRadius','range','Ecken der Karte',[0,32,1,'px',18],function(p){ return p.calStyle !== 'strip'; }]],
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
@@ -556,7 +567,24 @@ var FIELDS = {
   html:[['code','code','HTML-Code','Wird 1:1 eingefügt (z. B. Embeds, Tracking, eigenes Styling).']]
 };
 var TEXTY = {recap:1,steps:1,reviews:1,avatars:1,loader:1,heading:1,text:1,badge:1,list:1,button:1,choice:1,input:1,testimonial:1,faq:1,trust:1,summary:1,checkbox:1,rating:1,calendar:1,countdown:1,slider:1,upload:1,signature:1};
-var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','padT','padR','padB','padL','brad','bwid','bc','shd','anim','delay','vis'];
+var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','padT','padR','padB','padL','brad','bwid','bc','shd','anim','delay','vis','iAcc','iAccText','iSurf','iMut','iRad','iLine','iBw','iShd','iGap','inBg','starColor','oCheck','oIcon','liStyle'];
+/* Innere Gestaltung: gilt für Antworten, Felder, Kacheln, Icons … innerhalb des Elements */
+var INNER_T = {choice:1, rating:1, slider:1, input:1, checkbox:1, calendar:1, upload:1, signature:1, list:1, faq:1, testimonial:1, recap:1, summary:1, steps:1, countdown:1, reviews:1, avatars:1, badge:1, trust:1, loader:1, compare:1};
+var SURF_T = {choice:1, rating:1, input:1, calendar:1, upload:1, signature:1, faq:1, testimonial:1, recap:1, summary:1, steps:1, countdown:1};
+var STYLE_INNER = [
+  ['row2','row',[['iAcc','color','Akzentfarbe'],['iAccText','color','Text auf Akzent']]],
+  ['row2','row',[['iSurf','color','Flächen'],['iMut','color','Nebentext']]],
+  ['row2','row',[['iLine','color','Rahmenfarbe'],['iBw','num','Rahmen (px)']]],
+  ['iShd','seg','Schatten',[['','Theme'],['none','Kein'],['sm','S'],['md','M'],['lg','L'],['glow','Leuchten']]],
+  ['row2','row',[['iRad','num','Ecken (px)'],['iGap','num','Abstand (px)']]]
+];
+var STYLE_EXTRA = {
+  choice:[['oIcon','seg','Icons',[['','Normal'],['sm','Klein'],['lg','Groß'],['none','Aus']]],['oCheck','toggle','Auswahl-Kreis zeigen',null,null,true]],
+  rating:[['starColor','color','Farbe der Sterne',null,function(p){ return !p.style || p.style === 'stars'; }]],
+  list:[['liStyle','seg','Icon-Hintergrund',[['','Getönt'],['solid','Gefüllt'],['ring','Ring'],['plain','Ohne']]]],
+  input:[['inBg','color','Feld-Hintergrund']],
+  checkbox:[['inBg','color','Kästchen-Hintergrund']]
+};
 var STYLE_TYPO = [['ff','font','Schrift'],['fw','seg','Stärke',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']]],['scale','range','Größe',[60,180,5,'%']],['row2','row',[['lh','num','Zeilenhöhe'],['ls','num','Laufweite']]],['tt','seg','Schreibweise',[['','Normal'],['uppercase','GROSS'],['lowercase','klein']]],['it','toggle','Kursiv'],['color','color','Textfarbe']];
 var STYLE_BOX = [['bgc','color','Hintergrund'],['pad','pad4','Innenabstand',{keys:['padT','padR','padB','padL'], ph:function(p){ var v = +p.pad || 0; return [v,v,v,v]; }}],['brad','range','Ecken',[0,40,1]],['row2','row',[['bwid','num','Rahmen (px)'],['bc','color','Rahmenfarbe']]],['shd','seg','Schatten',[['','Kein'],['sm','S'],['md','M'],['lg','L']]]];
 var STYLE_FX = [['anim','select','Einblenden',[['none','Keine'],['fade','Einblenden'],['up','Von unten'],['left','Von rechts'],['zoom','Zoom']]],['delay','range','Verzögerung',[0,1500,50,'ms']],['vis','seg','Sichtbar auf',[['all','Allen'],['mobile','Mobil'],['desktop','Desktop']]]];
@@ -718,6 +746,7 @@ function field(spec, p, scope){
     case 'font': return w(fontSelect(scope, k, v || '', true));
     case 'select': return w('<select class="inp" '+a+' data-rp>'+extra.map(function(o){ return '<option value="'+o[0]+'"'+(String(v)===String(o[0])?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select>');
     case 'seg': return w('<div class="segf">'+extra.map(function(o){ return '<button data-a="seg" data-scope="'+scope+'" data-k="'+k+'" data-v="'+esc(o[0])+'" data-t="'+(typeof o[0])+'" class="'+(String(v==null?'':v)===String(o[0])?'on':'')+'">'+esc(o[1])+'</button>'; }).join('')+'</div>');
+    case 'sec': return '<div class="flab fsec">'+esc(label)+'</div>';
     case 'color': return w('<div style="display:flex;gap:6px">'+colorField(scope, k, v||'')+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Zurücksetzen">'+I('x')+'</button>':'')+'</div>');
     case 'toggle': var inv = spec[5] === true; return '<label class="tgl"><span>'+esc(label)+'</span><input type="checkbox" '+a+' data-bool data-rp'+(inv ? ' data-inv' : '')+((inv ? v !== false : v)?' checked':'')+'><span class="sw"></span></label>'+(hint?'<div style="margin:-6px 0 12px">'+hint+'</div>':'');
     case 'image': return w('<div class="upl"><div class="pv" style="'+(v?'background-image:url(&quot;'+esc(v)+'&quot;)':'')+'">'+(v?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+(v?'Ersetzen':'Hochladen')+'<input type="file" accept="image/*" data-img="'+k+'" data-scope="'+scope+'"></label>'+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Entfernen">'+I('trash')+'</button>':'')+'</div>');
@@ -764,6 +793,7 @@ function panelElement(b){
   var hasStyle = STYLE_KEYS.some(function(k){ return p[k] !== undefined && p[k] !== '' && p[k] !== false && !(k==='anim' && p[k]==='none') && !(k==='vis' && p[k]==='all') && !(k==='scale' && +p[k]===100); });
   h += '<div class="psec"><h5>'+I('palette',13)+'Stil'+(hasStyle?'<span style="flex:1"></span><button class="btn sm ghost" data-a="styleReset" style="height:24px;text-transform:none;letter-spacing:0">Zurücksetzen</button>':'')+'</h5>';
   if(TEXTY[b.type]) h += '<div class="subh">Typografie</div>' + STYLE_TYPO.map(function(sp){ return field(sp, dv, 'p'); }).join('');
+  if(INNER_T[b.type]) h += '<div class="subh">Elemente im Block</div>' + STYLE_INNER.filter(function(sp, i){ return sp && !(sp[0] === 'row2' && sp[2][0][0] === 'iSurf' && !SURF_T[b.type]); }).concat(STYLE_EXTRA[b.type] || []).map(function(sp){ return field(sp, p, 'p'); }).join('') + '<div class="hint" style="margin:-4px 0 12px">Leer = Werte aus dem Design-Tab.</div>';
   h += '<div class="subh">Box</div>' + STYLE_BOX.map(function(sp){ return field(sp, dv, 'p'); }).join('');
   h += '<div class="subh">Effekte & Sichtbarkeit</div>' + STYLE_FX.map(function(sp){ return field(sp, dv, 'p'); }).join('') + '</div>';
   return h;
