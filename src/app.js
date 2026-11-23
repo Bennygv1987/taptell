@@ -24,6 +24,7 @@ var IP = {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 000 11H13"/>',
   mobile:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>', monitor:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
   sidebar:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
+  history:'<path d="M3 12a9 9 0 109-9 9.7 9.7 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
   brush:'<path d="M14.5 4.5l5 5-7.5 7.5-5-5z"/><path d="M7 12l-2.6 2.6a2.4 2.4 0 000 3.4l.6.6c.9.9 2.5.9 3.4 0L11 16"/><path d="M17 2l5 5"/>',
   flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', minus:'<path d="M5 12h14"/>', fit:'<path d="M4 9V5a1 1 0 011-1h4M15 4h4a1 1 0 011 1v4M20 15v4a1 1 0 01-1 1h-4M9 20H5a1 1 0 01-1-1v-4"/>', logic:'<path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/>',
   fBold:'<path d="M7 5h6a3.5 3.5 0 010 7H7zM7 12h7a3.5 3.5 0 010 7H7z"/>',
@@ -92,7 +93,7 @@ function loadDb(){ try{ var s = localStorage.getItem(KEY); if(s) return JSON.par
 var saveT = null, saveWarned = false;
 function save(now){
   clearTimeout(saveT);
-  var go = REMOTE ? function(){ syncRemote(); } : function(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); setSaved(true); }catch(e){ setSaved(false); if(!saveWarned){ saveWarned = true; toast('Lokaler Speicher voll oder gesperrt – Daten bleiben nur bis zum Neuladen erhalten.'); } } };
+  var go = REMOTE ? function(){ syncRemote(); } : function(){ try{ if(db && db.funnels) fixSlugs(); localStorage.setItem(KEY, JSON.stringify(db)); setSaved(true); }catch(e){ setSaved(false); if(!saveWarned){ saveWarned = true; toast('Lokaler Speicher voll oder gesperrt – Daten bleiben nur bis zum Neuladen erhalten.'); } } };
   setSaved(null);
   if(now) go(); else saveT = setTimeout(function(){ saveT = null; go(); }, 350);
 }
@@ -148,7 +149,61 @@ function getF(id){ return db.funnels.filter(function(f){ return f.id === id; })[
 function curPage(){ var f = F(); return f && f.pages[S.pi]; }
 function selBlock(){ var p = curPage(); if(!p || !S.sel) return null; return p.blocks.filter(function(b){ return b.id === S.sel; })[0] || null; }
 function findBlock(f, id){ var r = null; f.pages.forEach(function(p, pi){ p.blocks.forEach(function(b, bi){ if(b.id === id) r = {page:p, pi:pi, bi:bi, b:b}; }); }); return r; }
-function touch(){ var f = F(); if(f) f.updatedAt = Date.now(); save(); }
+/* ================= Entwurf, Live-Stand und Versionen =================
+   Autospeichern sichert den Entwurf. Online geht nur, was mit „Veröffentlichen“ als Live-Stand (f.published) übernommen wird.
+   Dazu je Funnel wenige Backups (f.versions): bei jedem Veröffentlichen und automatisch alle 10 Minuten beim Bearbeiten. */
+var HAS_PUB = !REMOTE_CFG(), OPENED = {}, VSNAP = {}; /* im Demo-Modus immer; mit Supabase erst nach versionen.sql */
+function REMOTE_CFG(){ var c = window.FS_CONFIG || {}; return !!(c.supabaseUrl && c.supabaseAnonKey); }
+function fState(f){ return {name:f.name, theme:clone(f.theme), settings:clone(f.settings), pages:clone(f.pages)}; }
+function fSig(x){ return JSON.stringify([x.theme, x.settings, x.pages]); }
+function pubDirty(f){ if(!f || f.status !== 'live' || !f.published) return false; if(f._dirty == null) f._dirty = fSig(f.published) !== fSig(f); return f._dirty; }
+function addVersion(f, kind, label){
+  f.versions = f.versions || [];
+  var st = fState(f), last = f.versions[0];
+  if(kind === 'auto' && last && fSig(last) === fSig(st)) return;
+  f.versions.unshift(Object.assign({id:uid(), at:Date.now(), kind:kind, label:label || ''}, st));
+  /* behalten: die 4 letzten Veröffentlichungen und die 8 letzten automatischen Stände */
+  var pub = 0, auto = 0; f.versions = f.versions.filter(function(v){ return v.kind === 'publish' ? ++pub <= 4 : ++auto <= 8; });
+}
+function publishNow(f){
+  addVersion(f, 'publish', 'Veröffentlicht');
+  f.published = Object.assign({at:Date.now()}, fState(f)); f.status = 'live'; f._dirty = false; f.updatedAt = Date.now(); save(true);
+}
+function autoVersion(f){ if(!f) return; var now = Date.now(); if(f._av && now - f._av < 10 * 60000) return; f._av = now; addVersion(f, 'auto', 'Automatisch gesichert'); }
+function restoreVersion(f, v, msg){
+  addVersion(f, 'auto', 'Vor dem Wiederherstellen');
+  f.theme = clone(v.theme); f.settings = clone(v.settings); f.pages = clone(v.pages); if(v.name) f.name = v.name;
+  f._dirty = null; S.hist = []; S.fut = []; S.sel = null; S.pi = Math.min(S.pi, f.pages.length - 1); f.updatedAt = Date.now(); save(true);
+  if(S.view === 'editor') renderEditor(); toast(msg || 'Version wiederhergestellt – noch nicht veröffentlicht');
+}
+function ago(ts){ var m = Math.round((Date.now() - ts) / 60000); if(m < 1) return 'gerade eben'; if(m < 60) return 'vor '+m+' Min.'; var h = Math.round(m / 60); if(h < 24) return 'vor '+h+' Std.'; var d = Math.round(h / 24); return d === 1 ? 'gestern' : 'vor '+d+' Tagen'; }
+function fmtTs(ts){ var d = new Date(ts); return d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})+', '+d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})+' Uhr'; }
+function versionsModal(f){
+  f = f || F(); if(!f) return;
+  var body = function(){
+    var vs = f.versions || [], h = '';
+    if(f.published) h += '<div class="vrow live"><span class="vi">'+I('rocket',14)+'</span><div class="vt"><b>Aktueller Live-Stand</b><span>Veröffentlicht '+ago(f.published.at)+' · '+fmtTs(f.published.at)+'</span></div>'+(pubDirty(f) ? '<button class="btn sm" data-vlive>Änderungen verwerfen</button>' : '<span class="pill live">Online</span>')+'</div>';
+    if(!vs.length) h += '<div class="hint" style="margin:8px 0 0">Noch keine Backups. Sie entstehen beim Veröffentlichen und automatisch alle 10 Minuten, während du arbeitest.</div>';
+    h += vs.map(function(v, i){ return '<div class="vrow"><span class="vi '+v.kind+'">'+I(v.kind === 'publish' ? 'rocket' : 'history', 14)+'</span><div class="vt"><b>'+esc(v.label || (v.kind === 'publish' ? 'Veröffentlicht' : 'Automatisch gesichert'))+'</b><span>'+ago(v.at)+' · '+fmtTs(v.at)+' · '+v.pages.length+' Seiten</span></div><button class="btn sm" data-vres="'+i+'">'+I('undo',13)+'Wiederherstellen</button></div>'; }).join('');
+    if(REMOTE_CFG() && !HAS_PUB) h += '<div class="callout" style="margin-top:12px">'+I('info')+'<div>Damit Backups auch auf dem Server liegen und Änderungen erst nach „Veröffentlichen“ online gehen, einmal <b>supabase/versionen.sql</b> in Supabase ausführen. Bis dahin sind Backups nur in diesem Browser.</div></div>';
+    return h;
+  };
+  modal({title:'Versionen', sub:'Backups von „'+f.name+'“. Wiederherstellen ändert nur den Entwurf – online geht es erst mit „Veröffentlichen“.', size:'mid', body:'<div id="vlist">'+body()+'</div>',
+    onOpen:function(el, close){
+      el.addEventListener('click', function(e){
+        var r = e.target.closest('[data-vres]'); if(r){ var v = (f.versions || [])[+r.getAttribute('data-vres')]; if(!v) return; confirmBox('Version wiederherstellen?', 'Der Entwurf wird auf den Stand von '+fmtTs(v.at)+' zurückgesetzt. Der jetzige Stand wird vorher gesichert.', 'Wiederherstellen', function(){ restoreVersion(f, v); close(); }); return; }
+        if(e.target.closest('[data-vlive]')){ confirmBox('Änderungen verwerfen?', 'Der Entwurf wird auf den Live-Stand zurückgesetzt. Der jetzige Stand wird vorher gesichert.', 'Verwerfen', function(){ restoreVersion(f, f.published, 'Zurück auf dem Live-Stand'); close(); }, true); }
+      });
+    }});
+}
+function pubUi(){
+  var f = F(); if(!f || S.view !== 'editor') return;
+  var d = pubDirty(f), pill = $('.etop .pill'), btn = $('[data-a="publish"]');
+  if(pill){ pill.className = 'pill '+(f.status === 'live' ? (d ? 'warn' : 'live') : 'draft'); pill.textContent = f.status === 'live' ? (d ? 'Live · Änderungen offen' : 'Live') : 'Entwurf'; pill.title = d ? 'Deine letzten Änderungen sind gespeichert, aber noch nicht online.' : ''; }
+  if(btn) btn.classList.toggle('dirty', d);
+}
+
+function touch(){ var f = F(); if(f){ f.updatedAt = Date.now(); if(f.status === 'live') f._dirty = null; autoVersion(f); } save(); pubUi(); }
 
 /* history */
 function snap(force){
@@ -350,7 +405,7 @@ function funnelMenu(btn, id){
   ]);
 }
 function duplicateFunnel(f){
-  var c = clone(f); c.id = uid()+uid().slice(0,4); c.name = f.name + ' (Kopie)'; c.status = 'draft'; c.createdAt = c.updatedAt = Date.now(); c.stats = {views:0,starts:0,completes:0,pages:{},daily:{}}; delete c.demo;
+  var c = clone(f); c.id = uid()+uid().slice(0,4); c.name = f.name + ' (Kopie)'; c.slug = uniqueSlug(c.name, c.id); c.status = 'draft'; c.published = null; c.versions = []; delete c._dirty; delete c._av; c.createdAt = c.updatedAt = Date.now(); c.stats = {views:0,starts:0,completes:0,pages:{},daily:{}}; delete c.demo;
   var map = {};
   c.pages.forEach(function(p){ var n = uid(); map[p.id] = n; p.id = n; p.blocks.forEach(function(b){ var nb = uid(); map[b.id] = nb; b.id = nb; }); });
   c.pages.forEach(function(p){ (p.logic||[]).forEach(function(r){ r.goto = map[r.goto] || ''; (r.cond||[]).forEach(function(cd){ cd.bid = map[cd.bid] || ''; }); }); });
@@ -526,7 +581,18 @@ function swHtml(cur){
   return out.map(function(x, i){ return (i && x[2] === 0 && out[i-1][2] === 1 ? '<i></i>' : '') + '<button type="button" class="sw'+(x[0] === cv ? ' on' : '')+'" data-a="swPick" data-c="'+x[0]+'" style="--c:'+x[0]+'" title="'+esc(x[1])+'" aria-label="Farbe '+esc(x[1])+'"></button>'; }).join('');
 }
 function swRefresh(){ document.querySelectorAll('.swr').forEach(function(r){ var w = r.closest('.colw'), tx = w && w.querySelector('input[type=text]'); r.innerHTML = swHtml(tx ? tx.value : ''); }); }
-function colorField(scope, k, v){ return '<div class="colw"><div class="colr"><input type="color" data-'+scope+'="'+k+'" value="'+esc(toHex(v||'#ffffff'))+'"><input type="text" data-'+scope+'="'+k+'" value="'+esc(v)+'"></div><div class="swr">'+swHtml(v)+'</div></div>'; }
+function colAlpha(v){ var m = String(v || '').match(/rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/); if(m) return Math.round(Math.max(0, Math.min(1, +m[1])) * 100); var h = String(v || '').match(/^#[0-9a-f]{6}([0-9a-f]{2})$/i); return h ? Math.round(parseInt(h[1], 16) / 2.55) : 100; }
+function colMix(hex, a){ hex = toHex(hex || '#000000'); if(a >= 100) return hex; var n = parseInt(hex.slice(1), 16); return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+(Math.round(a)/100)+')'; }
+function colorField(scope, k, v){ var al = colAlpha(v); return '<div class="colw"><div class="colr"><input type="color" data-'+scope+'="'+k+'" value="'+esc(toHex(v||'#ffffff'))+'"><input type="text" data-'+scope+'="'+k+'" value="'+esc(v)+'"><span class="alw" title="Deckkraft"><input type="range" class="alpha" min="0" max="100" step="1" value="'+al+'" data-alpha style="--c:'+esc(toHex(v||'#ffffff'))+'" aria-label="Deckkraft"><b>'+al+'%</b></span></div><div class="swr">'+swHtml(v)+'</div></div>'; }
+/* Deckkraft-Regler und Farbwähler arbeiten zusammen: unter 100 % wird rgba() gespeichert */
+document.addEventListener('input', function(e){
+  var el = e.target; if(!el.closest) return; var w = el.closest('.colr'); if(!w) return;
+  var tx = w.querySelector('input[type=text]'), cp = w.querySelector('input[type=color]'), al = w.querySelector('[data-alpha]'); if(!tx || !al) return;
+  if(el === al){ e.stopPropagation(); var a = +al.value; al.nextElementSibling.textContent = a + '%'; tx.value = colMix(cp.value, a); tx.dispatchEvent(new Event('input', {bubbles:true})); return; }
+  if(el === cp && +al.value < 100){ e.stopPropagation(); al.style.setProperty('--c', cp.value); tx.value = colMix(cp.value, +al.value); tx.dispatchEvent(new Event('input', {bubbles:true})); return; }
+  if(el === cp) al.style.setProperty('--c', cp.value);
+  if(el === tx){ var na = colAlpha(tx.value); if(+al.value !== na){ al.value = na; al.nextElementSibling.textContent = na + '%'; } }
+}, true);
 function fontSelect(scope, k, v, allowEmpty){
   var groups = {sans:'Sans Serif', serif:'Serif', display:'Display & Handschrift'}, F_ = db.fonts || {google:[], uploaded:[]};
   var opt = function(n){ return '<option value="'+esc(n)+'"'+(n===v?' selected':'')+' style="font-family:'+esc(FP.fontStack(n))+'">'+esc(n)+'</option>'; };
@@ -565,8 +631,8 @@ var FIELDS = {
   loader:[['anim','select','Animation',FP.LOADERS],['src','text','Lottie-Adresse (.json, z. B. von LottieFiles)',null,function(p){ return p.anim === 'custom'; }],['json','lottie','Oder Datei hochladen',null,function(p){ return p.anim === 'custom'; }],['duration','range','Dauer',[1,10,0.5,' s']],['size','range','Größe',[60,240,4]],['texts','strings','Wechselnde Hinweise','Wechseln gleichmäßig über die Dauer.'],['showBar','toggle','Ladebalken anzeigen'],['_n','note','Nach Ablauf geht es automatisch zur nächsten Seite. Wer zurückgeht, überspringt die Ladeseite.']],
   faq:[['items','faq','Fragen & Antworten']],
   countdown:[['label','text','Text darüber'],['minutes','num','Dauer in Minuten']],
-  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[1,'1']],function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
-  input:[['label','text','Label'],['placeholder','text','Platzhalter'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
+  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[3,'3'],[4,'4'],[1,'1']],function(p){ return p.layout==='image'; }],['zoom','toggle','Lupe zum Vergrößern','Öffnet das Bild groß, mit Wischen zwischen den Antworten und direktem Auswählen.',function(p){ return p.layout==='image'; },true],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
+  input:[['label','text','Label'],['placeholder','text','Platzhalter'],['emoji','text','Emoji im Feld (optional)','z. B. ✉️ oder 📞 – ersetzt das Standard-Icon.'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['faces','Smileys flach mit Text'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='faces'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.style==='faces'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.style==='faces'; }],['faceLabels','strings','Texte unter den Smileys','Leer lassen für: Sehr schlecht, Schlecht, Okay, Gut, Super.',function(p){ return p.style==='faces' && !p.faceNoText; }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.style==='faces' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.style!=='faces' || (p.faceNoText && p.faceEnds); }],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   calendar:[['label','text','Label'],['calStyle','seg','Ansicht',[['','Monatskalender'],['strip','Tagesleiste']]],['row2','row',[['dur','text','Dauer (optional)'],['where','text','Ort (optional)']]],['row2','row',[['days','num','Buchbare Tage'],['offset','num','Frühestens in … Tagen']]],['excludeDays','days','Geschlossen an'],['slots','strings','Uhrzeiten'],['noHolidays','toggle','Feiertage ausschließen','Bundesweite Feiertage wie Ostern oder Weihnachten sind nicht buchbar.',null,true],['blocked','strings','Gesperrte Tage (z. B. 2026-12-24)'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel'],
@@ -583,15 +649,15 @@ var FIELDS = {
     ['calRadius','range','Ecken der Karte',[0,32,1,'px',18],function(p){ return p.calStyle !== 'strip'; }]],
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  checkbox:[['text','textarea','Text'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['whatsapp','WhatsApp'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
+  checkbox:[['text','textarea','Text','Link: Doppelklick auf den Text im Handy, Wort markieren, Link-Symbol – oder hier [Datenschutzerklärung](https://…) schreiben. Links öffnen sich in einem neuen Fenster.'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
+  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['whatsapp','WhatsApp'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['row2','row',[['btnBw','num','Rahmen (px)'],['btnBc','color','Rahmenfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
   summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }],['sticky','toggle','Unten fixieren','Bleibt beim Scrollen am unteren Rand sichtbar, solange das Element weiter unten auf der Seite steht.']],
   spacer:[['height','range','Höhe',[4,160,2]]],
   divider:[],
   html:[['code','code','HTML-Code','Wird 1:1 eingefügt (z. B. Embeds, Tracking, eigenes Styling).']]
 };
 var TEXTY = {recap:1,steps:1,reviews:1,avatars:1,loader:1,heading:1,text:1,badge:1,list:1,button:1,choice:1,input:1,testimonial:1,faq:1,trust:1,summary:1,checkbox:1,rating:1,calendar:1,countdown:1,slider:1,upload:1,signature:1};
-var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','padT','padR','padB','padL','brad','bwid','bc','shd','anim','delay','vis','iAcc','iAccText','iSurf','iMut','iRad','iLine','iBw','iShd','iGap','inBg','starColor','oCheck','oIcon','liStyle'];
+var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','padT','padR','padB','padL','brad','bwid','bc','shd','anim','delay','vis','iAcc','iAccText','iSurf','iMut','iRad','iLine','iBw','iShd','iShdC','iShdB','iShdS','iShdX','iShdY','iGap','inBg','inStyle','starColor','oCheck','oIcon','liStyle'];
 /* Innere Gestaltung: gilt für Antworten, Felder, Kacheln, Icons … innerhalb des Elements */
 var INNER_T = {choice:1, rating:1, slider:1, input:1, checkbox:1, calendar:1, upload:1, signature:1, list:1, faq:1, testimonial:1, recap:1, summary:1, steps:1, countdown:1, reviews:1, avatars:1, badge:1, trust:1, loader:1, compare:1};
 var SURF_T = {choice:1, rating:1, input:1, calendar:1, upload:1, signature:1, faq:1, testimonial:1, recap:1, summary:1, steps:1, countdown:1};
@@ -599,14 +665,16 @@ var STYLE_INNER = [
   ['row2','row',[['iAcc','color','Akzentfarbe'],['iAccText','color','Text auf Akzent']]],
   ['row2','row',[['iSurf','color','Flächen'],['iMut','color','Nebentext']]],
   ['row2','row',[['iLine','color','Rahmenfarbe'],['iBw','num','Rahmen (px)']]],
-  ['iShd','seg','Schatten',[['','Theme'],['none','Kein'],['sm','S'],['md','M'],['lg','L'],['glow','Leuchten']]],
+  ['iShd','seg','Schatten',[['','Theme'],['none','Kein'],['sm','S'],['md','M'],['lg','L'],['glow','Leuchten'],['custom','Eigen']]],
+  ['row2','row',[['iShdC','color','Schattenfarbe'],['iShdB','num','Unschärfe (px)']],null,function(p){ return p.iShd === 'custom'; }],
+  ['row3','row',[['iShdS','num','Ausweitung'],['iShdX','num','Versatz X'],['iShdY','num','Versatz Y']],null,function(p){ return p.iShd === 'custom'; }],
   ['row2','row',[['iRad','num','Ecken (px)'],['iGap','num','Abstand (px)']]]
 ];
 var STYLE_EXTRA = {
   choice:[['oIcon','seg','Icons',[['','Normal'],['sm','Klein'],['lg','Groß'],['none','Aus']]],['oCheck','toggle','Auswahl-Kreis zeigen',null,null,true]],
   rating:[['starColor','color','Farbe der Sterne',null,function(p){ return !p.style || p.style === 'stars'; }]],
   list:[['liStyle','seg','Icon-Hintergrund',[['','Getönt'],['solid','Gefüllt'],['ring','Ring'],['plain','Ohne']]]],
-  input:[['inBg','color','Feld-Hintergrund']],
+  input:[['inStyle','seg','Feld-Stil',[['','Theme'],['card','Karte'],['outline','Rahmen'],['filled','Gefüllt'],['soft','Soft UI'],['glass','Glas'],['line','Linie']]],['inBg','color','Feld-Hintergrund']],
   checkbox:[['inBg','color','Kästchen-Hintergrund']]
 };
 var STYLE_TYPO = [['ff','font','Schrift'],['fw','seg','Stärke',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']]],['scale','range','Größe',[60,180,5,'%']],['row2','row',[['lh','num','Zeilenhöhe'],['ls','num','Laufweite']]],['tt','seg','Schreibweise',[['','Normal'],['uppercase','GROSS'],['lowercase','klein']]],['it','toggle','Kursiv'],['color','color','Textfarbe']];
@@ -631,18 +699,20 @@ function lpOff(){ try{ return localStorage.getItem('tt-lp') === '0'; }catch(e){ 
 function renderEditor(){
   var f = F(); if(!f){ go('funnels'); return; }
   /* Ältere Funnels aus Vorlagen: feste Werte aus dem eigenen CSS in die Einstellungen übernehmen (sieht gleich aus, ist aber einstellbar) */
+  if(f.status === 'live' && !f.published){ f.published = Object.assign({at:f.updatedAt || Date.now()}, fState(f)); save(); } /* bisheriger Stand bleibt online, bis neu veröffentlicht wird */
+  if(!OPENED[f.id]){ OPENED[f.id] = 1; f._av = 0; autoVersion(f); f._av = Date.now(); }
   if(T.liftCss && T.liftCss(f.theme)) touch();
   fixSel();
   var h = '<div class="ed'+(lpOff()?' lp-off':'')+'"><header class="etop">'
     + '<button class="btn ghost sm ic" data-a="nav" data-v="funnels" title="Zurück zum Dashboard">'+I('left')+'</button>'
     + '<button class="btn ghost sm ic" data-a="lpToggle" title="Elemente ein- oder ausblenden ( [ )" aria-pressed="'+(!lpOff())+'">'+I('sidebar')+'</button>'
     + '<input class="nmin" id="fname" value="'+esc(f.name)+'" size="'+Math.max(8,f.name.length)+'">'
-    + '<span class="pill '+(f.status==='live'?'live':'draft')+'">'+(f.status==='live'?'Live':'Entwurf')+'</span><span class="sv" id="svst">'+I('check',13)+' Gespeichert</span>'
+    + '<span class="pill '+(f.status==='live'?(pubDirty(f)?'warn':'live'):'draft')+'">'+(f.status==='live'?(pubDirty(f)?'Live · Änderungen offen':'Live'):'Entwurf')+'</span><span class="sv" id="svst">'+I('check',13)+' Gespeichert</span><button class="btn ghost sm ic" data-a="versions" title="Versionen & Backups">'+I('history')+'</button>'
     + '<div class="sp"></div>'
     + '<div class="seg"><button class="'+(S.device==='mobile'?'on':'')+'" data-a="device" data-v="mobile" title="Mobil">'+I('mobile',15)+'</button><button class="'+(S.device==='desk'?'on':'')+'" data-a="device" data-v="desk" title="Desktop">'+I('monitor',15)+'</button></div>'
     + (S.device !== 'desk' ? '<button class="btn ghost sm devpick" data-a="devPick" title="Handy für die Vorschau wählen">'+esc(curDevice().n)+'<span class="dvw">'+curDevice().w+' px</span>'+I('chevDown',12)+'</button>' : '')
     + '<div class="vr"></div><button class="btn ghost sm ic" data-a="undo" title="Rückgängig (⌘Z)"'+(S.hist.length?'':' disabled')+'>'+I('undo')+'</button><button class="btn ghost sm ic" data-a="redo" title="Wiederholen (⌘⇧Z)"'+(S.fut.length?'':' disabled')+'>'+I('redo')+'</button><div class="vr"></div>'
-    + '<button class="btn sm" data-a="preview">'+I('play',14)+'Vorschau</button><button class="btn sm pri" data-a="publish">'+I('rocket',14)+'Veröffentlichen</button></header>'
+    + '<button class="btn sm" data-a="preview">'+I('play',14)+'Vorschau</button><button class="btn sm pri'+(pubDirty(f)?' dirty':'')+'" data-a="publish">'+I('rocket',14)+'Veröffentlichen</button></header>'
     + '<div class="ebody"><aside class="lp" id="lp"></aside><section class="canvas" id="canvas"></section><aside class="rp" id="rp"></aside></div></div>';
   $('#app').innerHTML = h;
   ensureFonts();
@@ -838,6 +908,7 @@ function panelPage(){
     + '<label class="tgl"><span>Breites Layout auf Desktop</span><input type="checkbox" data-pp="wide" data-bool'+(pg.wide?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Inhalt vertikal zentrieren</span><input type="checkbox" data-pp="vcenter" data-bool'+(pg.vcenter?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Fortschrittsbalken ausblenden</span><input type="checkbox" data-pp="hideProgress" data-bool'+(pg.hideProgress?' checked':'')+'><span class="sw"></span></label>'
+    + '<label class="tgl"><span>Logo ausblenden</span><input type="checkbox" data-pp="hideLogo" data-bool'+(pg.hideLogo?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Lead beim Öffnen speichern</span><input type="checkbox" data-pp="submitOnEnter" data-bool'+(pg.submitOnEnter?' checked':'')+'><span class="sw"></span></label>'
     + '<label class="tgl"><span>Zurück-Button erlauben</span><input type="checkbox" data-pp="allowBack" data-bool data-inv'+(pg.allowBack===false?'':' checked')+'><span class="sw"></span></label>'
     + (FP.hasButton(pg) || S.pi === f.pages.length-1 ? '' : '<label class="tgl"><span>Automatischer Weiter-Button</span><input type="checkbox" data-pp="autoButton" data-bool data-inv data-rp'+(pg.autoButton===false?'':' checked')+'><span class="sw"></span></label>' + (pg.autoButton===false?'':'<div class="fld"><label>Button-Text</label><input class="inp" data-pp="buttonLabel" value="'+esc(pg.buttonLabel||'')+'" placeholder="'+esc(f.theme.nextLabel||'Weiter')+'"></div>'))
@@ -1132,7 +1203,7 @@ document.addEventListener('pointerdown', function(e){
 /* ================= Text direkt im Vorschaubild bearbeiten =================
    Doppelklick auf Überschrift, Text, Badge, Button oder Frage – oder ein zweiter Klick auf ein markiertes Element.
    Formatierung über die schwebende Leiste oder ⌘B / ⌘I / ⌘U. Gespeichert wird im gewohnten Text-Format (**fett**, *kursiv*, ++unterstrichen++, __Hervorhebung__, ==Akzent==, [[Marker]]). */
-var INL = {heading:{sel:'.fp-h1,.fp-h2,.fp-h3', k:'text', multi:true}, text:{sel:'.fp-txt', k:'text', multi:true}, badge:{sel:'.fp-badge', k:'text'}, button:{sel:'.fp-btn .ln,.fp-btn>span:first-child', k:'label'}, choice:{sel:'.fp-q', k:'question', multi:true}};
+var INL = {heading:{sel:'.fp-h1,.fp-h2,.fp-h3', k:'text', multi:true}, text:{sel:'.fp-txt', k:'text', multi:true}, badge:{sel:'.fp-badge', k:'text'}, button:{sel:'.fp-btn .ln,.fp-btn>span:first-child', k:'label'}, choice:{sel:'.fp-q', k:'question', multi:true}, checkbox:{sel:'.fp-cb > span:last-child', k:'text', multi:true}};
 var inl = null;
 function inlTarget(blk, b){ var c = b && INL[b.type]; if(!c || !blk) return null; var el = blk.querySelector(c.sel); return el ? {el:el, cfg:c} : null; }
 /* HTML aus dem Bearbeitungsfeld zurück ins Text-Format */
@@ -1813,10 +1884,13 @@ function publishModal(f){
     var ic = {ok:'check', warn:'info', err:'x', info:'info'};
     var h = '<div class="pubstep"><div class="psh"><span class="pn'+(errs?' bad':warns?' warn':' ok')+'">1</span><div><b>Prüfen</b><span>'+(errs?errs+' Problem'+(errs>1?'e':'')+' muss behoben werden':warns?warns+' Hinweis'+(warns>1?'e':'')+' – Live schalten ist trotzdem möglich':'Alles bereit')+'</span></div></div>'
       + '<div class="checks">' + checks.map(function(c){ return '<div class="pchk '+c.lvl+'"><span class="ci">'+I(ic[c.lvl],12)+'</span><div class="ct"><b>'+esc(c.t)+'</b>'+(c.d?'<span>'+esc(c.d)+'</span>':'')+'</div>'+(c.page!=null?'<button class="btn ghost sm" data-goto="'+c.page+'">Zur Seite</button>':c.tab?'<button class="btn ghost sm" data-gotab="'+c.tab+'">Öffnen</button>':'')+'</div>'; }).join('') + '</div></div>';
-    h += '<div class="pubstep"><div class="psh"><span class="pn'+(live?' ok':'')+'">2</span><div><b>Live schalten</b><span>'+(live?'Der Funnel ist live'+(REMOTE?' und unter seinem Link erreichbar.':'.'):'Erst im Live-Modus ist der Funnel erreichbar und zählt Aufrufe und Anfragen.')+'</span></div></div>'
-      + '<div class="golive '+(live?'on':'')+'">'+(live
-        ? '<span class="dot"></span><div style="flex:1"><b>Live</b><span>Seit dem Live-Schalten werden Aufrufe und Anfragen gezählt.</span></div><button class="btn sm" data-ps="draft">Offline nehmen</button>'
+    var dirty = pubDirty(f);
+    h += '<div class="pubstep"><div class="psh"><span class="pn'+(live&&!dirty?' ok':dirty?' warn':'')+'">2</span><div><b>'+(live?'Veröffentlichen':'Live schalten')+'</b><span>'+(live?(dirty?'Deine Änderungen sind gespeichert, aber noch nicht online.':'Online ist der aktuelle Stand'+(f.published?' vom '+fmtTs(f.published.at):'')+'.'):'Erst im Live-Modus ist der Funnel erreichbar und zählt Aufrufe und Anfragen.')+'</span></div></div>'
+      + '<div class="golive '+(live?'on':'')+(dirty?' dirty':'')+'">'+(live
+        ? (dirty ? '<span class="dot"></span><div style="flex:1"><b>Änderungen offen</b><span>Online bleibt der Stand '+(f.published?'vom '+fmtTs(f.published.at):'von vorher')+', bis du veröffentlichst.</span></div><button class="btn pri" data-ps="publish"'+(errs?' disabled':'')+'>'+I('rocket',14)+'Änderungen veröffentlichen</button>'
+          : '<span class="dot"></span><div style="flex:1"><b>Live</b><span>Alles online. Neue Änderungen werden erst mit „Veröffentlichen“ übernommen.</span></div>') + '<button class="btn sm" data-ps="draft">Offline nehmen</button>'
         : '<div style="flex:1"><b>Entwurf</b><span>'+(errs?'Behebe zuerst die markierten Probleme.':'Bereit zum Veröffentlichen.')+'</span></div><button class="btn pri" data-ps="live"'+(errs?' disabled':'')+'>'+I('rocket',14)+'Jetzt live schalten</button>')+'</div></div>';
+    h += '<div class="pvl"><button class="btn ghost sm" data-pvers>'+I('history',13)+'Versionen & Backups'+((f.versions||[]).length?' ('+f.versions.length+')':'')+'</button></div>';
     h += '<div class="pubstep"><div class="psh"><span class="pn'+(live?' ok':'')+'">3</span><div><b>Teilen</b><span>Per Link, unter der Domain des Kunden oder direkt auf seiner Website.</span></div></div>';
     h += '<div id="sharewrap">' + shareBody() + '</div>' + (REMOTE && !live ? '<div class="hint" style="margin-top:6px">Link und Einbindung funktionieren, sobald der Funnel live ist.</div>' : '');
     h += '<details class="advx"'+(open?' open':'')+'><summary>'+I('code',13)+'Erweitert: '+(REMOTE?'QR-Code, ':'QR-Code, ')+'HTML-Export, Webhook, JSON</summary><div id="advb">'+advBody()+'</div></details></div>';
@@ -1829,7 +1903,8 @@ function publishModal(f){
       el.addEventListener('input', function(e){ var k = e.target.getAttribute && e.target.getAttribute('data-em'); if(k){ em[k] = e.target.value; var c = el.querySelector('#embcode'); if(c) c.value = embedCode(); } });
       el.addEventListener('click', function(e){
         var pt = e.target.closest('[data-pt]'); if(pt){ adv = pt.getAttribute('data-pt'); el.querySelector('#advb').innerHTML = advBody(); if(adv === 'qr') drawQR(el.querySelector('#qrurl').value); return; }
-        var ps = e.target.closest('[data-ps]'); if(ps){ f.status = ps.getAttribute('data-ps'); save(); if(S.view === 'editor'){ var pill = $('.etop .pill'); if(pill){ pill.className = 'pill '+(f.status==='live'?'live':'draft'); pill.textContent = f.status==='live'?'Live':'Entwurf'; } } toast(f.status==='live'?'Funnel ist live':'Funnel ist wieder ein Entwurf'); rerender(); return; }
+        var ps = e.target.closest('[data-ps]'); if(ps){ var pv = ps.getAttribute('data-ps'), was = f.status; if(pv === 'draft'){ f.status = 'draft'; save(true); toast('Funnel ist offline (Entwurf)'); } else { publishNow(f); toast(was === 'live' ? 'Änderungen sind online' : 'Funnel ist live'); } pubUi(); rerender(); return; }
+        if(e.target.closest('[data-pvers]')){ close(); versionsModal(f); return; }
         var g = e.target.closest('[data-goto]'); if(g){ close(); if(S.view === 'editor' && S.fid === f.id){ selectPage(+g.getAttribute('data-goto')); } else { go('editor', f.id); S.pi = +g.getAttribute('data-goto'); renderEditor(); } return; }
         var gt = e.target.closest('[data-gotab]'); if(gt){ close(); if(!(S.view === 'editor' && S.fid === f.id)) go('editor', f.id); S.rtab = 'set'; renderRight(); return; }
         var sh = e.target.closest('[data-share]'); if(sh){ share = sh.getAttribute('data-share'); el.querySelector('#sharewrap').innerHTML = shareBody(); return; }
@@ -2171,6 +2246,15 @@ function linkBase(){ return ((CONFIG && CONFIG.publicUrl) || (location.origin + 
 /* Öffentlicher Link: kurz (taptell.de/funnelname); mit publicUrl in config.js die eigene Basis-Domain */
 function publicUrl(f){ return linkBase() + '/' + (f.slug || ''); }
 function ensureSlug(f){ if(!f.slug) f.slug = slug(f.name).slice(0, 40) + '-' + f.id.slice(0, 5); return f.slug; }
+function fixSlugs(){
+  var seen = {}, fixed = 0;
+  db.funnels.slice().sort(function(a, b){ return (a.createdAt || 0) - (b.createdAt || 0); }).forEach(function(f){
+    ensureSlug(f);
+    if(seen[f.slug]){ f.slug = uniqueSlug(f.name, f.id); fixed++; }
+    seen[f.slug] = 1;
+  });
+  return fixed;
+}
 
 /* ---------- login ---------- */
 function renderLogin(){
@@ -2346,8 +2430,8 @@ function emptyDb(){ return {version:2, funnels:[], leads:[], clients:[], users:[
 var SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js', SUPABASE_JS_SRI = 'sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O';
 function loadScript(src, sri){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; if(sri){ s.integrity = sri; s.crossOrigin = 'anonymous'; } s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 var SNAP = {funnels:{}, leads:{}, clients:{}, settings:''}, syncing = false, syncAgain = false;
-function funnelToRow(f){ ensureSlug(f); return {id:f.id, name:f.name, slug:f.slug, status:f.status, client_id:f.clientId || null, shared:!!f.shared, theme:f.theme, settings:f.settings, pages:f.pages, created_at:new Date(f.createdAt||Date.now()).toISOString(), updated_at:new Date(f.updatedAt||Date.now()).toISOString()}; }
-function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, status:r.status, clientId:r.client_id, shared:r.shared, theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
+function funnelToRow(f){ ensureSlug(f); var r = {id:f.id, name:f.name, slug:f.slug, status:f.status, client_id:f.clientId || null, shared:!!f.shared, theme:f.theme, settings:f.settings, pages:f.pages, created_at:new Date(f.createdAt||Date.now()).toISOString(), updated_at:new Date(f.updatedAt||Date.now()).toISOString()}; if(HAS_PUB) r.published = f.published || null; return r; }
+function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, status:r.status, clientId:r.client_id, shared:r.shared, published:r.published || null, versions:r.versions || [], theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
 var LEAD_COLS = ['id','funnelId','funnelName','name','email','phone','total','status','notes','createdAt'];
 function leadToRow(l){ var data = {}; Object.keys(l).forEach(function(k){ if(LEAD_COLS.indexOf(k) < 0) data[k] = l[k]; }); return {id:l.id, funnel_id:l.funnelId || null, funnel_name:l.funnelName || '', name:l.name || null, email:l.email || null, phone:l.phone || null, total:l.total || 0, status:l.status || 'neu', notes:l.notes || '', data:data, created_at:new Date(l.createdAt||Date.now()).toISOString()}; }
 function rowToLead(r){ return Object.assign({}, r.data || {}, {id:r.id, funnelId:r.funnel_id, funnelName:r.funnel_name, name:r.name, email:r.email, phone:r.phone, total:+r.total || 0, status:r.status, notes:r.notes || '', createdAt:Date.parse(r.created_at)}); }
@@ -2370,6 +2454,7 @@ async function loadRemote(){
   var stats = {}; (q[3].data || []).forEach(function(r){ stats[r.funnel_id] = {views:+r.views || 0, starts:+r.starts || 0, completes:+r.completes || 0, pages:r.pages || {}, daily:r.daily || {}}; });
   var set = (q[4].data && q[4].data.data) || {};
   db = emptyDb();
+  var pubProbe = await sb.from('funnels').select('published').limit(1); HAS_PUB = !pubProbe.error; /* Spalten aus versionen.sql vorhanden? */
   db.clients = (q[0].data || []).map(rowToClient);
   db.funnels = (q[1].data || []).map(function(r){ return rowToFunnel(r, stats[r.id]); }).sort(function(a, b){ return b.updatedAt - a.updatedAt; });
   db.leads = (q[2].data || []).map(rowToLead);
@@ -2378,7 +2463,7 @@ async function loadRemote(){
   if(set.brand) db.brand = set.brand; if(set.defaults) db.defaults = set.defaults; if(set.fonts) db.fonts = set.fonts;
   SNAP = {funnels:{}, leads:{}, clients:{}, recipient_lists:{}, settings:JSON.stringify(settingsPayload())};
   db.lists.forEach(function(l){ SNAP.recipient_lists[l.id] = JSON.stringify(listToRow(l)); });
-  db.funnels.forEach(function(f){ SNAP.funnels[f.id] = JSON.stringify(funnelToRow(f)); });
+  db.funnels.forEach(function(f){ SNAP.funnels[f.id] = JSON.stringify(funnelToRow(f)); VSNAP[f.id] = JSON.stringify((f.versions || []).map(function(v){ return v.id; })); });
   db.leads.forEach(function(l){ SNAP.leads[l.id] = JSON.stringify(leadToRow(l)); });
   db.clients.forEach(function(c){ SNAP.clients[c.id] = JSON.stringify(clientToRow(c)); });
   ensureFonts();
@@ -2401,7 +2486,9 @@ async function syncRemote(){
   try{
     if(realAdmin()){
       await syncTable('clients', db.clients || [], clientToRow);
+      if(fixSlugs()) toast('Doppelte Link-Adresse korrigiert – die Kopie hat jetzt eine eigene Adresse');
       await syncTable('funnels', db.funnels, funnelToRow);
+      if(HAS_PUB){ for(var vi = 0; vi < db.funnels.length; vi++){ var vf = db.funnels[vi], vh = JSON.stringify((vf.versions || []).map(function(v){ return v.id; })); if(VSNAP[vf.id] !== vh){ var vr = await sb.from('funnels').update({versions:vf.versions || []}).eq('id', vf.id); if(vr.error) throw vr.error; VSNAP[vf.id] = vh; } } } /* Backups getrennt und nur bei Änderung senden */
       var sp = JSON.stringify(settingsPayload()); if(sp !== SNAP.settings){ var r = await sb.from('app_settings').upsert({id:1, data:settingsPayload()}); if(r.error) throw r.error; SNAP.settings = sp; }
       await syncTable('leads', db.leads, leadToRow);
       try{ await syncTable('recipient_lists', lists(), listToRow); }catch(e){ console.warn('recipient_lists:', e.message || e); }
@@ -2473,6 +2560,7 @@ var ACT = {
   undo:undo, redo:redo,
   preview:function(){ openPreview(F(), S.pi); },
   publish:function(){ publishModal(F()); },
+  versions:function(){ versionsModal(F()); },
   addLib:function(el){ addFromLibClick(el.getAttribute('data-lib')); },
   page:function(el, e){ if(e.target.closest('[data-a="pmenu"]')) return; selectPage(+el.getAttribute('data-i')); },
   pmenu:function(el, e){ e.stopPropagation(); var i = +el.getAttribute('data-i'), f = F(); dropdown(el, [
@@ -2605,7 +2693,7 @@ document.addEventListener('input', function(e){
   if(el.hasAttribute('data-rr')){ var rb = selBlock(), rr = rb && rb.props.routes[+el.getAttribute('data-rr')], rk = el.getAttribute('data-rk'); if(!rr) return; snap(el.tagName === 'SELECT'); rr[rk] = rk === 'goto' ? el.value : +el.value; touch(); renderLeft(); renderCanvas(true); return; }
   if(el.hasAttribute('data-sr')){ var pg = curPage(), r = pg.scoreRoutes[+el.getAttribute('data-sr')], sk = el.getAttribute('data-sk'); snap(el.tagName === 'SELECT'); r[sk] = sk === 'goto' ? el.value : +el.value; touch(); renderLeft(); return; }
 });
-function syncColor(el, scope, k, v){ var w = el.closest('.colr'); if(!w) return; $$('input', w).forEach(function(x){ if(x !== el){ if(x.type === 'color') x.value = toHex(v); else x.value = v; } }); }
+function syncColor(el, scope, k, v){ var w = el.closest('.colr'); if(!w) return; $$('input', w).forEach(function(x){ if(x === el || x.type === 'range') return; if(x.type === 'color') x.value = toHex(v); else x.value = v; }); var al = w.querySelector('[data-alpha]'); if(al){ al.style.setProperty('--c', toHex(v)); if(el.type === 'text'){ var na = colAlpha(v); al.value = na; al.nextElementSibling.textContent = na + '%'; } } }
 function rangeLabel(el){ if(el.type === 'range'){ var s = el.parentNode.querySelector('span'); if(s) s.textContent = el.value + (el.hasAttribute('data-unit') ? el.getAttribute('data-unit') : 'px'); } }
 
 document.addEventListener('change', function(e){
@@ -2656,6 +2744,11 @@ document.addEventListener('keydown', function(e){
   if(mod && e.altKey && !typing && (e.code === 'KeyC' || e.code === 'KeyV')){ e.preventDefault(); if(e.code === 'KeyC') fmtCopy(false); else { var fb = selBlock(); if(fb) fmtApply(fb); else toast('Erst ein Element markieren'); } return; }
   var textSel = getSelection && String(getSelection()).length > 0;
   if(mod && !e.shiftKey && e.key.toLowerCase() === 'v' && !typing){ e.preventDefault(); pasteBlock(); return; }
+  /* Ohne markiertes Element: ←/→ oder A/D blättern durch die Seiten */
+  if(!typing && !S.sel && !mod && !e.altKey && !inl && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'a' || e.key === 'd' || e.key === 'A' || e.key === 'D')){
+    var dir = (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') ? 1 : -1, ni = S.pi + dir;
+    if(ni >= 0 && ni < F().pages.length){ e.preventDefault(); selectPage(ni); } return;
+  }
   if(typing || !S.sel) return;
   if(mod && e.key.toLowerCase() === 'c' && !textSel){ e.preventDefault(); copyBlock(); return; }
   if(e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); delBlock(); }

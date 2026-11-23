@@ -596,6 +596,7 @@ FP.renderBlock = function(b, ctx){
       var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow'), icH = ic === 'whatsapp' ? FP.WA : ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
       var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse':'');
       var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '') + (p.radiusOn ? '--br:'+(+p.radius||0)+'px;' : '');
+      if(+p.btnBw || p.btnBc) bst += 'border:'+(p.btnBw !== '' && p.btnBw != null ? +p.btnBw : 1)+'px solid '+esc(p.btnBc || 'color-mix(in srgb,currentColor 25%,transparent)')+';'; /* eigener Rahmen, z. B. weißer Button mit feiner Linie */
       var bpd = FP.padSides(p, ['bpt','bpr','bpb','bpl']); if(bpd) bst += bpd + 'min-height:0;'; /* eigener Innenabstand schlägt Mindesthöhen aus Vorlagen-CSS */
       var subIn = p.sub && p.subIn;
       var lbl = subIn ? '<span class="tx"><span class="ln">'+T(p.label||'Weiter')+'</span><span class="sb">'+T(p.sub)+'</span></span>' : '<span>'+T(p.label||'Weiter')+'</span>';
@@ -618,7 +619,7 @@ FP.renderBlock = function(b, ctx){
         break;
       }
       var ratio = lay==='image' && p.ratio ? String(p.ratio).replace(':','/') : '';
-      h += '<div class="fp-opts '+lay+((lay==='image'&&p.cols===1)?' one':'')+((lay==='grid'&&p.cols===3)?' grid3':'')+((lay==='image'||lay==='grid'||lay==='checklist')&&+p.colsD>1?' cd'+(+p.colsD):'')+(p.optAlign?' ta-'+(p.optAlign==='center'?'c':'l'):'')+(p.optFw?' ofw':'')+(p.optSubFw?' osfw':'')+'"'+((ratio||p.optFw||p.optSubFw)?' style="'+(ratio?'--ir:'+esc(ratio)+';':'')+(p.optFw?'--ofw:'+(+p.optFw)+';':'')+(p.optSubFw?'--osfw:'+(+p.optSubFw)+';':'')+'"':'')+'>';
+      h += '<div class="fp-opts '+lay+((lay==='image'&&p.cols===1)?' one':'')+((lay==='image'&&(p.cols===3||p.cols===4))?' c'+p.cols:'')+((lay==='grid'&&p.cols===3)?' grid3':'')+((lay==='image'||lay==='grid'||lay==='checklist')&&+p.colsD>1?' cd'+(+p.colsD):'')+(p.optAlign?' ta-'+(p.optAlign==='center'?'c':'l'):'')+(p.optFw?' ofw':'')+(p.optSubFw?' osfw':'')+'"'+((ratio||p.optFw||p.optSubFw)?' style="'+(ratio?'--ir:'+esc(ratio)+';':'')+(p.optFw?'--ofw:'+(+p.optFw)+';':'')+(p.optSubFw?'--osfw:'+(+p.optSubFw)+';':'')+'"':'')+'>';
       (p.options||[]).forEach(function(o){
         var on = sel.indexOf(o.id) >= 0;
         var price = p.showPrices && (+o.price || +o.unitPrice) ? '<span class="pr">'+(+o.price ? '+ '+FP.money(o.price,cur) : FP.money(o.unitPrice,cur)+(o.unitLabel?' / '+esc(o.unitLabel):''))+'</span>' : '';
@@ -626,7 +627,7 @@ FP.renderBlock = function(b, ctx){
         if(lay === 'image'){
           var olq = o.img ? FP.lqSrc(o.img) : '';
           var bg = o.img ? 'background-image:url(&quot;'+o.img+'&quot;)'+(olq?',url(&quot;'+olq+'&quot;)':'')+(o.pos?';background-position:'+esc(o.pos):'') :'background:linear-gradient(135deg,color-mix(in srgb,var(--p) 18%,var(--sf)),var(--sf))';
-          h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'"><span class="im'+(!o.img && o.ic && FP.ICONS[o.ic] ? ' ic' : '')+'" style="'+bg+'">'+(o.img?'':(o.ic && FP.ICONS[o.ic] ? FP.ICONS[o.ic] : esc(o.icon||'')))+'</span><span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
+          h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'"><span class="im'+(!o.img && o.ic && FP.ICONS[o.ic] ? ' ic' : '')+'" style="'+bg+'">'+(o.img?'':(o.ic && FP.ICONS[o.ic] ? FP.ICONS[o.ic] : esc(o.icon||'')))+(o.img && p.zoom !== false ? '<span class="zm" role="button" tabindex="0" data-act="zoom" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="Bild vergrößern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5"/></svg></span>' : '')+'</span><span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
         } else {
           h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'">'+(o.ic && FP.ICONS[o.ic] ? '<span class="ico ic">'+FP.ICONS[o.ic]+'</span>' : o.icon?'<span class="ico">'+esc(o.icon)+'</span>':'')+'<span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
         }
@@ -634,7 +635,7 @@ FP.renderBlock = function(b, ctx){
       h += '</div>';
       break;
     case 'input':
-      var it = p.inputType || 'text', icon = it==='email'?IC.mail:it==='tel'?IC.phone:p.icon==='user'?IC.user:'';
+      var it = p.inputType || 'text', icon = p.emoji ? '<span class="ie">'+esc(p.emoji)+'</span>' : it==='email'?IC.mail:it==='tel'?IC.phone:p.icon==='user'?IC.user:'';
       var val = v == null ? '' : esc(v);
       var field = it === 'textarea' ? '<textarea class="fp-in" data-key="'+esc(k)+'" data-bid="'+b.id+'"'+(+p.rows>0?' rows="'+(+p.rows)+'"':'')+' placeholder="'+esc(ctx.edit?p.placeholder:FP.interp(p.placeholder, ctx.f, a))+'">'+val+'</textarea>'
         : '<div class="fp-iw">'+(icon?'<span class="ii">'+icon+'</span>':'')+'<input class="fp-in" type="'+(it==='tel'?'tel':it==='email'?'email':it==='number'?'number':it==='date'?'date':'text')+'" data-key="'+esc(k)+'" data-bid="'+b.id+'" placeholder="'+esc(ctx.edit?p.placeholder:FP.interp(p.placeholder, ctx.f, a))+'" value="'+val+'" autocomplete="'+(it==='email'?'email':it==='tel'?'tel':/name/i.test(k)?'name':'on')+'"></div>';
@@ -681,7 +682,7 @@ FP.renderBlock = function(b, ctx){
       h = label(p.label) + '<div class="fp-sig'+(v?' has':'')+'" data-sig="'+b.id+'"><canvas data-key="'+esc(k)+'" data-bid="'+b.id+'"></canvas><div class="line"></div><div class="fp-sigh">'+esc(p.hint||'Hier mit dem Finger unterschreiben')+'</div><button class="clr" data-act="sigclr" data-bid="'+b.id+'">Löschen</button></div>';
       break;
     case 'checkbox':
-      h = '<button class="fp-cb'+(v?' on':'')+'" data-act="cb" data-bid="'+b.id+'"><span class="box">'+IC.check+'</span><span>'+T(p.text)+rq+'</span></button>';
+      h = '<div class="fp-cb'+(v?' on':'')+'" role="checkbox" tabindex="0" aria-checked="'+(!!v)+'" data-act="cb" data-bid="'+b.id+'"><span class="box">'+IC.check+'</span><span>'+T(p.text)+rq+'</span></div>';
       break;
     case 'spacer':
       h = '<div style="height:'+(p.height||24)+'px"></div>';
@@ -760,6 +761,8 @@ FP.renderBlock = function(b, ctx){
   if(hv(p.iRad)){ st += '--r:'+(+p.iRad)+'px;'; cl0 += ' ix-rad'; }
   if(hv(p.iLine) || hv(p.iBw)){ st += (hv(p.iLine) ? '--iline:'+esc(p.iLine)+';' : '') + (hv(p.iBw) ? '--ibw:'+(+p.iBw)+'px;' : ''); cl0 += ' ix-line'; }
   if(p.iShd) cl0 += ' ix-sh-'+esc(p.iShd);
+  if(p.iShd === 'custom') st += '--ishd:'+(+p.iShdX||0)+'px '+(hv(p.iShdY)?+p.iShdY:6)+'px '+(hv(p.iShdB)?+p.iShdB:18)+'px '+(+p.iShdS||0)+'px '+esc(p.iShdC||'rgba(0,0,0,.18)')+';';
+  if(p.inStyle) cl0 += ' ins-'+esc(p.inStyle);
   if(hv(p.iGap)){ st += '--igap:'+(+p.iGap)+'px;'; cl0 += ' ix-gap'; }
   if(hv(p.inBg)){ st += '--inbg:'+esc(p.inBg)+';'; cl0 += ' ix-inbg'; }
   if(hv(p.starColor)) st += '--star:'+esc(p.starColor)+';';
@@ -816,6 +819,7 @@ FP.renderShell = function(f, idx, inner, opts){
     logo = '<div class="fp-chathd"><span class="av" style="'+cav+'">'+(t.chatAvatar ? '' : esc(FP.chatIni(t.chatName)))+'</span><span class="nm"><b>'+esc(t.chatName || t.logoText || 'Dein Team')+'</b><small>'+esc(t.chatRole || 'Antwortet in der Regel sofort')+'</small></span></div>';
     style += t.chatAvatar ? '--cav:url(&quot;'+esc(t.chatAvatar)+'&quot;);--cini:&quot;&quot;;' : '--cini:&quot;'+esc(FP.chatIni(t.chatName))+'&quot;;';
   }
+  if(page.hideLogo && !t.chat) logo = ''; /* Logo nur auf dieser Seite ausblenden */
   var head = (logo || opts.back) ? '<div class="fp-head'+(t.chat?' left':'')+(t.logoAlign==='left'?' left':'')+(opts.back?' hb':'')+'">'+(opts.back?'<button class="fp-back" data-act="back" aria-label="Zurück">'+IC.back+'</button>':'')+logo+'</div>' : '';
   var ov = bgImg ? '<div class="fp-ov" style="background:'+(t.overlay||'rgba(0,0,0,.35)')+'"></div>' : '';
   var top = (head || prog) ? '<div class="fp-top">'+(t.progressTop?prog+head:head+prog)+'</div>' : '<div style="height:var(--tpt,10px)"></div>';
@@ -1162,6 +1166,7 @@ FP.mount = function(root, f, opts){
     var el = e.target.closest('[data-act]'); if(!el || !root.contains(el)) return;
     var act = el.getAttribute('data-act'), b = blockById(el.getAttribute('data-bid'));
     if(act === 'consent') return; /* eigener Handler unten */
+    if(act === 'cb' && e.target.closest('a')) return; /* Link in der Einwilligung öffnet sich, ohne das Häkchen zu setzen */
     if(!b && ['next','back','logo','fab','resume','fresh'].indexOf(act) < 0) return; /* Element gehört nicht (mehr) zu diesem Funnel */
     if(act !== 'sigclr') e.preventDefault();
     if(act === 'next') go();
@@ -1194,13 +1199,42 @@ FP.mount = function(root, f, opts){
       }
     }
     else if(act === 'rate'){ setAns(b, +el.getAttribute('data-v')); markSelection(b); if(b.props.autoNext){ clearTimeout(timer); timer = setTimeout(function(){ go(); }, 300);} }
-    else if(act === 'cb'){ setAns(b, !st.answers[keyOf(b)]); markSelection(b); }
+    else if(act === 'cb'){ setAns(b, !st.answers[keyOf(b)]); markSelection(b); var cbe = root.querySelector('.fp-cb[data-bid="'+b.id+'"]'); if(cbe) cbe.setAttribute('aria-checked', !!st.answers[keyOf(b)]); }
+    else if(act === 'zoom'){ e.stopPropagation(); lightbox(b, el.getAttribute('data-oid')); }
     else if(act === 'day'){ var cv = st.answers[keyOf(b)] || {}, nd = el.getAttribute('data-v'); if(cv.date !== nd) FP.calAnim[b.id] = 'd'; FP.calView[b.id] = nd.slice(0, 7); setAns(b, b.props.calStyle === 'strip' ? {date:nd, time:cv.time} : {date:nd}); render(true); }
     else if(act === 'slot'){ var cv2 = st.answers[keyOf(b)] || {}; if(!cv2.date) return; setAns(b, {date:cv2.date, time:el.getAttribute('data-v')}); render(true); }
     else if(act === 'calnav'){ var cur = FP.calView[b.id] || ((st.answers[keyOf(b)] || {}).date || FP.calDays(b.props)[0] || '').slice(0, 7), dir = +el.getAttribute('data-v'); if(!cur) return; var dt = new Date(+cur.slice(0, 4), +cur.slice(5, 7) - 1 + dir, 1, 12); FP.calView[b.id] = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); FP.calAnim[b.id] = dir > 0 ? 'n' : 'p'; render(true); }
     else if(act === 'sigclr'){ e.preventDefault(); delete st.answers[keyOf(b)]; render(true); }
   });
 
+  /* Lightbox für Bildkarten: großes Bild, Wischen/Pfeile zwischen den Antworten, direkt auswählen */
+  function lightbox(b, oid){
+    var opts2 = (b.props.options || []).filter(function(o){ return o.img; }), i = Math.max(0, opts2.map(function(o){ return o.id; }).indexOf(oid)), cur2 = (f.settings || {}).currency;
+    var old = root.querySelector('.fp-lb'); if(old) old.remove();
+    var lb = document.createElement('div'); lb.className = 'fp-lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true');
+    var draw = function(dir){
+      var o = opts2[i], sel = [].concat(st.answers[keyOf(b)] == null ? [] : st.answers[keyOf(b)]).indexOf(o.id) >= 0;
+      var price = b.props.showPrices && (+o.price || +o.unitPrice) ? '<span class="pr">'+(+o.price ? '+ '+FP.money(o.price, cur2) : FP.money(o.unitPrice, cur2)+(o.unitLabel?' / '+esc(o.unitLabel):''))+'</span>' : '';
+      lb.innerHTML = '<div class="lbbg" data-lb="close"></div><div class="lbc"><button type="button" class="lbx" data-lb="close" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'
+        + '<div class="lbi'+(dir ? ' in-'+dir : '')+'"><img src="'+esc(o.img)+'" alt="'+esc(o.label)+'"></div>'
+        + '<div class="lbt"><div><b>'+esc(o.label)+'</b>'+(o.sub ? '<span>'+esc(o.sub)+'</span>' : '')+price+'</div><button type="button" class="lbs'+(sel ? ' on' : '')+'" data-lb="sel">'+(sel ? IC.check+'Ausgewählt' : 'Auswählen')+'</button></div>'
+        + (opts2.length > 1 ? '<button type="button" class="lbn p" data-lb="prev" aria-label="Vorheriges Bild">'+IC.back+'</button><button type="button" class="lbn n" data-lb="next" aria-label="Nächstes Bild">'+IC.back+'</button><div class="lbd">'+(i+1)+' / '+opts2.length+'</div>' : '')
+        + '</div>';
+    };
+    var step = function(d){ if(opts2.length < 2) return; i = (i + d + opts2.length) % opts2.length; draw(d > 0 ? 'n' : 'p'); };
+    var close = function(){ lb.classList.add('out'); document.removeEventListener('keydown', key, true); setTimeout(function(){ lb.remove(); }, 180); };
+    var key = function(e){ if(e.key === 'Escape'){ e.preventDefault(); close(); } else if(e.key === 'ArrowRight'){ step(1); } else if(e.key === 'ArrowLeft'){ step(-1); } };
+    lb.addEventListener('click', function(e){
+      var a = e.target.closest('[data-lb]'); if(!a) return; e.stopPropagation(); var k = a.getAttribute('data-lb');
+      if(k === 'close') close(); else if(k === 'prev') step(-1); else if(k === 'next') step(1);
+      else if(k === 'sel'){ var ob = root.querySelector('[data-act="opt"][data-bid="'+b.id+'"][data-oid="'+opts2[i].id+'"]'); close(); if(ob && !ob.classList.contains('sel')) ob.click(); }
+    });
+    var sx = null; lb.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive:true});
+    lb.addEventListener('touchend', function(e){ if(sx == null) return; var dx = e.changedTouches[0].clientX - sx; if(Math.abs(dx) > 40) step(dx < 0 ? 1 : -1); sx = null; });
+    document.addEventListener('keydown', key, true);
+    draw(); (root.querySelector('.fp') || root).appendChild(lb); /* innerhalb von .fp, damit Farben und Schriften des Funnels gelten */ var bx = lb.querySelector('.lbs'); if(bx) bx.focus({preventScroll:true});
+  }
+  root.addEventListener('keydown', function(e){ var t2 = e.target; if((e.key === 'Enter' || e.key === ' ') && t2.getAttribute && (t2.getAttribute('data-act') === 'cb' || t2.getAttribute('data-act') === 'zoom')){ e.preventDefault(); t2.click(); } });
   root.addEventListener('click', function(e){ var o = root.querySelector('[data-fab].open'); if(o && !o.contains(e.target)){ o.classList.remove('open'); var ob = o.querySelector('[data-act="fab"]'); if(ob) ob.setAttribute('aria-expanded', 'false'); } }, true);
   root.addEventListener('change', function(e){
     var el = e.target; if(!el || el.type !== 'range') return;

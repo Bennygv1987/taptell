@@ -41,6 +41,7 @@ Die SQL-Dateien liegen bewusst **außerhalb** von `supabase/migrations/`, damit 
 | 1 | `supabase/schema.sql` | Tabellen clients, profiles, funnels, leads, events, app_settings · RLS · `get_public_funnel`, `submit_lead`, `track_event`, `funnel_stats` | 👤 ausführen (oder 🤖 nach Freigabe per CLI) |
 | 2 | `supabase/automation.sql` | Empfängerlisten, Zustell-Protokoll, Domains, `resolve_domain`, **sichere** `get_public_funnel` (ohne Automations-Daten), Trigger „neuer Lead → lead-notify“ | 👤 / 🤖 |
 | 3 | `supabase/kunden-v2.sql` | Spalte `clients.data` (Stammdaten, Paket, Preis) | 👤 / 🤖 |
+| 4 | `supabase/versionen.sql` | Entwurf vs. Live-Stand (`funnels.published`) und Backups (`funnels.versions`); `get_public_funnel` liefert den Live-Stand. **Nach** `automation.sql` ausführen | 👤 / 🤖 |
 
 `automation.sql` muss **nach** `schema.sql` laufen, weil sie `get_public_funnel` absichert. Sonst wären Empfänger und Webhook-Daten öffentlich lesbar.
 

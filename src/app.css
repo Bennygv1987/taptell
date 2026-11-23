@@ -940,3 +940,28 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
 .fmtbar .btn{justify-content:center}
 body.painting #scr .fp-b{cursor:copy}
 @media (hover:hover) and (pointer:fine){body.painting #scr .fp-b:hover{outline:2px dashed var(--acc);outline-offset:3px}}
+
+/* Deckkraft im Farbwähler */
+.colr .alw{display:flex;align-items:center;gap:4px;flex:none}
+.colr .alw b{font:500 var(--fs-11) var(--mono);color:var(--mut);width:30px;text-align:right}
+.colr input.alpha{-webkit-appearance:none;appearance:none;width:54px;height:8px;border-radius:99px;background:linear-gradient(90deg,transparent,var(--c)),repeating-conic-gradient(var(--n200) 0 25%,var(--card) 0 50%) 0 0/8px 8px;outline:none;cursor:pointer}
+.colr input.alpha::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--card);box-shadow:0 0 0 1px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.2)}
+.colr input.alpha::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--card);border:0;box-shadow:0 0 0 1px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.2)}
+.row2 .colr .alw b{display:none}
+.row2 .colr input.alpha{width:40px}
+
+/* Entwurf / Live-Stand / Versionen */
+.pill.warn{background:var(--warnS);color:var(--warnT)}
+.btn.pri.dirty{position:relative}
+.btn.pri.dirty::after{content:'';position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 2px var(--card)}
+.golive.dirty .dot{background:var(--warn);box-shadow:0 0 0 4px var(--warnS)}
+.pn.warn{background:var(--warnS);color:var(--warnT)}
+.pvl{display:flex;justify-content:flex-end;margin:-6px 0 6px}
+.vrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2)}
+.vrow:last-child{border-bottom:0}
+.vrow.live{padding:12px;margin-bottom:6px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--n25)}
+.vi{flex:none;width:30px;height:30px;border-radius:var(--r-md);display:grid;place-items:center;background:var(--n100);color:var(--mut)}
+.vi.publish,.vrow.live .vi{background:var(--accS);color:var(--acc)}
+.vt{flex:1;min-width:0;display:grid;gap:2px}
+.vt b{font-size:var(--fs-13);font-weight:600}
+.vt span{font-size:var(--fs-12);color:var(--mut)}
