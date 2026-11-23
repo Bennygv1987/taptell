@@ -869,3 +869,39 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp-lb :is(.lbn,.lbx):active{transform:scale(.92)}
 .fp-lb .lbd{position:absolute;top:12px;left:12px;padding:4px 10px;border-radius:99px;background:rgba(17,17,20,.55);color:#fff;font:600 12px var(--ff)}
 @media (prefers-reduced-motion:reduce){.fp-lb .lbc,.fp-lb .lbi.in-n,.fp-lb .lbi.in-p{animation-name:fpFade}}
+
+/* Box: Rahmen um mehrere Elemente – Stil-Vorlagen, alles über den Stil-Tab überschreibbar */
+.fp-b.fp-box{padding:22px 20px;border-radius:18px}
+.fp-box > .fp-boxin > .fp-b:last-child{margin-bottom:0 !important}
+.fp-box > .fp-boxin > .fp-b:first-child{margin-top:0}
+.fp-b.bx-card{background:var(--bg);box-shadow:0 0 0 1px color-mix(in srgb,var(--tx) 8%,transparent),0 10px 30px -14px rgba(0,0,0,.18)}
+.fp-b.bx-sand{background:color-mix(in srgb,#efe6d8 55%,var(--bg));box-shadow:inset 0 0 0 1px color-mix(in srgb,#cdbfa8 55%,transparent)}
+.fp-b.bx-tint{background:color-mix(in srgb,var(--p) 8%,var(--bg))}
+.fp-b.bx-outline{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tx) 14%,transparent)}
+.fp-b.bx-glass{background:color-mix(in srgb,var(--bg) 55%,transparent);-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 12px 32px -16px rgba(0,0,0,.25)}
+.fp-b.bx-soft{background:var(--sf);box-shadow:-6px -6px 14px rgba(255,255,255,.9),8px 8px 18px color-mix(in srgb,var(--tx) 12%,transparent)}
+.fp-b.bx-solid{background:var(--p);--tx:var(--pt);--mt:color-mix(in srgb,var(--pt) 78%,transparent);color:var(--pt)}
+.fp-b.bx-solid .fp-btn{--p:var(--pt);--pt:var(--bgp,#111)}
+.fp-b.bx-plain{padding:0;border-radius:0}
+.fp-boxph{display:block;padding:14px;border:1.5px dashed color-mix(in srgb,var(--tx) 18%,transparent);border-radius:12px;font-size:13px;color:var(--mt);text-align:center}
+.fp.is-edit .fp-b.fp-box{outline:1px dashed color-mix(in srgb,var(--tx) 14%,transparent);outline-offset:2px}
+/* Social-Media-Leiste */
+.fp-soc{display:flex;flex-wrap:wrap;gap:12px;justify-content:inherit}
+.fp-b[style*="text-align:center"] .fp-soc{justify-content:center}
+.fp-b[style*="text-align:right"] .fp-soc{justify-content:flex-end}
+.fp-soc .si{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--tx);font:600 14px var(--ff);transition:transform 160ms var(--ease-out)}
+.fp-soc .si svg{width:var(--ssz);height:var(--ssz);flex:none;display:block}
+.fp-soc .si:active{transform:scale(.94)}
+@media (hover:hover) and (pointer:fine){.fp-soc .si:hover{transform:translateY(-2px)}}
+.fp-soc.fp-socc .si{padding:8px;border-radius:99px;background:var(--bg);box-shadow:0 0 0 1px color-mix(in srgb,var(--tx) 7%,transparent),0 6px 16px -8px rgba(0,0,0,.2)}
+.fp-soc.fp-socc .si:has(span){padding-right:16px}
+.fp.is-edit .fp-soc .si{pointer-events:none}
+/* Button: Icon-Farbe, Marken-Icons in Originalfarben */
+.fp-btn svg:not(.br){color:var(--bic,currentColor)}
+.fp-btn svg:not(.br) *{stroke:var(--bic,currentColor)}
+.fp-btn svg.br{width:1.45em;height:1.45em;flex:none}
+/* Icon-Farben bei Antworten und Listen */
+.fp-b.oic-c .fp-opt .ico{color:var(--oic)}
+.fp-b.oic-c .fp-opt .ico svg{stroke:var(--oic)}
+.fp-b[style*="--lic"] .fp-list .fp-li{color:var(--lic)}
+.fp-b[style*="--lic"] .fp-list .fp-li svg{stroke:var(--lic)}

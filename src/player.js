@@ -81,6 +81,19 @@ FP.faceIdx = function(n, i){ return n > 1 ? Math.round(i * 4 / (n - 1)) : 4; };
 /* WhatsApp-Logo (gefüllt) und Link-Helfer: Nummer in internationales Format, erste Nachricht vorbefüllt */
 FP.WA = '<svg class="wa" viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:none"><path d="M12 2.2a9.8 9.8 0 00-8.4 14.8l-1.3 4.8 4.9-1.3A9.8 9.8 0 1012 2.2zm0 17.9a8.1 8.1 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8.1 8.1 0 1112 20.1zm4.5-6c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.6 6.6 0 01-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.8 11.8 0 004.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 001.8-1.2 2.2 2.2 0 00.1-1.3c0-.1-.2-.2-.5-.3z"/></svg>';
 FP.waUrl = function(num, text){ var n = String(num || '').replace(/\D/g, '').replace(/^00/, '').replace(/^0/, '49'); return n ? 'https://wa.me/' + n + (text ? '?text=' + encodeURIComponent(text) : '') : ''; };
+/* ---------- Marken-Icons in Originalfarben (für Buttons und die Social-Media-Leiste) ---------- */
+FP.BRANDS = {
+  whatsapp:{n:'WhatsApp', c:'#25D366', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><path fill="#25D366" d="M12 1.6a10.3 10.3 0 00-8.9 15.6L1.7 22.4l5.3-1.4A10.4 10.4 0 1012 1.6z"/><path fill="#fff" d="M17.1 14.3c-.3-.1-1.6-.8-1.8-.9s-.4-.1-.6.1-.7.9-.9 1.1-.3.2-.6.1a7.2 7.2 0 01-3.6-3.1c-.3-.5.3-.5.8-1.5.1-.2 0-.3 0-.5l-.8-2c-.2-.5-.4-.5-.6-.5h-.5a1 1 0 00-.8.4 3.2 3.2 0 00-1 2.4 5.6 5.6 0 001.2 3 12.8 12.8 0 004.9 4.3c1.8.8 2.5.8 3.4.7a2.9 2.9 0 001.9-1.3 2.4 2.4 0 00.2-1.4c-.1-.1-.3-.2-.6-.4z"/></svg>'},
+  instagram:{n:'Instagram', c:'#E4405F', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="tt-ig" cx="30%" cy="107%" r="150%"><stop offset="0" stop-color="#fdf497"/><stop offset=".05" stop-color="#fdf497"/><stop offset=".45" stop-color="#fd5949"/><stop offset=".6" stop-color="#d6249f"/><stop offset=".9" stop-color="#285AEB"/></radialGradient></defs><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="url(#tt-ig)"/><rect x="6" y="6" width="12" height="12" rx="3.6" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="12" cy="12" r="2.9" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="16.3" cy="7.7" r="1" fill="#fff"/></svg>'},
+  facebook:{n:'Facebook', c:'#1877F2', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#1877F2"/><path fill="#fff" d="M15.3 8.4h-1.6c-.7 0-.9.4-.9 1v1.5h2.4l-.4 2.5h-2V22a10.6 10.6 0 01-2.8 0v-8.6H8v-2.5h2V9.1c0-2.1 1.2-3.3 3.1-3.3.9 0 1.8.1 2.2.2z"/></svg>'},
+  tiktok:{n:'TikTok', c:'#000000', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#000"/><path fill="#25F4EE" d="M14.6 4.6c.3 1.9 1.5 3.2 3.4 3.4v2.5a5.7 5.7 0 01-3.3-1.1v5a4.5 4.5 0 11-4.5-4.5h.5v2.5a2 2 0 102 2V4.6z" transform="translate(-.6 -.5)"/><path fill="#FE2C55" d="M14.6 4.6c.3 1.9 1.5 3.2 3.4 3.4v2.5a5.7 5.7 0 01-3.3-1.1v5a4.5 4.5 0 11-4.5-4.5h.5v2.5a2 2 0 102 2V4.6z" transform="translate(.6 .5)"/><path fill="#fff" d="M14.6 4.6c.3 1.9 1.5 3.2 3.4 3.4v2.5a5.7 5.7 0 01-3.3-1.1v5a4.5 4.5 0 11-4.5-4.5h.5v2.5a2 2 0 102 2V4.6z"/></svg>'},
+  linkedin:{n:'LinkedIn', c:'#0A66C2', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="4" fill="#0A66C2"/><rect x="6" y="9.6" width="2.6" height="8.4" fill="#fff"/><circle cx="7.3" cy="6.8" r="1.5" fill="#fff"/><path fill="#fff" d="M10.6 9.6h2.5v1.2c.4-.7 1.3-1.4 2.7-1.4 2.5 0 3 1.6 3 3.8V18h-2.6v-4.3c0-1-.1-2.3-1.5-2.3s-1.6 1.1-1.6 2.2V18h-2.5z"/></svg>'},
+  youtube:{n:'YouTube', c:'#FF0000', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4.8" width="22" height="14.4" rx="4.3" fill="#FF0000"/><path fill="#fff" d="M9.8 8.7v6.6l5.7-3.3z"/></svg>'},
+  x:{n:'X', c:'#000000', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#000"/><path fill="#fff" d="M6.6 6.5h3.5l2.8 3.9 3.4-3.9h1.4l-4.2 4.8 4.9 6.7h-3.5l-3-4.2-3.7 4.2H6.8l4.5-5.1z"/></svg>'},
+  telegram:{n:'Telegram', c:'#229ED9', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#229ED9"/><path fill="#fff" d="M5.4 11.7l11.2-4.3c.5-.2 1 .1.8.9l-1.9 9c-.1.6-.5.8-1 .5l-2.8-2.1-1.4 1.3c-.2.2-.3.3-.6.3l.2-2.9 5.3-4.8c.2-.2 0-.3-.3-.1L8.4 13.6l-2.8-.9c-.6-.2-.6-.6.1-.9z"/></svg>'},
+  mail:{n:'E-Mail', c:'#6B7280', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#6B7280"/><rect x="5.5" y="7.5" width="13" height="9" rx="1.6" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M6 8.3l6 4.4 6-4.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'}
+};
+FP.SOCIAL_ORDER = ['whatsapp','instagram','facebook','tiktok','linkedin','youtube','x','telegram','mail'];
 FP.BTN_ICONS = {
   arrow:BI('<path d="M5 12h14M13 6l6 6-6 6"/>'), chevron:BI('<path d="M9 6l6 6-6 6"/>'), send:BI('<path d="M21.5 2.5L10.5 13.5"/><path d="M21.5 2.5l-7 19-4-8-8-4z"/>'),
   check:BI('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), calendar:BI('<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>'),
@@ -149,6 +162,7 @@ FP.money = function(n, cur){
   catch(e){ return Math.round(n||0) + ' €'; }
 };
 var WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+var hv0 = function(x){ return x != null && x !== ''; };
 var fmtDate = function(iso){ if(!iso) return ''; var d = new Date(iso+'T12:00:00'); return WD[d.getDay()]+', '+d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); };
 FP.fmtDate = fmtDate;
 /* ---------- Übergänge an Bildkanten (wie Shape-Divider): Maske oben/unten, die Seite scheint durch ---------- */
@@ -593,9 +607,11 @@ FP.renderBlock = function(b, ctx){
     case 'button':
       var th = ctx.f.theme || {}, bv = p.variant || th.btnVariant || '';
       if(bv === 'filled') bv = '';
-      var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow'), icH = ic === 'whatsapp' ? FP.WA : ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
+      var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow'), icH = ic === 'whatsapp' ? FP.WA : /^br-/.test(ic) && FP.BRANDS[ic.slice(3)] ? FP.BRANDS[ic.slice(3)].svg : ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
       var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse':'');
       var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '') + (p.radiusOn ? '--br:'+(+p.radius||0)+'px;' : '');
+      if(+p.bSize) bst += 'font-size:'+(+p.bSize)+'px;';
+      if(p.icColor) bst += '--bic:'+esc(p.icColor)+';';
       if(+p.btnBw || p.btnBc) bst += 'border:'+(p.btnBw !== '' && p.btnBw != null ? +p.btnBw : 1)+'px solid '+esc(p.btnBc || 'color-mix(in srgb,currentColor 25%,transparent)')+';'; /* eigener Rahmen, z. B. weißer Button mit feiner Linie */
       var bpd = FP.padSides(p, ['bpt','bpr','bpb','bpl']); if(bpd) bst += bpd + 'min-height:0;'; /* eigener Innenabstand schlägt Mindesthöhen aus Vorlagen-CSS */
       var subIn = p.sub && p.subIn;
@@ -627,7 +643,7 @@ FP.renderBlock = function(b, ctx){
         if(lay === 'image'){
           var olq = o.img ? FP.lqSrc(o.img) : '';
           var bg = o.img ? 'background-image:url(&quot;'+o.img+'&quot;)'+(olq?',url(&quot;'+olq+'&quot;)':'')+(o.pos?';background-position:'+esc(o.pos):'') :'background:linear-gradient(135deg,color-mix(in srgb,var(--p) 18%,var(--sf)),var(--sf))';
-          h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'"><span class="im'+(!o.img && o.ic && FP.ICONS[o.ic] ? ' ic' : '')+'" style="'+bg+'">'+(o.img?'':(o.ic && FP.ICONS[o.ic] ? FP.ICONS[o.ic] : esc(o.icon||'')))+(o.img && p.zoom !== false ? '<span class="zm" role="button" tabindex="0" data-act="zoom" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="Bild vergrößern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5"/></svg></span>' : '')+'</span><span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
+          h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'"><span class="im'+(!o.img && o.ic && FP.ICONS[o.ic] ? ' ic' : '')+'" style="'+bg+'">'+(o.img?'':(o.ic && FP.ICONS[o.ic] ? FP.ICONS[o.ic] : esc(o.icon||'')))+(o.img && p.zoom ? '<span class="zm" role="button" tabindex="0" data-act="zoom" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="Bild vergrößern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5"/></svg></span>' : '')+'</span><span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
         } else {
           h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'">'+(o.ic && FP.ICONS[o.ic] ? '<span class="ico ic">'+FP.ICONS[o.ic]+'</span>' : o.icon?'<span class="ico">'+esc(o.icon)+'</span>':'')+'<span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
         }
@@ -683,6 +699,15 @@ FP.renderBlock = function(b, ctx){
       break;
     case 'checkbox':
       h = '<div class="fp-cb'+(v?' on':'')+'" role="checkbox" tabindex="0" aria-checked="'+(!!v)+'" data-act="cb" data-bid="'+b.id+'"><span class="box">'+IC.check+'</span><span>'+T(p.text)+rq+'</span></div>';
+      break;
+    case 'box':
+      /* Box: umschließt die nächsten Elemente (sie bleiben normale Elemente der Seite) */
+      h = '<div class="fp-boxin">' + (ctx.boxKids || (ctx.edit ? '<div class="fp-boxph">Leere Box – Elemente darunter einfügen oder bei „Enthält“ erhöhen</div>' : '')) + '</div>';
+      break;
+    case 'social':
+      var sn = FP.SOCIAL_ORDER.filter(function(k){ return p[k]; }), ssz = Math.max(24, Math.min(72, +p.size || 40));
+      var shref = function(k){ var v = String(p[k] || '').trim(); if(k === 'whatsapp') return FP.waUrl(v, p.waText); if(k === 'mail') return 'mailto:' + v.replace(/^mailto:/, ''); return /^https?:\/\//.test(v) ? v : 'https://' + v.replace(/^\/+/, ''); };
+      h = '<div class="fp-soc'+(p.chip ? ' fp-socc' : '')+'" style="--ssz:'+ssz+'px">' + (sn.length ? sn.map(function(k){ var B2 = FP.BRANDS[k]; return '<a class="si" href="'+esc(shref(k))+'" target="_blank" rel="noopener" aria-label="'+esc(B2.n)+'">'+B2.svg+(p.labels ? '<span>'+esc(B2.n)+'</span>' : '')+'</a>'; }).join('') : (ctx.edit ? '<span class="fp-boxph">Links rechts eintragen</span>' : '')) + '</div>';
       break;
     case 'spacer':
       h = '<div style="height:'+(p.height||24)+'px"></div>';
@@ -744,6 +769,8 @@ FP.renderBlock = function(b, ctx){
   }
   var t0 = (ctx.f && ctx.f.theme) || {}, cl0 = '';
   if(b.type === 'heading' || b.type === 'text') cl0 += ' hl-' + (p.hl || t0.hlStyle || 'swoosh');
+  if(b.type === 'box') cl0 += ' fp-box bx-' + esc(p.bxStyle || 'card');
+  if(hv0(p.oIconC)) cl0 += ' oic-c';
   var st = 'text-align:'+(p.align||'left')+';margin-top:'+(+p.mt||0)+'px;margin-bottom:'+(p.mb!=null&&p.mb!==''?+p.mb+'px':'var(--bk,16px)')+';';
   if(p.ff) st += '--ff:'+FP.fontStack(p.ff)+';--hf:'+FP.fontStack(p.ff)+';font-family:var(--ff);';
   if(p.fw) st += '--hw:'+p.fw+';--tw:'+p.fw+';--bw:'+p.fw+';font-weight:'+p.fw+';';
@@ -766,6 +793,8 @@ FP.renderBlock = function(b, ctx){
   if(hv(p.iGap)){ st += '--igap:'+(+p.iGap)+'px;'; cl0 += ' ix-gap'; }
   if(hv(p.inBg)){ st += '--inbg:'+esc(p.inBg)+';'; cl0 += ' ix-inbg'; }
   if(hv(p.starColor)) st += '--star:'+esc(p.starColor)+';';
+  if(hv(p.oIconC)) st += '--oic:'+esc(p.oIconC)+';';
+  if(hv(p.liColor)) st += '--lic:'+esc(p.liColor)+';';
   if(p.oCheck === false) cl0 += ' nochk';
   if(p.oIcon) cl0 += ' oic-'+esc(p.oIcon);
   if(p.liStyle) cl0 += ' li-'+esc(p.liStyle);
@@ -859,7 +888,10 @@ FP.renderPage = function(f, idx, ctx){
   if(t.stickyCta && last && last.type === 'button') stickyId = last.id;
   var chat = !!t.chat, nBot = chat ? blocks.filter(function(b){ return FP.CHAT_BOT[b.type]; }).length : 0;
   if(chat) ctx.chat = {i:0};
-  var inner = blocks.map(function(b){ var r = FP.renderBlock(b, ctx); return b.id === stickyId ? '<div class="fp-sticky">'+r+'</div>' : r; }).join('');
+  var one = function(b, c){ var r = FP.renderBlock(b, c || ctx); return b.id === stickyId ? '<div class="fp-sticky">'+r+'</div>' : r; };
+  /* Box-Elemente umschließen die nächsten n Elemente (auch verschachtelt) */
+  var list = function(arr){ var out = '', i = 0; while(i < arr.length){ var b = arr[i]; if(b.type === 'box' && !chat){ var n = Math.max(0, Math.min(+b.props.count || 0, arr.length - i - 1)); out += one(b, Object.assign({}, ctx, {boxKids:list(arr.slice(i + 1, i + 1 + n))})); i += n + 1; } else { out += one(b); i++; } } return out; };
+  var inner = list(blocks);
   /* Chat-Modus: bisherige Antworten als Verlauf, beim ersten Öffnen einer Seite kurz „schreibt …“ */
   var chatIn = chat && nBot > 0 && !ctx.edit && !ctx.noAnim;
   if(chat && !ctx.edit && (ctx.chatHist||[]).length) inner = '<div class="fp-chist">' + ctx.chatHist.map(function(x){ return (x.q ? '<div class="q">'+esc(x.q)+'</div>' : '') + '<div class="a">'+esc(x.a)+'</div>'; }).join('') + '</div>' + (chatIn ? '<div class="fp-typing" aria-hidden="true"><i></i><i></i><i></i></div>' : '') + inner;

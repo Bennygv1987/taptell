@@ -882,6 +882,42 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp-lb .lbd{position:absolute;top:12px;left:12px;padding:4px 10px;border-radius:99px;background:rgba(17,17,20,.55);color:#fff;font:600 12px var(--ff)}
 @media (prefers-reduced-motion:reduce){.fp-lb .lbc,.fp-lb .lbi.in-n,.fp-lb .lbi.in-p{animation-name:fpFade}}
 
+/* Box: Rahmen um mehrere Elemente – Stil-Vorlagen, alles über den Stil-Tab überschreibbar */
+.fp-b.fp-box{padding:22px 20px;border-radius:18px}
+.fp-box > .fp-boxin > .fp-b:last-child{margin-bottom:0 !important}
+.fp-box > .fp-boxin > .fp-b:first-child{margin-top:0}
+.fp-b.bx-card{background:var(--bg);box-shadow:0 0 0 1px color-mix(in srgb,var(--tx) 8%,transparent),0 10px 30px -14px rgba(0,0,0,.18)}
+.fp-b.bx-sand{background:color-mix(in srgb,#efe6d8 55%,var(--bg));box-shadow:inset 0 0 0 1px color-mix(in srgb,#cdbfa8 55%,transparent)}
+.fp-b.bx-tint{background:color-mix(in srgb,var(--p) 8%,var(--bg))}
+.fp-b.bx-outline{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tx) 14%,transparent)}
+.fp-b.bx-glass{background:color-mix(in srgb,var(--bg) 55%,transparent);-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 12px 32px -16px rgba(0,0,0,.25)}
+.fp-b.bx-soft{background:var(--sf);box-shadow:-6px -6px 14px rgba(255,255,255,.9),8px 8px 18px color-mix(in srgb,var(--tx) 12%,transparent)}
+.fp-b.bx-solid{background:var(--p);--tx:var(--pt);--mt:color-mix(in srgb,var(--pt) 78%,transparent);color:var(--pt)}
+.fp-b.bx-solid .fp-btn{--p:var(--pt);--pt:var(--bgp,#111)}
+.fp-b.bx-plain{padding:0;border-radius:0}
+.fp-boxph{display:block;padding:14px;border:1.5px dashed color-mix(in srgb,var(--tx) 18%,transparent);border-radius:12px;font-size:13px;color:var(--mt);text-align:center}
+.fp.is-edit .fp-b.fp-box{outline:1px dashed color-mix(in srgb,var(--tx) 14%,transparent);outline-offset:2px}
+/* Social-Media-Leiste */
+.fp-soc{display:flex;flex-wrap:wrap;gap:12px;justify-content:inherit}
+.fp-b[style*="text-align:center"] .fp-soc{justify-content:center}
+.fp-b[style*="text-align:right"] .fp-soc{justify-content:flex-end}
+.fp-soc .si{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--tx);font:600 14px var(--ff);transition:transform 160ms var(--ease-out)}
+.fp-soc .si svg{width:var(--ssz);height:var(--ssz);flex:none;display:block}
+.fp-soc .si:active{transform:scale(.94)}
+@media (hover:hover) and (pointer:fine){.fp-soc .si:hover{transform:translateY(-2px)}}
+.fp-soc.fp-socc .si{padding:8px;border-radius:99px;background:var(--bg);box-shadow:0 0 0 1px color-mix(in srgb,var(--tx) 7%,transparent),0 6px 16px -8px rgba(0,0,0,.2)}
+.fp-soc.fp-socc .si:has(span){padding-right:16px}
+.fp.is-edit .fp-soc .si{pointer-events:none}
+/* Button: Icon-Farbe, Marken-Icons in Originalfarben */
+.fp-btn svg:not(.br){color:var(--bic,currentColor)}
+.fp-btn svg:not(.br) *{stroke:var(--bic,currentColor)}
+.fp-btn svg.br{width:1.45em;height:1.45em;flex:none}
+/* Icon-Farben bei Antworten und Listen */
+.fp-b.oic-c .fp-opt .ico{color:var(--oic)}
+.fp-b.oic-c .fp-opt .ico svg{stroke:var(--oic)}
+.fp-b[style*="--lic"] .fp-list .fp-li{color:var(--lic)}
+.fp-b[style*="--lic"] .fp-list .fp-li svg{stroke:var(--lic)}
+
 </style>
 <style>
 :root{
@@ -1941,6 +1977,19 @@ FP.faceIdx = function(n, i){ return n > 1 ? Math.round(i * 4 / (n - 1)) : 4; };
 /* WhatsApp-Logo (gefüllt) und Link-Helfer: Nummer in internationales Format, erste Nachricht vorbefüllt */
 FP.WA = '<svg class="wa" viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:none"><path d="M12 2.2a9.8 9.8 0 00-8.4 14.8l-1.3 4.8 4.9-1.3A9.8 9.8 0 1012 2.2zm0 17.9a8.1 8.1 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8.1 8.1 0 1112 20.1zm4.5-6c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.6 6.6 0 01-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.8 11.8 0 004.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 001.8-1.2 2.2 2.2 0 00.1-1.3c0-.1-.2-.2-.5-.3z"/></svg>';
 FP.waUrl = function(num, text){ var n = String(num || '').replace(/\D/g, '').replace(/^00/, '').replace(/^0/, '49'); return n ? 'https://wa.me/' + n + (text ? '?text=' + encodeURIComponent(text) : '') : ''; };
+/* ---------- Marken-Icons in Originalfarben (für Buttons und die Social-Media-Leiste) ---------- */
+FP.BRANDS = {
+  whatsapp:{n:'WhatsApp', c:'#25D366', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><path fill="#25D366" d="M12 1.6a10.3 10.3 0 00-8.9 15.6L1.7 22.4l5.3-1.4A10.4 10.4 0 1012 1.6z"/><path fill="#fff" d="M17.1 14.3c-.3-.1-1.6-.8-1.8-.9s-.4-.1-.6.1-.7.9-.9 1.1-.3.2-.6.1a7.2 7.2 0 01-3.6-3.1c-.3-.5.3-.5.8-1.5.1-.2 0-.3 0-.5l-.8-2c-.2-.5-.4-.5-.6-.5h-.5a1 1 0 00-.8.4 3.2 3.2 0 00-1 2.4 5.6 5.6 0 001.2 3 12.8 12.8 0 004.9 4.3c1.8.8 2.5.8 3.4.7a2.9 2.9 0 001.9-1.3 2.4 2.4 0 00.2-1.4c-.1-.1-.3-.2-.6-.4z"/></svg>'},
+  instagram:{n:'Instagram', c:'#E4405F', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="tt-ig" cx="30%" cy="107%" r="150%"><stop offset="0" stop-color="#fdf497"/><stop offset=".05" stop-color="#fdf497"/><stop offset=".45" stop-color="#fd5949"/><stop offset=".6" stop-color="#d6249f"/><stop offset=".9" stop-color="#285AEB"/></radialGradient></defs><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="url(#tt-ig)"/><rect x="6" y="6" width="12" height="12" rx="3.6" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="12" cy="12" r="2.9" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="16.3" cy="7.7" r="1" fill="#fff"/></svg>'},
+  facebook:{n:'Facebook', c:'#1877F2', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#1877F2"/><path fill="#fff" d="M15.3 8.4h-1.6c-.7 0-.9.4-.9 1v1.5h2.4l-.4 2.5h-2V22a10.6 10.6 0 01-2.8 0v-8.6H8v-2.5h2V9.1c0-2.1 1.2-3.3 3.1-3.3.9 0 1.8.1 2.2.2z"/></svg>'},
+  tiktok:{n:'TikTok', c:'#000000', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#000"/><path fill="#25F4EE" d="M14.6 4.6c.3 1.9 1.5 3.2 3.4 3.4v2.5a5.7 5.7 0 01-3.3-1.1v5a4.5 4.5 0 11-4.5-4.5h.5v2.5a2 2 0 102 2V4.6z" transform="translate(-.6 -.5)"/><path fill="#FE2C55" d="M14.6 4.6c.3 1.9 1.5 3.2 3.4 3.4v2.5a5.7 5.7 0 01-3.3-1.1v5a4.5 4.5 0 11-4.5-4.5h.5v2.5a2 2 0 102 2V4.6z" transform="translate(.6 .5)"/><path fill="#fff" d="M14.6 4.6c.3 1.9 1.5 3.2 3.4 3.4v2.5a5.7 5.7 0 01-3.3-1.1v5a4.5 4.5 0 11-4.5-4.5h.5v2.5a2 2 0 102 2V4.6z"/></svg>'},
+  linkedin:{n:'LinkedIn', c:'#0A66C2', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="4" fill="#0A66C2"/><rect x="6" y="9.6" width="2.6" height="8.4" fill="#fff"/><circle cx="7.3" cy="6.8" r="1.5" fill="#fff"/><path fill="#fff" d="M10.6 9.6h2.5v1.2c.4-.7 1.3-1.4 2.7-1.4 2.5 0 3 1.6 3 3.8V18h-2.6v-4.3c0-1-.1-2.3-1.5-2.3s-1.6 1.1-1.6 2.2V18h-2.5z"/></svg>'},
+  youtube:{n:'YouTube', c:'#FF0000', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4.8" width="22" height="14.4" rx="4.3" fill="#FF0000"/><path fill="#fff" d="M9.8 8.7v6.6l5.7-3.3z"/></svg>'},
+  x:{n:'X', c:'#000000', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#000"/><path fill="#fff" d="M6.6 6.5h3.5l2.8 3.9 3.4-3.9h1.4l-4.2 4.8 4.9 6.7h-3.5l-3-4.2-3.7 4.2H6.8l4.5-5.1z"/></svg>'},
+  telegram:{n:'Telegram', c:'#229ED9', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#229ED9"/><path fill="#fff" d="M5.4 11.7l11.2-4.3c.5-.2 1 .1.8.9l-1.9 9c-.1.6-.5.8-1 .5l-2.8-2.1-1.4 1.3c-.2.2-.3.3-.6.3l.2-2.9 5.3-4.8c.2-.2 0-.3-.3-.1L8.4 13.6l-2.8-.9c-.6-.2-.6-.6.1-.9z"/></svg>'},
+  mail:{n:'E-Mail', c:'#6B7280', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#6B7280"/><rect x="5.5" y="7.5" width="13" height="9" rx="1.6" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M6 8.3l6 4.4 6-4.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'}
+};
+FP.SOCIAL_ORDER = ['whatsapp','instagram','facebook','tiktok','linkedin','youtube','x','telegram','mail'];
 FP.BTN_ICONS = {
   arrow:BI('<path d="M5 12h14M13 6l6 6-6 6"/>'), chevron:BI('<path d="M9 6l6 6-6 6"/>'), send:BI('<path d="M21.5 2.5L10.5 13.5"/><path d="M21.5 2.5l-7 19-4-8-8-4z"/>'),
   check:BI('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), calendar:BI('<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>'),
@@ -2009,6 +2058,7 @@ FP.money = function(n, cur){
   catch(e){ return Math.round(n||0) + ' €'; }
 };
 var WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+var hv0 = function(x){ return x != null && x !== ''; };
 var fmtDate = function(iso){ if(!iso) return ''; var d = new Date(iso+'T12:00:00'); return WD[d.getDay()]+', '+d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); };
 FP.fmtDate = fmtDate;
 /* ---------- Übergänge an Bildkanten (wie Shape-Divider): Maske oben/unten, die Seite scheint durch ---------- */
@@ -2453,9 +2503,11 @@ FP.renderBlock = function(b, ctx){
     case 'button':
       var th = ctx.f.theme || {}, bv = p.variant || th.btnVariant || '';
       if(bv === 'filled') bv = '';
-      var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow'), icH = ic === 'whatsapp' ? FP.WA : ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
+      var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow'), icH = ic === 'whatsapp' ? FP.WA : /^br-/.test(ic) && FP.BRANDS[ic.slice(3)] ? FP.BRANDS[ic.slice(3)].svg : ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
       var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse':'');
       var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '') + (p.radiusOn ? '--br:'+(+p.radius||0)+'px;' : '');
+      if(+p.bSize) bst += 'font-size:'+(+p.bSize)+'px;';
+      if(p.icColor) bst += '--bic:'+esc(p.icColor)+';';
       if(+p.btnBw || p.btnBc) bst += 'border:'+(p.btnBw !== '' && p.btnBw != null ? +p.btnBw : 1)+'px solid '+esc(p.btnBc || 'color-mix(in srgb,currentColor 25%,transparent)')+';'; /* eigener Rahmen, z. B. weißer Button mit feiner Linie */
       var bpd = FP.padSides(p, ['bpt','bpr','bpb','bpl']); if(bpd) bst += bpd + 'min-height:0;'; /* eigener Innenabstand schlägt Mindesthöhen aus Vorlagen-CSS */
       var subIn = p.sub && p.subIn;
@@ -2487,7 +2539,7 @@ FP.renderBlock = function(b, ctx){
         if(lay === 'image'){
           var olq = o.img ? FP.lqSrc(o.img) : '';
           var bg = o.img ? 'background-image:url(&quot;'+o.img+'&quot;)'+(olq?',url(&quot;'+olq+'&quot;)':'')+(o.pos?';background-position:'+esc(o.pos):'') :'background:linear-gradient(135deg,color-mix(in srgb,var(--p) 18%,var(--sf)),var(--sf))';
-          h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'"><span class="im'+(!o.img && o.ic && FP.ICONS[o.ic] ? ' ic' : '')+'" style="'+bg+'">'+(o.img?'':(o.ic && FP.ICONS[o.ic] ? FP.ICONS[o.ic] : esc(o.icon||'')))+(o.img && p.zoom !== false ? '<span class="zm" role="button" tabindex="0" data-act="zoom" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="Bild vergrößern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5"/></svg></span>' : '')+'</span><span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
+          h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'"><span class="im'+(!o.img && o.ic && FP.ICONS[o.ic] ? ' ic' : '')+'" style="'+bg+'">'+(o.img?'':(o.ic && FP.ICONS[o.ic] ? FP.ICONS[o.ic] : esc(o.icon||'')))+(o.img && p.zoom ? '<span class="zm" role="button" tabindex="0" data-act="zoom" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="Bild vergrößern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5"/></svg></span>' : '')+'</span><span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
         } else {
           h += '<button class="fp-opt'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'">'+(o.ic && FP.ICONS[o.ic] ? '<span class="ico ic">'+FP.ICONS[o.ic]+'</span>' : o.icon?'<span class="ico">'+esc(o.icon)+'</span>':'')+'<span class="lbl">'+esc(o.label)+(o.sub?'<span class="sub">'+esc(o.sub)+'</span>':'')+price+'</span>'+chk+'</button>';
         }
@@ -2543,6 +2595,15 @@ FP.renderBlock = function(b, ctx){
       break;
     case 'checkbox':
       h = '<div class="fp-cb'+(v?' on':'')+'" role="checkbox" tabindex="0" aria-checked="'+(!!v)+'" data-act="cb" data-bid="'+b.id+'"><span class="box">'+IC.check+'</span><span>'+T(p.text)+rq+'</span></div>';
+      break;
+    case 'box':
+      /* Box: umschließt die nächsten Elemente (sie bleiben normale Elemente der Seite) */
+      h = '<div class="fp-boxin">' + (ctx.boxKids || (ctx.edit ? '<div class="fp-boxph">Leere Box – Elemente darunter einfügen oder bei „Enthält“ erhöhen</div>' : '')) + '</div>';
+      break;
+    case 'social':
+      var sn = FP.SOCIAL_ORDER.filter(function(k){ return p[k]; }), ssz = Math.max(24, Math.min(72, +p.size || 40));
+      var shref = function(k){ var v = String(p[k] || '').trim(); if(k === 'whatsapp') return FP.waUrl(v, p.waText); if(k === 'mail') return 'mailto:' + v.replace(/^mailto:/, ''); return /^https?:\/\//.test(v) ? v : 'https://' + v.replace(/^\/+/, ''); };
+      h = '<div class="fp-soc'+(p.chip ? ' fp-socc' : '')+'" style="--ssz:'+ssz+'px">' + (sn.length ? sn.map(function(k){ var B2 = FP.BRANDS[k]; return '<a class="si" href="'+esc(shref(k))+'" target="_blank" rel="noopener" aria-label="'+esc(B2.n)+'">'+B2.svg+(p.labels ? '<span>'+esc(B2.n)+'</span>' : '')+'</a>'; }).join('') : (ctx.edit ? '<span class="fp-boxph">Links rechts eintragen</span>' : '')) + '</div>';
       break;
     case 'spacer':
       h = '<div style="height:'+(p.height||24)+'px"></div>';
@@ -2604,6 +2665,8 @@ FP.renderBlock = function(b, ctx){
   }
   var t0 = (ctx.f && ctx.f.theme) || {}, cl0 = '';
   if(b.type === 'heading' || b.type === 'text') cl0 += ' hl-' + (p.hl || t0.hlStyle || 'swoosh');
+  if(b.type === 'box') cl0 += ' fp-box bx-' + esc(p.bxStyle || 'card');
+  if(hv0(p.oIconC)) cl0 += ' oic-c';
   var st = 'text-align:'+(p.align||'left')+';margin-top:'+(+p.mt||0)+'px;margin-bottom:'+(p.mb!=null&&p.mb!==''?+p.mb+'px':'var(--bk,16px)')+';';
   if(p.ff) st += '--ff:'+FP.fontStack(p.ff)+';--hf:'+FP.fontStack(p.ff)+';font-family:var(--ff);';
   if(p.fw) st += '--hw:'+p.fw+';--tw:'+p.fw+';--bw:'+p.fw+';font-weight:'+p.fw+';';
@@ -2626,6 +2689,8 @@ FP.renderBlock = function(b, ctx){
   if(hv(p.iGap)){ st += '--igap:'+(+p.iGap)+'px;'; cl0 += ' ix-gap'; }
   if(hv(p.inBg)){ st += '--inbg:'+esc(p.inBg)+';'; cl0 += ' ix-inbg'; }
   if(hv(p.starColor)) st += '--star:'+esc(p.starColor)+';';
+  if(hv(p.oIconC)) st += '--oic:'+esc(p.oIconC)+';';
+  if(hv(p.liColor)) st += '--lic:'+esc(p.liColor)+';';
   if(p.oCheck === false) cl0 += ' nochk';
   if(p.oIcon) cl0 += ' oic-'+esc(p.oIcon);
   if(p.liStyle) cl0 += ' li-'+esc(p.liStyle);
@@ -2719,7 +2784,10 @@ FP.renderPage = function(f, idx, ctx){
   if(t.stickyCta && last && last.type === 'button') stickyId = last.id;
   var chat = !!t.chat, nBot = chat ? blocks.filter(function(b){ return FP.CHAT_BOT[b.type]; }).length : 0;
   if(chat) ctx.chat = {i:0};
-  var inner = blocks.map(function(b){ var r = FP.renderBlock(b, ctx); return b.id === stickyId ? '<div class="fp-sticky">'+r+'</div>' : r; }).join('');
+  var one = function(b, c){ var r = FP.renderBlock(b, c || ctx); return b.id === stickyId ? '<div class="fp-sticky">'+r+'</div>' : r; };
+  /* Box-Elemente umschließen die nächsten n Elemente (auch verschachtelt) */
+  var list = function(arr){ var out = '', i = 0; while(i < arr.length){ var b = arr[i]; if(b.type === 'box' && !chat){ var n = Math.max(0, Math.min(+b.props.count || 0, arr.length - i - 1)); out += one(b, Object.assign({}, ctx, {boxKids:list(arr.slice(i + 1, i + 1 + n))})); i += n + 1; } else { out += one(b); i++; } } return out; };
+  var inner = list(blocks);
   /* Chat-Modus: bisherige Antworten als Verlauf, beim ersten Öffnen einer Seite kurz „schreibt …“ */
   var chatIn = chat && nBot > 0 && !ctx.edit && !ctx.noAnim;
   if(chat && !ctx.edit && (ctx.chatHist||[]).length) inner = '<div class="fp-chist">' + ctx.chatHist.map(function(x){ return (x.q ? '<div class="q">'+esc(x.q)+'</div>' : '') + '<div class="a">'+esc(x.a)+'</div>'; }).join('') + '</div>' + (chatIn ? '<div class="fp-typing" aria-hidden="true"><i></i><i></i><i></i></div>' : '') + inner;
@@ -3264,6 +3332,8 @@ var DEF = {
   button:      function(){ return {label:'Weiter', action:'next', target:'', url:'', variant:'', full:true, shadow:true, arrow:true, pulse:false, sub:''}; },
   summary:     function(){ return {title:'Deine Konfiguration', totalLabel:'Geschätzter Gesamtpreis', note:'Unverbindliche Schätzung inkl. MwSt.', showItems:true, compact:false, prefix:''}; },
   spacer:      function(){ return {height:24}; },
+  box:         function(){ return {count:0, bxStyle:'sand', align:'center'}; },
+  social:      function(){ return {instagram:'', facebook:'', whatsapp:'', size:40, align:'center'}; },
   divider:     function(){ return {mt:4, mb:20}; },
   html:        function(){ return {code:'<div style="padding:16px;border-radius:12px;background:#f4f5f8;text-align:center">Eigener HTML-Code</div>'}; }
 };
@@ -3309,6 +3379,8 @@ var LIB = [
   {id:'faces', type:'rating', n:'Smileys flach', ic:'star', g:'Fragen', over:{label:'Wie zufrieden bist du?', style:'faces', max:5, key:'zufriedenheit', autoNext:true, align:'center'}},
   {id:'faq', type:'faq', n:'FAQ', ic:'help', g:'Vertrauen'},
   {id:'countdown', type:'countdown', n:'Countdown', ic:'clock', g:'Vertrauen'},
+  {id:'box', type:'box', n:'Box', ic:'boxi', g:'Layout'},
+  {id:'social', type:'social', n:'Social Media', ic:'share2', g:'Inhalt'},
   {id:'spacer', type:'spacer', n:'Abstand', ic:'space', g:'Layout'},
   {id:'divider', type:'divider', n:'Trennlinie', ic:'minus', g:'Layout'},
   {id:'html', type:'html', n:'HTML / Code', ic:'code', g:'Layout'}
@@ -4231,6 +4303,7 @@ var IP = {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 000 11H13"/>',
   mobile:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>', monitor:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
   sidebar:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
+  boxi:'<rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h5"/>', share2:'<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1"/>',
   history:'<path d="M3 12a9 9 0 109-9 9.7 9.7 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
   brush:'<path d="M14.5 4.5l5 5-7.5 7.5-5-5z"/><path d="M7 12l-2.6 2.6a2.4 2.4 0 000 3.4l.6.6c.9.9 2.5.9 3.4 0L11 16"/><path d="M17 2l5 5"/>',
   flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', minus:'<path d="M5 12h14"/>', fit:'<path d="M4 9V5a1 1 0 011-1h4M15 4h4a1 1 0 011 1v4M20 15v4a1 1 0 01-1 1h-4M9 20H5a1 1 0 01-1-1v-4"/>', logic:'<path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/>',
@@ -4838,7 +4911,7 @@ var FIELDS = {
   loader:[['anim','select','Animation',FP.LOADERS],['src','text','Lottie-Adresse (.json, z. B. von LottieFiles)',null,function(p){ return p.anim === 'custom'; }],['json','lottie','Oder Datei hochladen',null,function(p){ return p.anim === 'custom'; }],['duration','range','Dauer',[1,10,0.5,' s']],['size','range','Größe',[60,240,4]],['texts','strings','Wechselnde Hinweise','Wechseln gleichmäßig über die Dauer.'],['showBar','toggle','Ladebalken anzeigen'],['_n','note','Nach Ablauf geht es automatisch zur nächsten Seite. Wer zurückgeht, überspringt die Ladeseite.']],
   faq:[['items','faq','Fragen & Antworten']],
   countdown:[['label','text','Text darüber'],['minutes','num','Dauer in Minuten']],
-  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[3,'3'],[4,'4'],[1,'1']],function(p){ return p.layout==='image'; }],['zoom','toggle','Lupe zum Vergrößern','Öffnet das Bild groß, mit Wischen zwischen den Antworten und direktem Auswählen.',function(p){ return p.layout==='image'; },true],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
+  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[3,'3'],[4,'4'],[1,'1']],function(p){ return p.layout==='image'; }],['zoom','toggle','Lupe zum Vergrößern','Zeigt eine Lupe auf jedem Bild. Sie öffnet das Bild groß, mit Wischen zwischen den Antworten und direktem Auswählen.',function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
   input:[['label','text','Label'],['placeholder','text','Platzhalter'],['emoji','text','Emoji im Feld (optional)','z. B. ✉️ oder 📞 – ersetzt das Standard-Icon.'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['faces','Smileys flach mit Text'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='faces'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.style==='faces'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.style==='faces'; }],['faceLabels','strings','Texte unter den Smileys','Leer lassen für: Sehr schlecht, Schlecht, Okay, Gut, Super.',function(p){ return p.style==='faces' && !p.faceNoText; }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.style==='faces' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.style!=='faces' || (p.faceNoText && p.faceEnds); }],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
@@ -4857,14 +4930,16 @@ var FIELDS = {
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text','Link: Doppelklick auf den Text im Handy, Wort markieren, Link-Symbol – oder hier [Datenschutzerklärung](https://…) schreiben. Links öffnen sich in einem neuen Fenster.'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['whatsapp','WhatsApp'],['none','Kein Icon']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['row2','row',[['btnBw','num','Rahmen (px)'],['btnBc','color','Rahmenfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
+  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['whatsapp','WhatsApp (einfarbig)'],['br-whatsapp','WhatsApp (Original)'],['br-instagram','Instagram (Original)'],['br-facebook','Facebook (Original)'],['br-tiktok','TikTok (Original)'],['br-linkedin','LinkedIn (Original)'],['br-youtube','YouTube (Original)'],['br-x','X (Original)'],['br-telegram','Telegram (Original)'],['none','Kein Icon']]],['row2','row',[['bSize','num','Schriftgröße (px)'],['icColor','color','Icon-Farbe']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['row2','row',[['btnBw','num','Rahmen (px)'],['btnBc','color','Rahmenfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
   summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }],['sticky','toggle','Unten fixieren','Bleibt beim Scrollen am unteren Rand sichtbar, solange das Element weiter unten auf der Seite steht.']],
+  box:[['count','num','Enthält die nächsten … Elemente','Die Elemente direkt darunter liegen in der Box. Mit den Pfeilen in der Element-Leiste schiebst du Elemente hinein oder heraus.'],['bxStyle','seg','Stil',[['card','Karte'],['sand','Sand'],['tint','Getönt'],['outline','Rahmen'],['glass','Glas'],['soft','Soft UI'],['solid','Farbig'],['plain','Ohne']]],['_bh','note','Hintergrund, Rahmen, Schatten, Ecken und Innenabstand stellst du unten unter „Stil → Box“ ein.']],
+  social:[['whatsapp','text','WhatsApp-Nummer'],['waText','text','Erste WhatsApp-Nachricht (optional)'],['instagram','text','Instagram-Link'],['facebook','text','Facebook-Link'],['tiktok','text','TikTok-Link'],['linkedin','text','LinkedIn-Link'],['youtube','text','YouTube-Link'],['x','text','X-Link'],['telegram','text','Telegram-Link'],['mail','text','E-Mail-Adresse'],['size','range','Größe',[24,72,2,'px',40]],['chip','toggle','Mit weißem Hintergrund & Schatten'],['labels','toggle','Namen anzeigen']],
   spacer:[['height','range','Höhe',[4,160,2]]],
   divider:[],
   html:[['code','code','HTML-Code','Wird 1:1 eingefügt (z. B. Embeds, Tracking, eigenes Styling).']]
 };
-var TEXTY = {recap:1,steps:1,reviews:1,avatars:1,loader:1,heading:1,text:1,badge:1,list:1,button:1,choice:1,input:1,testimonial:1,faq:1,trust:1,summary:1,checkbox:1,rating:1,calendar:1,countdown:1,slider:1,upload:1,signature:1};
-var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','padT','padR','padB','padL','brad','bwid','bc','shd','anim','delay','vis','iAcc','iAccText','iSurf','iMut','iRad','iLine','iBw','iShd','iShdC','iShdB','iShdS','iShdX','iShdY','iGap','inBg','inStyle','starColor','oCheck','oIcon','liStyle'];
+var TEXTY = {box:1,social:1,recap:1,steps:1,reviews:1,avatars:1,loader:1,heading:1,text:1,badge:1,list:1,button:1,choice:1,input:1,testimonial:1,faq:1,trust:1,summary:1,checkbox:1,rating:1,calendar:1,countdown:1,slider:1,upload:1,signature:1};
+var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','padT','padR','padB','padL','brad','bwid','bc','shd','anim','delay','vis','iAcc','iAccText','iSurf','iMut','iRad','iLine','iBw','iShd','iShdC','iShdB','iShdS','iShdX','iShdY','iGap','inBg','inStyle','starColor','oCheck','oIcon','liStyle','oIconC','liColor'];
 /* Innere Gestaltung: gilt für Antworten, Felder, Kacheln, Icons … innerhalb des Elements */
 var INNER_T = {choice:1, rating:1, slider:1, input:1, checkbox:1, calendar:1, upload:1, signature:1, list:1, faq:1, testimonial:1, recap:1, summary:1, steps:1, countdown:1, reviews:1, avatars:1, badge:1, trust:1, loader:1, compare:1};
 var SURF_T = {choice:1, rating:1, input:1, calendar:1, upload:1, signature:1, faq:1, testimonial:1, recap:1, summary:1, steps:1, countdown:1};
@@ -4878,17 +4953,17 @@ var STYLE_INNER = [
   ['row2','row',[['iRad','num','Ecken (px)'],['iGap','num','Abstand (px)']]]
 ];
 var STYLE_EXTRA = {
-  choice:[['oIcon','seg','Icons',[['','Normal'],['sm','Klein'],['lg','Groß'],['none','Aus']]],['oCheck','toggle','Auswahl-Kreis zeigen',null,null,true]],
+  choice:[['oIconC','color','Icon-Farbe'],['oIcon','seg','Icons',[['','Normal'],['sm','Klein'],['lg','Groß'],['none','Aus']]],['oCheck','toggle','Auswahl-Kreis zeigen',null,null,true]],
   rating:[['starColor','color','Farbe der Sterne',null,function(p){ return !p.style || p.style === 'stars'; }]],
-  list:[['liStyle','seg','Icon-Hintergrund',[['','Getönt'],['solid','Gefüllt'],['ring','Ring'],['plain','Ohne']]]],
+  list:[['liColor','color','Icon-Farbe'],['liStyle','seg','Icon-Hintergrund',[['','Getönt'],['solid','Gefüllt'],['ring','Ring'],['plain','Ohne']]]],
   input:[['inStyle','seg','Feld-Stil',[['','Theme'],['card','Karte'],['outline','Rahmen'],['filled','Gefüllt'],['soft','Soft UI'],['glass','Glas'],['line','Linie']]],['inBg','color','Feld-Hintergrund']],
   checkbox:[['inBg','color','Kästchen-Hintergrund']]
 };
 var STYLE_TYPO = [['ff','font','Schrift'],['fw','seg','Stärke',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']]],['scale','range','Größe',[60,180,5,'%']],['row2','row',[['lh','num','Zeilenhöhe'],['ls','num','Laufweite']]],['tt','seg','Schreibweise',[['','Normal'],['uppercase','GROSS'],['lowercase','klein']]],['it','toggle','Kursiv'],['color','color','Textfarbe']];
 var STYLE_BOX = [['bgc','color','Hintergrund'],['pad','pad4','Innenabstand',{keys:['padT','padR','padB','padL'], ph:function(p){ var v = +p.pad || 0; return [v,v,v,v]; }}],['brad','range','Ecken',[0,40,1]],['row2','row',[['bwid','num','Rahmen (px)'],['bc','color','Rahmenfarbe']]],['shd','seg','Schatten',[['','Kein'],['sm','S'],['md','M'],['lg','L']]]];
 var STYLE_FX = [['anim','select','Einblenden',[['none','Keine'],['fade','Einblenden'],['up','Von unten'],['left','Von rechts'],['zoom','Zoom']]],['delay','range','Verzögerung',[0,1500,50,'ms']],['vis','seg','Sichtbar auf',[['all','Allen'],['mobile','Mobil'],['desktop','Desktop']]]];
-var BNAME = {arrow:'Hinweis-Pfeil',loader:'Lade-Animation',recap:'Auswahl-Karte',steps:'Zeitleiste',reviews:'Bewertungs-Abzeichen',avatars:'Kundenstapel',logos:'Logo-Leiste',heading:'Überschrift',text:'Text',badge:'Badge',image:'Bild',compare:'Vorher/Nachher',video:'Video',list:'Liste',testimonial:'Bewertung',trust:'Trust-Badges',faq:'FAQ',countdown:'Countdown',choice:'Auswahl',input:'Eingabefeld',slider:'Schieberegler',rating:'Bewertung',calendar:'Terminwahl',upload:'Datei-Upload',signature:'Unterschrift',checkbox:'Einwilligung',button:'Button',summary:'Preisübersicht',spacer:'Abstand',divider:'Trennlinie',html:'HTML'};
-var BICON = {arrow:'arrowHint',loader:'refresh',recap:'receipt',steps:'list',reviews:'star',avatars:'users',logos:'layers',heading:'heading',text:'type',badge:'badge',image:'image',compare:'compare',video:'video',list:'list',testimonial:'quote',trust:'shield',faq:'help',countdown:'clock',choice:'choice',input:'cursor',slider:'sliders',rating:'star',calendar:'calendar',upload:'upload',signature:'pen',checkbox:'checkbox',button:'pointer',summary:'receipt',spacer:'space',divider:'minus',html:'code'};
+var BNAME = {box:'Box',social:'Social Media',arrow:'Hinweis-Pfeil',loader:'Lade-Animation',recap:'Auswahl-Karte',steps:'Zeitleiste',reviews:'Bewertungs-Abzeichen',avatars:'Kundenstapel',logos:'Logo-Leiste',heading:'Überschrift',text:'Text',badge:'Badge',image:'Bild',compare:'Vorher/Nachher',video:'Video',list:'Liste',testimonial:'Bewertung',trust:'Trust-Badges',faq:'FAQ',countdown:'Countdown',choice:'Auswahl',input:'Eingabefeld',slider:'Schieberegler',rating:'Bewertung',calendar:'Terminwahl',upload:'Datei-Upload',signature:'Unterschrift',checkbox:'Einwilligung',button:'Button',summary:'Preisübersicht',spacer:'Abstand',divider:'Trennlinie',html:'HTML'};
+var BICON = {box:'boxi',social:'share2',arrow:'arrowHint',loader:'refresh',recap:'receipt',steps:'list',reviews:'star',avatars:'users',logos:'layers',heading:'heading',text:'type',badge:'badge',image:'image',compare:'compare',video:'video',list:'list',testimonial:'quote',trust:'shield',faq:'help',countdown:'clock',choice:'choice',input:'cursor',slider:'sliders',rating:'star',calendar:'calendar',upload:'upload',signature:'pen',checkbox:'checkbox',button:'pointer',summary:'receipt',spacer:'space',divider:'minus',html:'code'};
 
 /* Vorschau-Geräte: echte Bildschirmbreiten in CSS-Pixeln, damit die Vorschau dem Handy entspricht */
 var DEVICES = [
@@ -5309,6 +5384,8 @@ function insertBlocks(blocks, pageIdx, at){
   var f = F(), pg = f.pages[pageIdx];
   if(at == null || at < 0 || at > pg.blocks.length) at = pg.blocks.length;
   snap(true);
+  var hostBox = at > 0 ? (pg.blocks[at - 1].type === 'box' ? {b:pg.blocks[at - 1]} : boxOf(pg, at - 1)) : null; /* hinter einem Element in einer Box eingefügt → gehört dazu */
+  if(hostBox && hostBox.b.type === 'box' && (hostBox.end == null || at - 1 <= hostBox.end)) hostBox.b.props.count = (+hostBox.b.props.count || 0) + blocks.length;
   Array.prototype.splice.apply(pg.blocks, [at, 0].concat(blocks));
   S.pi = pageIdx; S.sel = blocks[blocks.length-1].id; S.rtab = 'el';
   touch(); renderLeft(); renderCanvas(true); renderRight();
@@ -5339,15 +5416,39 @@ function addFromLibClick(id){
   else { var lb = pg.blocks.length ? pg.blocks[pg.blocks.length-1] : null; if(lb && lb.type === 'button') at = pg.blocks.length - 1; }
   insertBlocks(blocks, S.pi, at);
 }
+/* ---- Box: umschließt die nächsten n Elemente. Verschieben, Einfügen und Löschen halten die Box stimmig ---- */
+function boxOf(pg, ix){ /* Box, deren Bereich das Element an ix enthält (nicht die Box selbst) */
+  for(var j = ix - 1; j >= 0; j--){ var b = pg.blocks[j]; if(b.type === 'box'){ var n = +b.props.count || 0; if(ix <= j + n) return {b:b, at:j, end:j + n}; } }
+  return null;
+}
 function moveBlock(dir){
-  var pg = curPage(), ix = pg.blocks.map(function(b){ return b.id; }).indexOf(S.sel), ni = ix + dir;
-  if(ix < 0 || ni < 0 || ni >= pg.blocks.length) return;
-  snap(true); var b = pg.blocks.splice(ix,1)[0]; pg.blocks.splice(ni,0,b); touch(); renderCanvas(true);
+  var pg = curPage(), ids = pg.blocks.map(function(b){ return b.id; }), ix = ids.indexOf(S.sel); if(ix < 0) return;
+  var b = pg.blocks[ix];
+  snap(true);
+  if(b.type === 'box'){ /* Box wandert mit ihrem Inhalt */
+    var n = Math.min(+b.props.count || 0, pg.blocks.length - ix - 1), grp = pg.blocks.splice(ix, n + 1), to = dir < 0 ? Math.max(0, ix - 1) : Math.min(pg.blocks.length, ix + 1);
+    Array.prototype.splice.apply(pg.blocks, [to, 0].concat(grp)); touch(); renderCanvas(true); return;
+  }
+  var own = boxOf(pg, ix);
+  if(dir < 0){
+    if(own && ix === own.at + 1){ pg.blocks.splice(ix, 1); pg.blocks.splice(own.at, 0, b); own.b.props.count = Math.max(0, (+own.b.props.count || 0) - 1); touch(); renderCanvas(true); toast('Aus der Box genommen'); return; }
+    var prev = ix > 0 ? boxOf(pg, ix - 1) : null, prevIsBox = ix > 0 && pg.blocks[ix - 1].type === 'box' && !(+pg.blocks[ix - 1].props.count);
+    if(prev && prev.end === ix - 1 && (!own || own.b !== prev.b)){ prev.b.props.count = (+prev.b.props.count || 0) + 1; touch(); renderCanvas(true); toast('In die Box verschoben'); return; }
+    if(prevIsBox){ pg.blocks[ix - 1].props.count = 1; touch(); renderCanvas(true); toast('In die Box verschoben'); return; }
+  } else {
+    if(own && ix === own.end){ own.b.props.count = Math.max(0, (+own.b.props.count || 0) - 1); touch(); renderCanvas(true); toast('Aus der Box genommen'); return; }
+    var nx = pg.blocks[ix + 1];
+    if(nx && nx.type === 'box'){ pg.blocks.splice(ix, 1); pg.blocks.splice(ix + 1, 0, b); nx.props.count = (+nx.props.count || 0) + 1; touch(); renderCanvas(true); toast('In die Box verschoben'); return; }
+  }
+  var ni = ix + dir; if(ni < 0 || ni >= pg.blocks.length){ touch(); return; }
+  pg.blocks.splice(ix, 1); pg.blocks.splice(ni, 0, b); touch(); renderCanvas(true);
 }
 function dupBlock(){
   var pg = curPage(), ix = pg.blocks.map(function(b){ return b.id; }).indexOf(S.sel); if(ix < 0) return;
-  snap(true); var c = clone(pg.blocks[ix]); c.id = uid(); if(c.props.options) c.props.options.forEach(function(o){ o.id = uid(); }); if(c.props.key) c.props.key = uniqueKey(c.props.key);
-  pg.blocks.splice(ix+1, 0, c); S.sel = c.id; touch(); renderLeft(); renderCanvas(true); renderRight();
+  snap(true); var src0 = pg.blocks[ix], grpN = src0.type === 'box' ? Math.min(+src0.props.count || 0, pg.blocks.length - ix - 1) : 0, own0 = boxOf(pg, ix);
+  var cs = pg.blocks.slice(ix, ix + grpN + 1).map(function(x){ var c1 = clone(x); c1.id = uid(); if(c1.props.options) c1.props.options.forEach(function(o){ o.id = uid(); }); if(c1.props.key) c1.props.key = uniqueKey(c1.props.key); return c1; }), c = cs[0];
+  if(own0) own0.b.props.count = (+own0.b.props.count || 0) + cs.length;
+  Array.prototype.splice.apply(pg.blocks, [ix + grpN + 1, 0].concat(cs)); S.sel = c.id; touch(); renderLeft(); renderCanvas(true); renderRight();
 }
 /* Element kopieren und auf einer beliebigen Seite (auch in einem anderen Funnel) einfügen.
    Die Zwischenablage liegt im Speicher und zusätzlich im Browser, damit sie Seitenwechsel und neue Tabs übersteht. */
@@ -5371,7 +5472,7 @@ function pasteBlock(){
 }
 function delBlock(){
   var pg = curPage(), ix = pg.blocks.map(function(b){ return b.id; }).indexOf(S.sel); if(ix < 0) return;
-  snap(true); pg.blocks.splice(ix,1); S.sel = pg.blocks[Math.min(ix, pg.blocks.length-1)] ? null : null; S.rtab = 'page'; touch(); renderLeft(); renderCanvas(true); renderRight();
+  snap(true); var own1 = boxOf(pg, ix); if(own1) own1.b.props.count = Math.max(0, (+own1.b.props.count || 0) - 1); pg.blocks.splice(ix,1); S.sel = null; S.rtab = 'page'; touch(); renderLeft(); renderCanvas(true); renderRight();
 }
 function addPage(){
   var f = F(); snap(true);

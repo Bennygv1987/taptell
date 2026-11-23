@@ -54,6 +54,8 @@ var DEF = {
   button:      function(){ return {label:'Weiter', action:'next', target:'', url:'', variant:'', full:true, shadow:true, arrow:true, pulse:false, sub:''}; },
   summary:     function(){ return {title:'Deine Konfiguration', totalLabel:'Geschätzter Gesamtpreis', note:'Unverbindliche Schätzung inkl. MwSt.', showItems:true, compact:false, prefix:''}; },
   spacer:      function(){ return {height:24}; },
+  box:         function(){ return {count:0, bxStyle:'sand', align:'center'}; },
+  social:      function(){ return {instagram:'', facebook:'', whatsapp:'', size:40, align:'center'}; },
   divider:     function(){ return {mt:4, mb:20}; },
   html:        function(){ return {code:'<div style="padding:16px;border-radius:12px;background:#f4f5f8;text-align:center">Eigener HTML-Code</div>'}; }
 };
@@ -99,6 +101,8 @@ var LIB = [
   {id:'faces', type:'rating', n:'Smileys flach', ic:'star', g:'Fragen', over:{label:'Wie zufrieden bist du?', style:'faces', max:5, key:'zufriedenheit', autoNext:true, align:'center'}},
   {id:'faq', type:'faq', n:'FAQ', ic:'help', g:'Vertrauen'},
   {id:'countdown', type:'countdown', n:'Countdown', ic:'clock', g:'Vertrauen'},
+  {id:'box', type:'box', n:'Box', ic:'boxi', g:'Layout'},
+  {id:'social', type:'social', n:'Social Media', ic:'share2', g:'Inhalt'},
   {id:'spacer', type:'spacer', n:'Abstand', ic:'space', g:'Layout'},
   {id:'divider', type:'divider', n:'Trennlinie', ic:'minus', g:'Layout'},
   {id:'html', type:'html', n:'HTML / Code', ic:'code', g:'Layout'}
