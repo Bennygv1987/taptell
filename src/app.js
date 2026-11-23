@@ -24,6 +24,7 @@ var IP = {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 000 11H13"/>',
   mobile:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>', monitor:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
   sidebar:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
+  brush:'<path d="M14.5 4.5l5 5-7.5 7.5-5-5z"/><path d="M7 12l-2.6 2.6a2.4 2.4 0 000 3.4l.6.6c.9.9 2.5.9 3.4 0L11 16"/><path d="M17 2l5 5"/>',
   flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', minus:'<path d="M5 12h14"/>', fit:'<path d="M4 9V5a1 1 0 011-1h4M15 4h4a1 1 0 011 1v4M20 15v4a1 1 0 01-1 1h-4M9 20H5a1 1 0 01-1-1v-4"/>', logic:'<path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/>',
   fBold:'<path d="M7 5h6a3.5 3.5 0 010 7H7zM7 12h7a3.5 3.5 0 010 7H7z"/>',
   fItalic:'<path d="M10 5h8M6 19h8M14 5l-4 14"/>',
@@ -506,7 +507,26 @@ function viewSettings(){
   h += '<div class="card"><div class="ch">'+I('upload')+'<h3>Daten importieren</h3></div><div class="cb"><textarea class="inp" id="impj" placeholder="Backup- oder Funnel-JSON hier einfügen …" style="min-height:80px;font-family:ui-monospace,monospace;font-size:var(--fs-12)"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-a="importJ">Importieren</button><span style="flex:1"></span><button class="btn danger" data-a="resetAll">'+I('refresh',14)+'Zurücksetzen</button></div></div></div>';
   return h + '</div></div>';
 }
-function colorField(scope, k, v){ return '<div class="colr"><input type="color" data-'+scope+'="'+k+'" value="'+esc(toHex(v||'#ffffff'))+'"><input type="text" data-'+scope+'="'+k+'" value="'+esc(v)+'"></div>'; }
+/* Schnellfarben: jede gewählte Farbe landet in der Palette des Kunden (ohne Kunde: im Funnel) und steht in allen Farbfeldern bereit */
+function swHost(){ var f = typeof F === 'function' ? F() : null; if(!f) return null; var c = f.clientId && clientById(f.clientId); if(c){ c.data = c.data || {}; return {o:c.data, who:c.name}; } f.theme = f.theme || {}; return {o:f.theme, who:''}; }
+function swList(){ var h = swHost(); return h ? (h.o.swatches || []) : []; }
+function swNorm(v){ v = String(v || '').trim().toLowerCase(); if(/^#[0-9a-f]{3}$/.test(v)) v = '#' + v[1]+v[1]+v[2]+v[2]+v[3]+v[3]; return /^#[0-9a-f]{6}$/.test(v) ? v : ''; }
+function swAdd(v){
+  var c = swNorm(v), h = swHost(); if(!c || !h) return;
+  var t = (F().theme || {}), brand = [t.primary, t.primaryText, t.bg, t.surface, t.text, t.muted].map(swNorm);
+  if(brand.indexOf(c) >= 0) return; /* Markenfarben stehen ohnehin vorne */
+  var l = (h.o.swatches || []).filter(function(x){ return x !== c; }); l.unshift(c); h.o.swatches = l.slice(0, 14); save(); swRefresh();
+}
+function swHtml(cur){
+  var f = typeof F === 'function' ? F() : null; if(!f) return '';
+  var t = f.theme || {}, seen = {}, out = [];
+  [[t.primary,'Markenfarbe'],[t.text,'Text'],[t.surface,'Flächen'],[t.bg,'Hintergrund']].forEach(function(x){ var c = swNorm(x[0]); if(c && !seen[c]){ seen[c] = 1; out.push([c, x[1], 1]); } });
+  swList().forEach(function(c){ if(!seen[c]){ seen[c] = 1; out.push([c, c, 0]); } });
+  var cv = swNorm(cur);
+  return out.map(function(x, i){ return (i && x[2] === 0 && out[i-1][2] === 1 ? '<i></i>' : '') + '<button type="button" class="sw'+(x[0] === cv ? ' on' : '')+'" data-a="swPick" data-c="'+x[0]+'" style="--c:'+x[0]+'" title="'+esc(x[1])+'" aria-label="Farbe '+esc(x[1])+'"></button>'; }).join('');
+}
+function swRefresh(){ document.querySelectorAll('.swr').forEach(function(r){ var w = r.closest('.colw'), tx = w && w.querySelector('input[type=text]'); r.innerHTML = swHtml(tx ? tx.value : ''); }); }
+function colorField(scope, k, v){ return '<div class="colw"><div class="colr"><input type="color" data-'+scope+'="'+k+'" value="'+esc(toHex(v||'#ffffff'))+'"><input type="text" data-'+scope+'="'+k+'" value="'+esc(v)+'"></div><div class="swr">'+swHtml(v)+'</div></div>'; }
 function fontSelect(scope, k, v, allowEmpty){
   var groups = {sans:'Sans Serif', serif:'Serif', display:'Display & Handschrift'}, F_ = db.fonts || {google:[], uploaded:[]};
   var opt = function(n){ return '<option value="'+esc(n)+'"'+(n===v?' selected':'')+' style="font-family:'+esc(FP.fontStack(n))+'">'+esc(n)+'</option>'; };
@@ -527,7 +547,11 @@ var FIELDS = {
   text:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzent== · [[Marker]] · {{name}}, {{total}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
   badge:[['text','text','Text'],['variant','seg','Stil',[['','Soft'],['filled','Gefüllt'],['outline','Rahmen'],['grey','Grau']]],['upper','toggle','Großbuchstaben']],
   compare:[['bleed','toggle','Volle Breite ohne Seitenrand'],['before','image','Vorher-Bild (links)'],['after','image','Nachher-Bild (rechts)'],['row2','row',[['labelBefore','text','Text links'],['labelAfter','text','Text rechts']]],['ratio','select','Seitenverhältnis',[['4:3','4:3'],['1:1','1:1'],['16:9','16:9'],['3:4','3:4 (hoch)']]],['start','range','Startposition',[5,95,1,'%']],['radius','range','Ecken',[0,40,1]]],
-  image:[['src','image','Bild'],['bleed','toggle','Volle Breite ohne Seitenrand','Das Bild reicht bis an den Rand des Bildschirms. Die Höhe bestimmst du weiter unten.'],['ratio','select','Seitenverhältnis',[['','Feste Höhe'],['2:1','2:1'],['16:9','16:9'],['4:3','4:3'],['1:1','1:1'],['auto','Original']]],['height','range','Höhe',[80,420,10],function(p){ return !p.ratio; }],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text']],
+  image:[['src','image','Bild'],['bleed','toggle','Volle Breite ohne Seitenrand','Das Bild reicht bis an den Rand des Bildschirms. Die Höhe bestimmst du weiter unten.'],['ratio','select','Seitenverhältnis',[['','Feste Höhe'],['2:1','2:1'],['16:9','16:9'],['4:3','4:3'],['1:1','1:1'],['auto','Original']]],['height','range','Höhe',[80,420,10],function(p){ return !p.ratio; }],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text'],
+    ['_e','sec','Übergänge'],
+    ['edgeTop','select','Oben',FP.EDGE_LIST],['edgeTopH','range','Höhe oben',[8,160,2,'px',40],function(p){ return !!p.edgeTop; }],['edgeTopFlip','toggle','Oben spiegeln',null,function(p){ return !!p.edgeTop && /slant|brush|torn|wave/.test(p.edgeTop); }],
+    ['edgeBot','select','Unten',FP.EDGE_LIST],['edgeBotH','range','Höhe unten',[8,160,2,'px',40],function(p){ return !!p.edgeBot; }],['edgeBotFlip','toggle','Unten spiegeln',null,function(p){ return !!p.edgeBot && /slant|brush|torn|wave/.test(p.edgeBot); }],
+    ['_eh','note','Am schönsten mit „Volle Breite ohne Seitenrand“ und Ecken auf 0. Der Hintergrund der Seite scheint durch.']],
   video:[['url','text','YouTube- oder Vimeo-Link','Wird im veröffentlichten Funnel eingebettet.'],['bleed','toggle','Volle Breite ohne Seitenrand'],['radius','range','Ecken',[0,40,1]]],
   list:[['items','strings','Punkte'],['icon','select','Symbol',[['check','Haken'],['number','Zahlen'],['star','Stern'],['heart','Herz'],['shield','Schild'],['bolt','Blitz'],['leaf','Blatt'],['clock','Uhr'],['euro','Euro'],['sparkle','Funkeln'],['thumb','Daumen']]]],
   testimonial:[['quote','textarea','Zitat'],['name','text','Name'],['role','text','Untertitel'],['stars','range','Sterne',[0,5,1]],['img','image','Foto']],
@@ -678,7 +702,7 @@ function placeTool(el){
   var old = $('#btool'); if(old) old.remove();
   var b = selBlock(); if(!b) return;
   var tb = document.createElement('div'); tb.className = 'btool'; tb.id = 'btool';
-  tb.innerHTML = '<span class="tl">'+esc(BNAME[b.type]||b.type)+'</span><button data-a="bup" title="Nach oben">'+I('chevUp')+'</button><button data-a="bdown" title="Nach unten">'+I('chevDown')+'</button><button data-a="bdup" title="Duplizieren (⌘D)">'+I('dup')+'</button><button data-a="bcopy" title="Kopieren (⌘C)">'+I('copy')+'</button>'+(CLIP ? '<button data-a="bpaste" title="Kopiertes Element darunter einfügen (⌘V)">'+I('paste')+'</button>' : '')+'<button data-a="bdel" title="Löschen">'+I('trash')+'</button>';
+  tb.innerHTML = '<span class="tl">'+esc(BNAME[b.type]||b.type)+'</span><button data-a="bup" title="Nach oben">'+I('chevUp')+'</button><button data-a="bdown" title="Nach unten">'+I('chevDown')+'</button><button data-a="bdup" title="Duplizieren (⌘D)">'+I('dup')+'</button><button data-a="bcopy" title="Kopieren (⌘C)">'+I('copy')+'</button><button data-a="fmtPaint" title="Format übertragen (⌥⌘C / ⌥⌘V)">'+I('brush')+'</button>'+(CLIP ? '<button data-a="bpaste" title="Kopiertes Element darunter einfügen (⌘V)">'+I('paste')+'</button>' : '')+'<button data-a="bdel" title="Löschen">'+I('trash')+'</button>';
   scr.appendChild(tb);
   var r = el.getBoundingClientRect(), sr = scr.getBoundingClientRect();
   var top = r.top - sr.top + scr.scrollTop - 38;
@@ -791,6 +815,7 @@ function panelElement(b){
     + '<div class="row2">' + field(['mt','num','Abstand oben'], p, 'p') + field(['mb','num','Abstand unten'], {mb: p.mb != null ? p.mb : 16}, 'p') + '</div></div>';
   var dv = Object.assign({}, p, {scale: p.scale || 100, delay: p.delay || 0, pad: p.pad || 0, brad: p.brad == null || p.brad === '' ? 0 : p.brad, anim: p.anim || 'none', vis: p.vis || 'all'});
   var hasStyle = STYLE_KEYS.some(function(k){ return p[k] !== undefined && p[k] !== '' && p[k] !== false && !(k==='anim' && p[k]==='none') && !(k==='vis' && p[k]==='all') && !(k==='scale' && +p[k]===100); });
+  h += '<div class="fmtbar"><button class="btn sm" data-a="fmtCopy">'+I('brush',13)+'Format kopieren</button><button class="btn sm" data-a="fmtPaste"'+(FCLIP ? ' title="Format von „'+esc(BNAME[FCLIP.type]||FCLIP.type)+'“ übertragen"' : ' disabled')+'>'+I('paste',13)+'Format einfügen</button></div>';
   h += '<div class="psec"><h5>'+I('palette',13)+'Stil'+(hasStyle?'<span style="flex:1"></span><button class="btn sm ghost" data-a="styleReset" style="height:24px;text-transform:none;letter-spacing:0">Zurücksetzen</button>':'')+'</h5>';
   if(TEXTY[b.type]) h += '<div class="subh">Typografie</div>' + STYLE_TYPO.map(function(sp){ return field(sp, dv, 'p'); }).join('');
   if(INNER_T[b.type]) h += '<div class="subh">Elemente im Block</div>' + STYLE_INNER.filter(function(sp, i){ return sp && !(sp[0] === 'row2' && sp[2][0][0] === 'iSurf' && !SURF_T[b.type]); }).concat(STYLE_EXTRA[b.type] || []).map(function(sp){ return field(sp, p, 'p'); }).join('') + '<div class="hint" style="margin:-4px 0 12px">Leer = Werte aus dem Design-Tab.</div>';
@@ -900,6 +925,9 @@ function panelDesign(){
       return '<button class="pack'+(pk===k?' on':'')+'" data-a="pack" data-v="'+k+'" title="'+esc(P0.d)+'"><span class="pkp pk-'+k+'"><b style="font-family:'+esc(FP.fontStack(pv.headingFont))+';font-weight:'+pv.headingWeight+'">Aa</b><i style="border-radius:'+Math.min(+pv.btnRadius, 10)+'px"></i></span><span class="pkl">'+esc(P0.n)+'</span></button>'; }).join('')
     + '</div><div class="hint">Schrift, Rundungen, Kartenstil und Abstände in einem Klick. Deine Farben bleiben.</div></div>';
   h += '<div class="psec"><h5>Themes</h5><div class="presets">' + Object.keys(T.THEMES).map(function(k){ var th = T.THEMES[k], on = th.primary===t.primary && th.bg===t.bg; return '<button class="preset'+(on?' on':'')+'" data-a="preset" data-v="'+k+'"><div class="sw" style="background:'+th.bg+';border:1px solid rgba(0,0,0,.06)"><i style="background:'+th.primary+'"></i><i style="background:'+th.surface+'"></i><i style="background:'+th.text+'"></i></div><span style="font-family:\''+th.headingFont+'\'">'+th.name+'</span></button>'; }).join('') + '</div></div>';
+  var swl = swList(), swh = swHost();
+  h += '<div class="psec"><h5>Schnellfarben'+(swh && swh.who ? '<span class="pill nos" style="margin-left:6px">'+esc(swh.who)+'</span>' : '')+'</h5><div class="hint" style="margin:-4px 0 10px">'+(swh && swh.who ? 'Gelten für alle Funnels dieses Kunden.' : 'Gelten für diesen Funnel. Mit einem Kunden verknüpft, teilen sich alle seine Funnels die Palette.')+' Jede Farbe, die du irgendwo wählst, landet automatisch hier.</div>'
+    + (swl.length ? '<div class="swmgr">' + swl.map(function(c){ return '<span class="swi"><span class="sw" style="--c:'+c+'"></span><code>'+c+'</code><button class="ibtn" data-a="swDel" data-c="'+c+'" title="Entfernen">'+I('x',12)+'</button></span>'; }).join('') + '</div>' : '<div class="hint" style="margin:0">Noch keine eigenen Farben.</div>') + '</div>';
   h += '<div class="psec"><h5>Farben</h5>' + (t.logoImg ? '<div class="fld"><label>Aus deinem Logo</label><div class="logocols" id="logocols" data-src="'+esc(t.logoImg.length > 200 ? 'data' : t.logoImg)+'"><span class="hint" style="margin:0">Farben werden gelesen …</span></div></div>' : '') + '<div class="row2"><div class="fld"><label>Primär / Akzent</label>'+colorField('t','primary',t.primary)+'</div><div class="fld"><label>Text auf Primär</label>'+colorField('t','primaryText',t.primaryText)+'</div></div>'
     + '<div class="row2"><div class="fld"><label>Hintergrund</label>'+colorField('t','bg',t.bg)+'</div><div class="fld"><label>Flächen / Karten</label>'+colorField('t','surface',t.surface)+'</div></div>'
     + '<div class="row2"><div class="fld"><label>Text</label>'+colorField('t','text',t.text)+'</div><div class="fld"><label>Text sekundär</label>'+colorField('t','muted',t.muted)+'</div></div>'
@@ -1267,7 +1295,7 @@ document.addEventListener('mousedown', function(e){
   inlStop();
 }, true);
 document.addEventListener('click', function(e){
-  if(inl) return;
+  if(inl || S.paint) return;
   var blk = e.target.closest && e.target.closest('#scr .fp-b[data-bid]'); if(!blk || e.target.closest('#btool')) return;
   var id = blk.getAttribute('data-bid'); if(S.sel !== id || e.detail > 1) return;
   var b = selBlock(), t = inlTarget(blk, b); if(!t) return;
@@ -1277,6 +1305,45 @@ document.addEventListener('click', function(e){
 
 /* Zeilenhöhe, die gerade gilt (Theme oder Vorlage), als Platzhalter */
 function b0lh(p){ var t = (F() && F().theme) || {}, b = selBlock(); if(b && b.type === 'heading'){ var m = /\.fp-h1,\.fp-h2,\.fp-h3\{line-height:([\d.]+)/.exec(t.customCss || ''); return t.headingLh || (m ? m[1] : 1.15); } return t.lineHeight || 1.55; }
+/* ================= Format übertragen (wie der Pinsel in Word) =================
+   Kopiert alle Gestaltungs-Eigenschaften eines Elements – ohne Inhalt – und überträgt sie auf ein anderes, auch auf anderen Seiten.
+   Gleicher Typ: sieht danach genauso aus. Anderer Typ: Stil, Abstände, Ausrichtung (bei Texten auch Größe und Zeilenhöhe). */
+var FMT_SKIP = {id:1, text:1, label:1, question:1, desc:1, sub:1, options:1, items:1, src:1, photos:1, names:1, quote:1, name:1, role:1, img:1, url:1, before:1, after:1, labelBefore:1, labelAfter:1, alt:1, key:1, required:1, action:1, target:1, waNumber:1, waText:1, placeholder:1, inputType:1, min:1, max:1, step:1, def:1, unit:1, isQuantity:1, qtyFactor:1, routes:1, slots:1, blocked:1, excludeDays:1, days:1, offset:1, dur:1, where:1, code:1, score:1, count:1, source:1, title:1, totalLabel:1, prefix:1, note:1, cta:1, hint:1, accept:1, minutes:1, texts:1, json:1, emojis:1, faceLabels:1, minLabel:1, maxLabel:1, multi:1, maxSelect:1, autoNext:1, showPrices:1, validDays:1, more:1, rows:1, x:1, y:1, duration:1, start:1, logic:1, pos:1, noHolidays:1, showItems:1, faq:1};
+var FMT_CROSS = {align:1, mt:1, mb:1, half:1};
+var FMT_TEXTY = {heading:1, text:1};
+var FCLIP = null;
+try{ FCLIP = JSON.parse(localStorage.getItem('tt-fclip') || 'null'); }catch(x){}
+function fmtCopy(paint){
+  var b = selBlock(); if(!b) return;
+  var pr = {}; Object.keys(b.props || {}).forEach(function(k){ if(!FMT_SKIP[k]) pr[k] = clone(b.props[k]); });
+  FCLIP = {type:b.type, props:pr}; try{ localStorage.setItem('tt-fclip', JSON.stringify(FCLIP)); }catch(x){}
+  if(paint){ S.paint = true; document.body.classList.add('painting'); toast('Format kopiert – klicke auf ein Element, um es zu übertragen (Esc bricht ab)'); }
+  else toast('Format von „'+(BNAME[b.type]||b.type)+'“ kopiert – mit ⌥⌘V auf ein anderes Element übertragen');
+  renderRight();
+}
+function fmtStop(){ S.paint = false; document.body.classList.remove('painting'); }
+function fmtKeyOk(k, same, texty){ return same ? !FMT_SKIP[k] : (STYLE_KEYS.indexOf(k) >= 0 || FMT_CROSS[k] || (texty && (k === 'size' || k === 'lh' || k === 'hl'))); }
+function fmtApply(b){
+  if(!FCLIP || !b) return;
+  var same = b.type === FCLIP.type, texty = FMT_TEXTY[b.type] && FMT_TEXTY[FCLIP.type];
+  snap(true);
+  /* zuerst alte Gestaltung entfernen, damit es danach wirklich gleich aussieht */
+  Object.keys(b.props).forEach(function(k){ if(fmtKeyOk(k, same, texty) && !(k in FCLIP.props)) delete b.props[k]; });
+  Object.keys(FCLIP.props).forEach(function(k){ if(fmtKeyOk(k, same, texty)) b.props[k] = clone(FCLIP.props[k]); });
+  touch(); renderCanvas(true); renderRight();
+  toast(same ? 'Format übertragen' : 'Stil übertragen (anderer Element-Typ: Schrift, Farben, Box und Abstände)');
+}
+/* Klick im Pinsel-Modus überträgt das Format auf das angeklickte Element */
+document.addEventListener('click', function(e){
+  if(!S.paint) return;
+  if(e.target.closest && e.target.closest('#btool')) return;
+  var blk = e.target.closest && e.target.closest('#scr .fp-b[data-bid]');
+  if(!blk){ if(e.target.closest && e.target.closest('#scr')) fmtStop(); return; } /* Seitenwechsel & Menüs lassen den Pinsel aktiv */
+  e.preventDefault(); e.stopPropagation();
+  var id = blk.getAttribute('data-bid'), b = curPage().blocks.filter(function(x){ return x.id === id; })[0];
+  fmtStop(); S.sel = id; S.rtab = 'el'; fmtApply(b); renderLeft();
+}, true);
+
 function selectBlock(id){ S.sel = id; S.rtab = 'el'; S.openOpts = {}; $$('#scr .fp-b.sel').forEach(function(e){ e.classList.remove('sel'); }); var el = $('#scr .fp-b[data-bid="'+id+'"]'); if(el){ el.classList.add('sel'); placeTool(el); } renderRight(); }
 
 /* ---- fonts ---- */
@@ -2464,6 +2531,11 @@ var ACT = {
     if(el.getAttribute('data-mode') === 'reset') keys.forEach(function(k){ delete tgt[k]; });
     else { var inp = el.closest('.fld').querySelector('input'), v = inp && inp.value !== '' ? +inp.value : +(inp && inp.placeholder) || 0; keys.forEach(function(k){ tgt[k] = v; }); }
     touch(); renderCanvas(true); renderRight(); },
+  fmtPaint:function(){ fmtCopy(true); },
+  fmtCopy:function(){ fmtCopy(false); },
+  fmtPaste:function(){ var b = selBlock(); if(b) fmtApply(b); },
+  swPick:function(el){ var w = el.closest('.colw'), tx = w && w.querySelector('.colr input[type=text]'); if(!tx) return; tx.value = el.getAttribute('data-c'); tx.dispatchEvent(new Event('input', {bubbles:true})); tx.dispatchEvent(new Event('change', {bubbles:true})); w.querySelectorAll('.sw').forEach(function(s){ s.classList.toggle('on', s === el); }); },
+  swDel:function(el){ var h = swHost(); if(!h) return; h.o.swatches = (h.o.swatches || []).filter(function(x){ return x !== el.getAttribute('data-c'); }); save(); renderRight(); },
   styleReset:function(){ var b = selBlock(); if(!b) return; snap(true); STYLE_KEYS.forEach(function(k){ delete b.props[k]; }); touch(); renderCanvas(true); renderRight(); },
   fontAdd:function(){ promptBox('Google Font hinzufügen','Exakter Name wie auf fonts.google.com (z. B. „Josefin Sans“)','',function(v){
     v = v.replace(/\s+/g,' ').trim(); if(FP.FONTS.indexOf(v) >= 0 || (db.fonts.google||[]).indexOf(v) >= 0){ toast('Schrift ist schon verfügbar'); return; }
@@ -2538,6 +2610,8 @@ function rangeLabel(el){ if(el.type === 'range'){ var s = el.parentNode.querySel
 
 document.addEventListener('change', function(e){
   var el = e.target;
+  /* gewählte Farbe in die Schnellfarben übernehmen (Farbwähler geschlossen oder Hex-Wert bestätigt) */
+  if(S.view === 'editor' && el.closest && el.closest('.colr') && (el.type === 'color' || el.type === 'text')) swAdd(el.value);
   if(el.id === 'cfun'){ S.cf.funnel = el.value; S.csel = {}; render(); return; }
   if(el.id === 'afun'){ S.afid = el.value; render(); return; }
   if(el.id === 'fcl'){ S.fclient = el.value; render(); return; }
@@ -2578,6 +2652,8 @@ document.addEventListener('keydown', function(e){
   if(mod && e.key.toLowerCase() === 'z' && !typing){ e.preventDefault(); if(e.shiftKey) redo(); else undo(); return; }
   if(mod && e.key.toLowerCase() === 'y' && !typing){ e.preventDefault(); redo(); return; }
   if(e.key === '[' && !typing && !mod){ e.preventDefault(); ACT.lpToggle(); return; }
+  if(e.key === 'Escape' && S.paint){ e.preventDefault(); fmtStop(); toast('Format übertragen abgebrochen'); return; }
+  if(mod && e.altKey && !typing && (e.code === 'KeyC' || e.code === 'KeyV')){ e.preventDefault(); if(e.code === 'KeyC') fmtCopy(false); else { var fb = selBlock(); if(fb) fmtApply(fb); else toast('Erst ein Element markieren'); } return; }
   var textSel = getSelection && String(getSelection()).length > 0;
   if(mod && !e.shiftKey && e.key.toLowerCase() === 'v' && !typing){ e.preventDefault(); pasteBlock(); return; }
   if(typing || !S.sel) return;

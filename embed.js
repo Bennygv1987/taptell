@@ -153,6 +153,43 @@ FP.money = function(n, cur){
 var WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 var fmtDate = function(iso){ if(!iso) return ''; var d = new Date(iso+'T12:00:00'); return WD[d.getDay()]+', '+d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); };
 FP.fmtDate = fmtDate;
+/* ---------- Übergänge an Bildkanten (wie Shape-Divider): Maske oben/unten, die Seite scheint durch ---------- */
+FP.EDGE_LIST = [['','Keiner'],['slant','Schräg'],['curve','Rund nach außen'],['curveIn','Rund nach innen'],['wave','Welle'],['peak','Spitze'],['valley','Kerbe'],['zigzag','Zickzack'],['brush','Pinselstrich'],['torn','Gerissen']];
+FP.edgePath = function(kind){
+  var rnd = (function(seed){ return function(){ seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }; })(kind === 'torn' ? 7 : 42), d, i, n;
+  switch(kind){
+    case 'slant': return 'M0 10 L100 0 V10 Z';
+    case 'curve': return 'M0 10 C25 0 75 0 100 10 Z';
+    case 'curveIn': return 'M0 0 C25 10 75 10 100 0 V10 H0 Z';
+    case 'wave': return 'M0 5 Q12.5 0 25 5 T50 5 T75 5 T100 5 V10 H0 Z';
+    case 'peak': return 'M0 10 L50 0 L100 10 Z';
+    case 'valley': return 'M0 0 L50 10 L100 0 V10 H0 Z';
+    case 'zigzag': d = 'M0 10'; n = 16; for(i = 0; i <= n; i++) d += ' L' + (i * 100 / n).toFixed(2) + ' ' + (i % 2 ? 0 : 10); return d + ' L100 10 Z';
+    case 'brush': /* weiche, wellige Kante wie ein Pinselstrich, mit vereinzelten feinen Borsten */
+      d = 'M0 10'; n = 160;
+      for(i = 0; i <= n; i++){
+        var x = i * 100 / n, y = 4.2 + 1.5 * Math.sin(x * .085 + 1.3) + .9 * Math.sin(x * .27 + .4) + rnd() * .7;
+        if(rnd() < .07){ d += ' L' + x.toFixed(2) + ' ' + Math.min(9.6, y + 2 + rnd() * 2.6).toFixed(2); continue; } /* feine Borste */
+        d += ' L' + x.toFixed(2) + ' ' + Math.max(.3, Math.min(9.4, y)).toFixed(2);
+      }
+      return d + ' L100 10 Z';
+    case 'torn': /* wenige große Risse wie gerissenes Papier */
+      d = 'M0 10 L0 ' + (2 + rnd() * 4).toFixed(2); n = 26;
+      for(i = 1; i <= n; i++) d += ' L' + (i * 100 / n - rnd() * 1.5).toFixed(2) + ' ' + (1 + rnd() * 7).toFixed(2);
+      return d + ' L100 10 Z';
+  }
+  return '';
+};
+FP.edgeMask = function(p){
+  var top = p.edgeTop && FP.edgePath(p.edgeTop), bot = p.edgeBot && FP.edgePath(p.edgeBot); if(!top && !bot) return '';
+  var svg = function(path, flipV, flipH){ var tr = (flipH ? 'translate(100 0) scale(-1 1) ' : '') + (flipV ? 'translate(0 10) scale(1 -1)' : ''); return 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10" preserveAspectRatio="none"><path fill="#000" d="' + path + '"' + (tr ? ' transform="' + tr.trim() + '"' : '') + '/></svg>') + '")'; };
+  var th = top ? Math.max(4, +p.edgeTopH || 40) : 0, bh = bot ? Math.max(4, +p.edgeBotH || 40) : 0, layers = [];
+  if(top) layers.push(svg(top, false, !!p.edgeTopFlip) + ' 0 0/100% ' + (th + 1) + 'px no-repeat');
+  layers.push('linear-gradient(#000 0 0) 0 ' + th + 'px/100% calc(100% - ' + (th + bh) + 'px) no-repeat');
+  if(bot) layers.push(svg(bot, true, !!p.edgeBotFlip) + ' 0 100%/100% ' + (bh + 1) + 'px no-repeat');
+  var m = layers.join(',');
+  return '-webkit-mask:' + m + ';mask:' + m + ';';
+};
 /* ---------- Termin: Monatskalender wie bei Calendly, danach die Uhrzeiten des Tages ---------- */
 FP.calView = {}; FP.calAnim = {};
 var isoOf = function(x){ return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
@@ -547,7 +584,7 @@ FP.renderBlock = function(b, ctx){
     case 'image':
       var ih = p.ratio ? 'aspect-ratio:'+esc(String(p.ratio).replace(':','/'))+';height:auto;' : p.height ? 'height:'+p.height+'px;' : '';
       var ilq = p.fit === 'contain' ? '' : FP.lqSrc(p.src);
-      h = p.src ? '<img class="fp-img" src="'+esc(p.src)+'" alt="'+esc(p.alt)+'" decoding="async" style="border-radius:'+(p.radius!=null?p.radius:14)+'px;'+ih+(p.fit==='contain'?'object-fit:contain;':'')+(p.pos?'object-position:'+esc(p.pos)+';':'')+(ilq?'background-image:url(&quot;'+ilq+'&quot;);':'')+'">'
+      h = p.src ? '<img class="fp-img" src="'+esc(p.src)+'" alt="'+esc(p.alt)+'" decoding="async" style="border-radius:'+(p.radius!=null?p.radius:14)+'px;'+ih+(p.fit==='contain'?'object-fit:contain;':'')+(p.pos?'object-position:'+esc(p.pos)+';':'')+(ilq?'background-image:url(&quot;'+ilq+'&quot;);':'')+FP.edgeMask(p).replace(/"/g,'&quot;')+'">'
         : '<div class="fp-ph" style="border-radius:'+(p.radius!=null?p.radius:14)+'px;height:'+(p.height||180)+'px">'+IC.img+'Bild hochladen</div>';
       break;
     case 'video':
