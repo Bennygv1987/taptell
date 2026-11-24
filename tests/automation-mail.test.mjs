@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {renderAutomationEmail, sampleLead, varsFor} from '../supabase/functions/_shared/automation-mail.mjs';
+import {automationMessage, renderAutomationEmail, sampleLead, varsFor} from '../supabase/functions/_shared/automation-mail.mjs';
 
 const funnel = {name:'Beispiel',settings:{basePrice:2490},pages:[]};
 const vars = varsFor(sampleLead(funnel),funnel,'https://example.com');
@@ -33,4 +33,17 @@ test('Funnel ohne Preise enthält auch im Test keinen Beispielbetrag',()=>{
 });
 test('Standard-Überschrift, Button und Fußzeile lassen sich leeren',()=>{
   assert.doesNotMatch(mail({headingText:'',buttonText:'',footerText:''},'notify'),/<h1|Im Dashboard öffnen|Gesendet mit TapTell/);
+});
+
+for(const kind of ['notify','confirm']){
+  test(kind+': Klartext bewahrt Zeilen, Abstände und benachbarte Platzhalter',()=>{
+    const template='Name: {{name}}\nForm: {{form}}\n\n{{form}}{{nummer}}  {{name}}\n';
+    const result=automationMessage({config:{format:'plain',plainBody:template,customLayout:true,fields:true,total:true},
+      kind,vars:{name:'Mia & Tom',form:'Eckig',nummer:'42'},subject:'Anfrage',funnel});
+    assert.deepEqual(result,{text:'Name: Mia & Tom\nForm: Eckig\n\nEckig42  Mia & Tom\n'});
+  });
+}
+test('Bestehende formatierte Vorlagen behalten ihre Versandart',()=>{
+  const result=automationMessage({config:{body:'Hallo {{vorname}}'},kind:'notify',vars,funnel,subject:'Test'});
+  assert.deepEqual(Object.keys(result),['html']);assert.match(result.html,/Hallo Max/);
 });

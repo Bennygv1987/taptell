@@ -11,7 +11,7 @@
 //   LEAD_NOTIFY_SECRET    – gleicher Wert wie im Vault „lead_notify_secret“
 //   APP_URL               – z. B. https://app.taptell.de (für Bilder & Dashboard-Link)
 // Deploy: supabase functions deploy lead-notify --no-verify-jwt
-import { renderAutomationEmail, sampleLead, varsFor, renderText } from '../_shared/automation-mail.mjs';
+import { automationMessage, sampleLead, varsFor, renderText } from '../_shared/automation-mail.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const cors = {
@@ -27,6 +27,7 @@ type Rule = { id?: string; field: string; op: 'lte' | 'gte' | 'eq' | 'contains' 
 type Hook = { id: string; url: string; secret?: string; active?: boolean; events?: string[]; name?: string };
 type MailOptions = {
   enabled?: boolean; subject?: string; body?: string; html?: string;
+  format?: 'html' | 'plain'; plainBody?: string;
   fields?: boolean; total?: boolean; customLayout?: boolean; layoutHtml?: string;
   headingText?: string; footerText?: string; showLogo?: boolean;
 };
@@ -42,13 +43,13 @@ const splitMails = (s?: string) => String(s ?? '').split(/[\s,;]+/).map((x) => x
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // ---------- E-Mail-Versand ----------
-async function sendMail(to: string[], subject: string, html: string, replyTo?: string) {
+async function sendMail(to: string[], subject: string, message: { text: string } | { html: string }, replyTo?: string) {
   const key = env('RESEND_API_KEY');
   if (!key) return { status: 'skipped' as const, error: 'RESEND_API_KEY fehlt' };
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: env('MAIL_FROM') || 'TapTell <anfragen@taptell.de>', to, subject, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
+    body: JSON.stringify({ from: env('MAIL_FROM') || 'TapTell <anfragen@taptell.de>', to, subject, ...message, ...(replyTo ? { reply_to: replyTo } : {}) }),
   });
   return r.ok ? { status: 'ok' as const, http: r.status } : { status: 'failed' as const, http: r.status, error: (await r.text()).slice(0, 500) };
 }
@@ -112,8 +113,8 @@ async function processLead(admin: any, lead: any, funnel: any, only?: { kind: st
     to = [...new Set(to.map((x) => x.toLowerCase()))];
     if (to.length) {
       const subject = renderText(a.notify?.subject ?? 'Neue Anfrage: {{funnel}}', vars) + (ruleHits.length && a.notify?.ruleSubject !== false ? ' · ' + ruleHits.join(', ') : '');
-      const html = renderAutomationEmail({ config:a.notify, vars, kind:'notify', fields, funnel, origin:env('APP_URL'), subject });
-      await log('email', to.join(', '), await sendMail(to, subject, html, lead.email || undefined));
+      const message = automationMessage({ config:a.notify, vars, kind:'notify', fields, funnel, origin:env('APP_URL'), subject });
+      await log('email', to.join(', '), await sendMail(to, subject, message, lead.email || undefined));
     }
   }
 
@@ -121,8 +122,8 @@ async function processLead(admin: any, lead: any, funnel: any, only?: { kind: st
   if ((!only && a.confirm?.enabled && lead.email) || only?.kind === 'confirm') {
     const target = only?.to?.[0] || lead.email;
     const subject = renderText(a.confirm?.subject ?? 'Danke für deine Anfrage, {{vorname|}}', vars);
-    const html = renderAutomationEmail({ config:a.confirm, vars, kind:'confirm', fields, funnel, origin:env('APP_URL'), subject });
-    await log('email', target, await sendMail([target], subject, html, a.confirm?.replyTo || undefined));
+    const message = automationMessage({ config:a.confirm, vars, kind:'confirm', fields, funnel, origin:env('APP_URL'), subject });
+    await log('email', target, await sendMail([target], subject, message, a.confirm?.replyTo || undefined));
   }
 
   // 3) Webhooks

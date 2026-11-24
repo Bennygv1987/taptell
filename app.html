@@ -1755,7 +1755,7 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
 .rte-ed a{color:var(--acc)}
 .rte-ed a[data-btn]{display:inline-block;background:var(--a);color:var(--pt);text-decoration:none;font-weight:600;font-size:var(--fs-13);padding:8px 14px;border-radius:var(--r-md);margin:2px 0}
 .rte-ed hr{border:0;border-top:1px solid var(--line);margin:12px 0}
-.rte-ed .rv{display:inline-flex;align-items:center;padding:0 7px;margin:0 1px;border-radius:var(--r-pill);background:var(--accS);color:var(--acc);font-size:.92em;font-weight:500;line-height:1.6;user-select:all;-webkit-user-select:all}
+.rte-ed .rv{display:inline;white-space:nowrap;padding:0 7px;margin:0 1px;border-radius:var(--r-pill);background:var(--accS);color:var(--acc);font-size:.92em;font-weight:500;line-height:1.6;user-select:all;-webkit-user-select:all}
 .emopop{position:fixed;z-index:400;display:grid;grid-template-columns:repeat(8,34px);gap:2px;padding:6px;background:var(--raise);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);animation:emoIn var(--dur-pop) var(--ease-out)}
 .emopop button{all:unset;cursor:pointer;width:34px;height:34px;border-radius:var(--r-sm);display:grid;place-items:center;font-size:19px;transition:background-color var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
 .emopop button:active{transform:scale(.9)}
@@ -4524,7 +4524,15 @@ function renderAutomationEmail({config = {}, vars, kind, fields = [], funnel, or
 }
 
 
-return {renderAutomationEmail, sampleLead, varsFor, renderText};})();
+function automationMessage(options) {
+  const config = options.config || {};
+  if (config.format === 'plain') {
+    return {text:renderText(config.plainBody ?? config.body ?? '', options.vars)};
+  }
+  return {html:renderAutomationEmail(options)};
+}
+
+return {automationMessage, sampleLead, varsFor, renderText};})();
 (function(){
 "use strict";
 var T = window.FS_T, esc = FP.esc, uid = T.uid, clone = T.clone;
@@ -6651,6 +6659,33 @@ function mailFromEditor(ed){
   box.querySelectorAll('span.rv').forEach(function(sp){ sp.replaceWith(document.createTextNode('{{' + sp.getAttribute('data-v') + '}}')); });
   return mailSanitize(box.innerHTML);
 }
+function mailTextFromHtml(html){
+  var box = document.createElement('div'); box.innerHTML = html;
+  box.querySelectorAll('p,div,h2,h3,li').forEach(function(block){
+    if(block.childNodes.length === 1 && block.firstChild.nodeName === 'BR') block.firstChild.remove();
+    block.appendChild(document.createTextNode('\n'));
+  });
+  box.querySelectorAll('br').forEach(function(br){ br.replaceWith(document.createTextNode('\n')); });
+  return box.textContent.replace(/\n$/, '');
+}
+function insertMailChip(ed, range, variable){
+  ed.focus();
+  if(!range || !ed.contains(range.commonAncestorContainer)){
+    range = document.createRange();
+    var lastLine = ed.lastElementChild;
+    var end = lastLine && lastLine === ed.lastChild && lastLine.matches('p,div,h2,h3,li') ? lastLine : ed;
+    range.selectNodeContents(end);
+    range.collapse(false);
+    if(end.lastChild && end.lastChild.nodeName === 'BR') range.setStartBefore(end.lastChild);
+    range.collapse(true);
+  }
+  var chip = document.createElement('span');
+  chip.className = 'rv'; chip.contentEditable = 'false';
+  chip.setAttribute('data-v',variable.key); chip.textContent = variable.label;
+  range.deleteContents(); range.insertNode(chip);
+  range.setStartAfter(chip); range.collapse(true);
+  restoreSel(range);
+}
 function plainToMail(t){ return t ? '<p>' + esc(t).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>') + '</p>' : ''; }
 function rte(path, html, f){
   var b = function(cmd, ic, title, extra){ return '<button type="button" class="rtb'+(extra||'')+'" data-rc="'+cmd+'" title="'+title+'" tabindex="-1">'+ic+'</button>'; };
@@ -6661,7 +6696,7 @@ function rte(path, html, f){
     + b('emoji','😊','Emoji', ' emo') + b('var',I('user',13)+'<span>Platzhalter</span>','Eingabe des Interessenten einfügen', ' var')
     + '</div><div class="rte-ed" contenteditable="true" spellcheck="true">'+mailToEditor(html, f)+'</div></div>';
 }
-function saveSel(ed){ var sl = window.getSelection(); if(!sl.rangeCount) return null; var rg = sl.getRangeAt(0); return ed && !ed.contains(rg.commonAncestorContainer) ? null : rg.cloneRange(); }
+function saveSel(ed){ var sl = window.getSelection(); if(!sl || !sl.rangeCount) return null; var rg = sl.getRangeAt(0); return ed && !ed.contains(rg.commonAncestorContainer) ? null : rg.cloneRange(); }
 function restoreSel(rg){ if(!rg) return; var sl = window.getSelection(); sl.removeAllRanges(); sl.addRange(rg); }
 /* Emoji-Auswahl: wächst aus dem Knopf, schließt bei Klick daneben oder Esc */
 function emojiPop(btn, fn){
@@ -6687,7 +6722,9 @@ function btnBox(cb){
 function emailPreview(f, kind){
   var c = auto(f)[kind], lead = TTMail.sampleLead(f), vars = TTMail.varsFor(lead,f,location.origin);
   var subject = TTMail.renderText(c.subject,vars);
-  return {subject:subject, html:TTMail.renderAutomationEmail({config:c, vars:vars, kind:kind, fields:lead.data.fields, funnel:f, origin:location.origin, subject:subject})};
+  var message = TTMail.automationMessage({config:c, vars:vars, kind:kind, fields:lead.data.fields, funnel:f, origin:location.origin, subject:subject});
+  var html = message.html ?? '<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit"><span>'+esc(message.text)+'</span></pre>';
+  return {subject:subject, html:html};
 }
 function autoModal(f, tab){
   tab = tab || 'notify';
@@ -6696,14 +6733,23 @@ function autoModal(f, tab){
   var fldv = function(label, inner, hint){ return '<div class="fld"><div class="flh"><label>'+label+'</label><button class="varbtn" data-a="insVar">'+I('user',12)+'Variable</button></div>'+inner+(hint?'<div class="hint">'+hint+'</div>':'')+'</div>'; };
   var flds = function(label, inner){ return '<div class="fld"><div class="flh"><label>'+label+'</label><span style="display:flex;gap:4px"><button class="varbtn" data-subj-emoji title="Emoji einfügen">😊</button><button class="varbtn" data-a="insVar">'+I('user',12)+'Variable</button></span></div>'+inner+'</div>'; };
   var tgl = function(k, on, label){ return '<label class="tgl"><span>'+label+'</span><input type="checkbox" data-au="'+k+'" data-bool'+(on?' checked':'')+'><span class="sw"></span></label>'; };
+  function messageEditor(kind){
+    var c = a[kind], plain = c.format === 'plain';
+    var format = fld('E-Mail-Format', '<select class="inp" data-au="'+kind+'.format"><option value="html"'+(plain?'':' selected')+'>Formatiert</option><option value="plain"'+(plain?' selected':'')+'>Klartext</option></select>');
+    if(!plain) return format + fld('Nachricht', rte(kind, c.html ?? plainToMail(c.body), f));
+    return format + '<div class="fld"><div class="flh"><label for="plain-mail-'+kind+'">Nachricht</label><button type="button" class="varbtn" data-mail-var>Platzhalter</button></div>'
+      + '<textarea class="inp" rows="8" id="plain-mail-'+kind+'" data-au="'+kind+'.plainBody">'+esc((c.plainBody ?? c.body ?? '').replace(/^\n/,'\n\n'))+'</textarea></div>';
+  }
   function layoutControls(kind){
     var c = a[kind];
     function textOption(key,label,fallback){
       return fld(label,'<input class="inp" data-au="'+kind+'.'+key+'" value="'+esc(c[key] ?? fallback)+'">','Zum Ausblenden leer lassen.');
     }
+    var ruleSubject = kind === 'notify' && a.rules.length ? tgl('notify.ruleSubject', c.ruleSubject !== false, 'Passende Regeln im Betreff nennen') : '';
+    if(c.format === 'plain') return ruleSubject;
     return tgl(kind+'.fields', c.fields !== false, 'Antworten anhängen')
       + tgl(kind+'.total', c.total ?? (c.fields !== false), 'Gesamtpreis anhängen')
-      + (kind === 'notify' && a.rules.length ? tgl('notify.ruleSubject', c.ruleSubject !== false, 'Passende Regeln im Betreff nennen') : '')
+      + ruleSubject
       + tgl(kind+'.customLayout', !!c.customLayout, 'Eigenes HTML-Layout verwenden')
       + (!c.customLayout ? tgl(kind+'.showLogo',c.showLogo !== false,'Funnel-Logo anzeigen')
         + textOption('headingText','Überschrift','{{betreff}}')
@@ -6721,14 +6767,14 @@ function autoModal(f, tab){
         + fld('Empfänger', '<input class="inp" data-au="notify.to" value="'+esc(a.notify.to||'')+'" placeholder="info@firma.de, vertrieb@firma.de">', 'Mehrere Adressen mit Komma trennen.')
         + fld('Empfängerlisten', listChips(a.notify.lists, 'notify.lists'))
         + flds('Betreff', '<input class="inp" data-au="notify.subject" value="'+esc(a.notify.subject||'')+'">')
-        + '<div class="fld"><label>Nachricht</label>'+rte('notify', a.notify.html || plainToMail(a.notify.body), f)+'<div class="hint">Formatieren, Emojis und Platzhalter wie „Vorname“ – in der Mail steht der echte Wert.</div></div>'
+        + messageEditor('notify')
         + layoutControls('notify')
         + '<div style="display:flex;gap:8px"><button class="btn sm" data-a="auTest" data-k="email">'+I('send',13)+'Testmail an mich</button></div></div>'
         + '<div class="au-prev"><div class="au-subj">'+I('mail',13)+'<span>'+esc(emailPreview(f,'notify').subject)+'</span></div><iframe sandbox="" title="Vorschau" data-prev="notify"></iframe></div></div>';
     } else if(tab === 'confirm'){
       h += '<div class="au2"><div>' + tgl('confirm.enabled', a.confirm.enabled, 'Interessent erhält eine Bestätigung')
         + flds('Betreff', '<input class="inp" data-au="confirm.subject" value="'+esc(a.confirm.subject||'')+'">')
-        + '<div class="fld"><label>Nachricht</label>'+rte('confirm', a.confirm.html || plainToMail(a.confirm.body), f)+'<div class="hint">Persönlich mit „Vorname“, Emojis und eigenem Button, z. B. zu deiner Website oder WhatsApp.</div></div>'
+        + messageEditor('confirm')
         + layoutControls('confirm')
         + fld('Antworten gehen an', '<input class="inp" data-au="confirm.replyTo" value="'+esc(a.confirm.replyTo||'')+'" placeholder="info@firma.de">', 'Wenn der Interessent auf die Mail antwortet.')
         + '<div class="hint">Wird nur verschickt, wenn im Funnel ein E-Mail-Feld ausgefüllt wurde.</div>'
@@ -6773,16 +6819,32 @@ function autoModal(f, tab){
       paint();
       /* Editor: speichern, Werkzeugleiste, Emojis, Platzhalter */
       var rteSave = function(ed){ var k = ed.closest('[data-rte]').getAttribute('data-rte'); a[k].html = mailFromEditor(ed); a[k].body = ed.innerText.trim(); changed(false); };
-      var lastInp = null;
-      el.addEventListener('focusin', function(e){ if(e.target.classList && e.target.classList.contains('rte-ed')){ try{ document.execCommand('defaultParagraphSeparator', false, 'p'); }catch(x){} } if(e.target.matches && e.target.matches('input.inp')) lastInp = e.target; });
-      el.addEventListener('mousedown', function(e){ if(e.target.closest('.rtb') || e.target.closest('.emopop')) e.preventDefault(); });
+      var caret = new WeakMap();
+      function rememberCaret(e){
+        var ed = e.target.closest && e.target.closest('.rte-ed');
+        if(ed){ var r = saveSel(ed); if(r) caret.set(ed,r); }
+      }
+      ['keyup','pointerup','input','focusout'].forEach(function(type){ el.addEventListener(type,rememberCaret); });
+      el.addEventListener('focusin', function(e){ if(e.target.classList && e.target.classList.contains('rte-ed')){ try{ document.execCommand('defaultParagraphSeparator', false, 'p'); }catch(x){} } });
+      el.addEventListener('mousedown', function(e){ if(e.target.closest('.rtb,[data-mail-var]') || e.target.closest('.emopop')) e.preventDefault(); });
       el.addEventListener('keydown', function(e){ if(e.target.classList && e.target.classList.contains('rte-ed') && (e.metaKey || e.ctrlKey) && /^[biu]$/i.test(e.key)){ setTimeout(function(){ rteSave(e.target); }, 0); } });
       el.addEventListener('click', function(e){
+        var plainVar = e.target.closest('[data-mail-var]');
+        if(plainVar){
+          e.stopPropagation();
+          var field = plainVar.closest('.fld').querySelector('textarea');
+          var start = field.selectionStart, end = field.selectionEnd;
+          dropdown(plainVar, mailVars(f).map(function(v,i){ return {k:String(i), ic:'user', l:v.label, fn:function(){
+            field.focus(); field.setRangeText('{{'+v.key+'}}',start,end,'end');
+            field.dispatchEvent(new Event('input',{bubbles:true}));
+          }}; }));
+          return;
+        }
         var sj = e.target.closest('[data-subj-emoji]');
         if(sj){ e.stopPropagation(); var inp = sj.closest('.fld').querySelector('input.inp'); emojiPop(sj, function(em){ var st = inp.selectionStart != null ? inp.selectionStart : inp.value.length; inp.value = inp.value.slice(0, st) + em + inp.value.slice(inp.selectionEnd != null ? inp.selectionEnd : st); inp.focus(); inp.setSelectionRange(st + em.length, st + em.length); inp.dispatchEvent(new Event('input', {bubbles:true})); }); return; }
         var rb = e.target.closest('[data-rc]'); if(!rb) return;
         e.stopPropagation(); /* sonst schließt der Dokument-Klick das Platzhalter-Menü sofort wieder */
-        var ed = rb.closest('[data-rte]').querySelector('.rte-ed'), c = rb.getAttribute('data-rc'), r = saveSel(ed);
+        var ed = rb.closest('[data-rte]').querySelector('.rte-ed'), c = rb.getAttribute('data-rc'), r = saveSel(ed) || caret.get(ed);
         ed.focus(); restoreSel(r);
         var ins = function(htm){ ed.focus(); restoreSel(r); document.execCommand('insertHTML', false, htm); rteSave(ed); };
         if(c === 'bold' || c === 'italic' || c === 'underline') document.execCommand(c);
@@ -6793,7 +6855,12 @@ function autoModal(f, tab){
         else if(c === 'link'){ var txt = r ? r.toString() : ''; promptBox('Link einfügen', 'Adresse (https://, mailto: oder tel:)', 'https://', function(u){ u = String(u||'').trim(); if(!u || u === 'https://') return; if(!/^(https?:|mailto:|tel:)/i.test(u)) u = 'https://' + u; if(txt){ ed.focus(); restoreSel(r); document.execCommand('createLink', false, u); rteSave(ed); } else ins('<a href="'+esc(u)+'">'+esc(u.replace(/^(https?:\/\/|mailto:|tel:)/,''))+'</a>&nbsp;'); }); return; }
         else if(c === 'btn'){ btnBox(function(label, url){ ins('<p><a data-btn="1" href="'+esc(url)+'">'+esc(label)+'</a></p><p><br></p>'); }); return; }
         else if(c === 'emoji'){ emojiPop(rb, function(em){ ed.focus(); restoreSel(r); document.execCommand('insertText', false, em); r = saveSel(ed); rteSave(ed); }); return; }
-        else if(c === 'var'){ dropdown(rb, mailVars(f).map(function(v){ return {k:v.key, ic:'user', l:v.label, fn:function(){ ins('<span class="rv" contenteditable="false" data-v="'+v.key+'">'+esc(v.label)+'</span>&nbsp;'); }}; })); return; }
+        else if(c === 'var'){
+          dropdown(rb, mailVars(f).map(function(v,i){ return {k:String(i), ic:'user', l:v.label, fn:function(){
+            insertMailChip(ed,r,v); caret.set(ed,saveSel(ed)); rteSave(ed);
+          }}; }));
+          return;
+        }
         rteSave(ed);
       });
       el.addEventListener('input', function(e){
@@ -6802,8 +6869,11 @@ function autoModal(f, tab){
         if(t.hasAttribute('data-au')){
           var path = t.getAttribute('data-au');
           if(path.endsWith('.fields') && a[tab].total == null) a[tab].total = a[tab].fields !== false;
+          if(path.endsWith('.format') && t.value === 'plain' && a[tab].plainBody == null){
+            a[tab].plainBody = a[tab].html != null ? mailTextFromHtml(a[tab].html) : (a[tab].body || '');
+          }
           setPath(path, t.hasAttribute('data-bool') ? t.checked : t.value);
-          changed(path.endsWith('.customLayout'));
+          changed(path.endsWith('.customLayout') || path.endsWith('.format'));
         }
         else if(t.hasAttribute('data-ar')){ var r = a.rules[+t.getAttribute('data-ar')], rk = t.getAttribute('data-rk'); if(rk === 'list') r.lists = t.value ? [t.value] : []; else r[rk] = t.value; changed(rk === 'op'); }
         else if(t.hasAttribute('data-aw')){ var w = a.webhooks[+t.getAttribute('data-aw')], wk = t.getAttribute('data-wk'); w[wk] = t.hasAttribute('data-bool') ? t.checked : t.value.trim(); changed(false); if(wk === 'url'){ var tb = t.closest('.rule').querySelector('[data-a="auTest"]'); if(tb) tb.disabled = !w.url; } }

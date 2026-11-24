@@ -829,7 +829,7 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
 .rte-ed a{color:var(--acc)}
 .rte-ed a[data-btn]{display:inline-block;background:var(--a);color:var(--pt);text-decoration:none;font-weight:600;font-size:var(--fs-13);padding:8px 14px;border-radius:var(--r-md);margin:2px 0}
 .rte-ed hr{border:0;border-top:1px solid var(--line);margin:12px 0}
-.rte-ed .rv{display:inline-flex;align-items:center;padding:0 7px;margin:0 1px;border-radius:var(--r-pill);background:var(--accS);color:var(--acc);font-size:.92em;font-weight:500;line-height:1.6;user-select:all;-webkit-user-select:all}
+.rte-ed .rv{display:inline;white-space:nowrap;padding:0 7px;margin:0 1px;border-radius:var(--r-pill);background:var(--accS);color:var(--acc);font-size:.92em;font-weight:500;line-height:1.6;user-select:all;-webkit-user-select:all}
 .emopop{position:fixed;z-index:400;display:grid;grid-template-columns:repeat(8,34px);gap:2px;padding:6px;background:var(--raise);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);animation:emoIn var(--dur-pop) var(--ease-out)}
 .emopop button{all:unset;cursor:pointer;width:34px;height:34px;border-radius:var(--r-sm);display:grid;place-items:center;font-size:19px;transition:background-color var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
 .emopop button:active{transform:scale(.9)}

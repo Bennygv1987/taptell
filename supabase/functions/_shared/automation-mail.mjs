@@ -110,3 +110,11 @@ export function renderAutomationEmail({config = {}, vars, kind, fields = [], fun
   </table></td></tr></table></body></html>`;
 }
 
+
+export function automationMessage(options) {
+  const config = options.config || {};
+  if (config.format === 'plain') {
+    return {text:renderText(config.plainBody ?? config.body ?? '', options.vars)};
+  }
+  return {html:renderAutomationEmail(options)};
+}
