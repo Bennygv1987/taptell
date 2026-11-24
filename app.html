@@ -4658,12 +4658,14 @@ var db;
 function loadDb(){ try{ var s = localStorage.getItem(KEY); if(s) return JSON.parse(s); }catch(e){} return null; }
 var saveT = null, saveWarned = false;
 function save(now){
-  clearTimeout(saveT);
+  clearTimeout(saveT); saveT = null;
   var go = REMOTE ? function(){ syncRemote(); } : function(){ try{ if(db && db.funnels) fixSlugs(); localStorage.setItem(KEY, JSON.stringify(db)); setSaved(true); }catch(e){ setSaved(false); if(!saveWarned){ saveWarned = true; toast('Lokaler Speicher voll oder gesperrt – Daten bleiben nur bis zum Neuladen erhalten.'); } } };
   setSaved(null);
-  if(now) go(); else saveT = setTimeout(function(){ saveT = null; go(); }, 350);
+  if(now) go(); else saveT = setTimeout(function(){ saveT = null; go(); }, REMOTE ? 1000 : 350);
 }
-function setSaved(s){ var el = $('#svst'); if(!el) return; el.innerHTML = s === null ? 'Speichert …' : s ? I('check',13)+' Gespeichert' : 'Nicht gespeichert'; }
+var savedState = true;
+function savedLabel(s){ return s === null ? 'Speichert …' : s === 'backup' ? 'Versionsbackup ausstehend' : s ? I('check',13)+' Gespeichert' : 'Nicht gespeichert'; }
+function setSaved(s){ savedState = s; var el = $('#svst'); if(el) el.innerHTML = savedLabel(s); }
 
 var NAMES = ['Lena Hoffmann','Jonas Becker','Sophie Wagner','Felix Schulz','Marie Koch','Paul Richter','Anna Klein','Lukas Wolf','Laura Neumann','Tim Schwarz','Julia Zimmermann','David Krüger','Sarah Hartmann','Max Lange','Nina Werner','Jan Schmitt','Hannah Braun','Leon Fischer'];
 var STATUSES = [['neu','Neu'],['kontaktiert','Kontaktiert'],['angebot','Angebot'],['gewonnen','Gewonnen'],['verloren','Verloren']];
@@ -5372,14 +5374,19 @@ function renderEditor(){
   var f = F(); if(!f){ go('funnels'); return; }
   /* Ältere Funnels aus Vorlagen: feste Werte aus dem eigenen CSS in die Einstellungen übernehmen (sieht gleich aus, ist aber einstellbar) */
   if(f.status === 'live' && !f.published){ f.published = Object.assign({at:f.updatedAt || Date.now()}, fState(f)); save(); } /* bisheriger Stand bleibt online, bis neu veröffentlicht wird */
-  if(!OPENED[f.id]){ OPENED[f.id] = 1; f._av = 0; autoVersion(f); f._av = Date.now(); }
+  if(!OPENED[f.id]){
+    OPENED[f.id] = 1;
+    var latest = (f.versions || [])[0];
+    f._av = latest ? latest.at : 0;
+    autoVersion(f);
+  }
   if(T.liftCss && T.liftCss(f.theme)) touch();
   fixSel();
   var h = '<div class="ed'+(lpOff()?' lp-off':'')+'"><header class="etop">'
     + '<button class="btn ghost sm ic" data-a="nav" data-v="funnels" title="Zurück zum Dashboard">'+I('left')+'</button>'
     + '<button class="btn ghost sm ic" data-a="lpToggle" title="Elemente ein- oder ausblenden ( [ )" aria-pressed="'+(!lpOff())+'">'+I('sidebar')+'</button>'
     + '<input class="nmin" id="fname" value="'+esc(f.name)+'" size="'+Math.max(8,f.name.length)+'">'
-    + '<span class="pill '+(f.status==='live'?(pubDirty(f)?'warn':'live'):'draft')+'">'+(f.status==='live'?(pubDirty(f)?'Live · Änderungen offen':'Live'):'Entwurf')+'</span><span class="sv" id="svst">'+I('check',13)+' Gespeichert</span><button class="btn ghost sm ic" data-a="versions" title="Versionen & Backups">'+I('history')+'</button>'
+    + '<span class="pill '+(f.status==='live'?(pubDirty(f)?'warn':'live'):'draft')+'">'+(f.status==='live'?(pubDirty(f)?'Live · Änderungen offen':'Live'):'Entwurf')+'</span><span class="sv" id="svst">'+savedLabel(savedState)+'</span><button class="btn ghost sm ic" data-a="versions" title="Versionen & Backups">'+I('history')+'</button>'
     + '<div class="sp"></div>'
     + '<div class="seg"><button class="'+(S.device==='mobile'?'on':'')+'" data-a="device" data-v="mobile" title="Mobil">'+I('mobile',15)+'</button><button class="'+(S.device==='desk'?'on':'')+'" data-a="device" data-v="desk" title="Desktop">'+I('monitor',15)+'</button></div>'
     + (S.device !== 'desk' ? '<button class="btn ghost sm devpick" data-a="devPick" title="Handy für die Vorschau wählen">'+esc(curDevice().n)+'<span class="dvw">'+curDevice().w+' px</span>'+I('chevDown',12)+'</button>' : '')
@@ -7233,6 +7240,7 @@ function rowToClient(r){ return {id:r.id, name:r.name, logo:r.logo || '', contac
 function settingsPayload(){ return {brand:db.brand, defaults:db.defaults, fonts:db.fonts}; }
 
 async function afterLogin(u){
+  clearTimeout(timeoutRetry); timeoutRetry = null; lastSaveError = ''; setSaved(true);
   var pr = await sb.from('profiles').select('*').eq('id', u.id).maybeSingle();
   if(pr.error || !pr.data){ await sb.auth.signOut(); toast('Für dieses Konto ist kein Zugang eingerichtet.'); S.user = null; return render(); }
   S.user = {id:u.id, email:u.email, name:pr.data.name || '', role:pr.data.role, clientId:pr.data.client_id};
@@ -7247,7 +7255,7 @@ async function loadRemote(){
   var stats = {}; (q[3].data || []).forEach(function(r){ stats[r.funnel_id] = {views:+r.views || 0, starts:+r.starts || 0, completes:+r.completes || 0, pages:r.pages || {}, daily:r.daily || {}}; });
   var set = (q[4].data && q[4].data.data) || {};
   db = emptyDb();
-  var pubProbe = await sb.from('funnels').select('published').limit(1); HAS_PUB = !pubProbe.error; /* Spalten aus versionen.sql vorhanden? */
+  var pubProbe = await sb.from('funnels').select('published').limit(0); HAS_PUB = !pubProbe.error; /* Spalten aus versionen.sql vorhanden? */
   db.clients = (q[0].data || []).map(rowToClient);
   savedOverviewColors.clear();
   (q[1].data || []).forEach(function(r){ if(r.overview_color) savedOverviewColors.set(r.id, r.overview_color); });
@@ -7262,6 +7270,43 @@ async function loadRemote(){
   db.leads.forEach(function(l){ SNAP.leads[l.id] = JSON.stringify(leadToRow(l)); });
   db.clients.forEach(function(c){ SNAP.clients[c.id] = JSON.stringify(clientToRow(c)); });
   ensureFonts();
+}
+/* Bestehende Datensätze gezielt aktualisieren: Live-Stand und eingebettete Bilder
+   gehören nur in den Request, wenn sich die jeweilige Spalte geändert hat. */
+async function syncFunnels(){
+  var snapshots = SNAP.funnels;
+  for(var f of db.funnels){
+    var row = funnelToRow(f), id = row.id, next = JSON.stringify(row);
+    if(next === snapshots[id]) continue;
+    var result;
+    if(snapshots[id]){
+      var previous = JSON.parse(snapshots[id]), patch = {};
+      Object.keys(row).forEach(function(key){
+        if(JSON.stringify(previous[key]) !== JSON.stringify(row[key])) patch[key] = row[key];
+      });
+      result = await sb.from('funnels').update(patch).eq('id', id).select('id').single();
+    } else {
+      result = await sb.from('funnels').upsert(row);
+    }
+    if(result.error) throw result.error;
+    snapshots[id] = next;
+  }
+  var seen = new Set(db.funnels.map(function(f){ return f.id; }));
+  var removed = Object.keys(snapshots).filter(function(id){ return !seen.has(id); });
+  if(removed.length){
+    var deleted = await sb.from('funnels').delete().in('id', removed);
+    if(deleted.error) throw deleted.error;
+    removed.forEach(function(id){ delete snapshots[id]; delete VSNAP[id]; savedOverviewColors.delete(id); });
+  }
+}
+async function syncVersions(){
+  for(var f of db.funnels){
+    var versions = f.versions || [], ids = JSON.stringify(versions.map(function(v){ return v.id; }));
+    if(VSNAP[f.id] === ids) continue;
+    var result = await sb.from('funnels').update({versions:versions}).eq('id', f.id).select('id').single();
+    if(result.error) throw result.error;
+    VSNAP[f.id] = ids;
+  }
 }
 async function syncTable(table, list, toRow, onlyCols){
   var snap = SNAP[table], seen = {}, ups = [], pend = {};
@@ -7285,25 +7330,40 @@ async function syncOverviewColors(){
     if(color) savedOverviewColors.set(f.id, color); else savedOverviewColors.delete(f.id);
   }
 }
+var lastSaveError = '', timeoutRetry = null;
 async function syncRemote(){
   if(!sb || !S.user) return;
   if(syncing){ syncAgain = true; return; }
   syncing = true; setSaved(null);
+  var stage = 'Kontakte';
   try{
     if(realAdmin()){
       await syncTable('clients', db.clients || [], clientToRow);
       if(fixSlugs()) toast('Doppelte Link-Adresse korrigiert – die Kopie hat jetzt eine eigene Adresse');
-      await syncTable('funnels', db.funnels, funnelToRow);
-      if(HAS_PUB){ for(var vi = 0; vi < db.funnels.length; vi++){ var vf = db.funnels[vi], vh = JSON.stringify((vf.versions || []).map(function(v){ return v.id; })); if(VSNAP[vf.id] !== vh){ var vr = await sb.from('funnels').update({versions:vf.versions || []}).eq('id', vf.id); if(vr.error) throw vr.error; VSNAP[vf.id] = vh; } } } /* Backups getrennt und nur bei Änderung senden */
+      stage = 'Funnel-Entwurf'; await syncFunnels();
+      stage = 'App-Einstellungen';
       var sp = JSON.stringify(settingsPayload()); if(sp !== SNAP.settings){ var r = await sb.from('app_settings').upsert({id:1, data:settingsPayload()}); if(r.error) throw r.error; SNAP.settings = sp; }
-      await syncTable('leads', db.leads, leadToRow);
+      stage = 'Leads'; await syncTable('leads', db.leads, leadToRow);
       try{ await syncTable('recipient_lists', lists(), listToRow); }catch(e){ console.warn('recipient_lists:', e.message || e); }
-      await syncOverviewColors();
+      stage = 'Übersichtsfarben'; await syncOverviewColors();
+      if(HAS_PUB){ stage = 'Versionsbackup'; await syncVersions(); }
     } else {
       await syncTable('leads', visibleLeads(), leadToRow, ['status','notes']);
     }
-    setSaved(true);
-  }catch(e){ setSaved(false); toast('Speichern fehlgeschlagen: ' + (e.message || e)); }
+    if(!syncAgain && !saveT) setSaved(true);
+    lastSaveError = ''; clearTimeout(timeoutRetry); timeoutRetry = null;
+  }catch(e){
+    setSaved(stage === 'Versionsbackup' ? 'backup' : false);
+    var message = stage + ': ' + (e.message || e);
+    if(message !== lastSaveError) toast('Speichern fehlgeschlagen – ' + message);
+    if((e.code === '57014' || /statement timeout/i.test(e.message)) && timeoutRetry === null){
+      var owner = S.user, sessionDb = db;
+      timeoutRetry = setTimeout(function(){
+        if(S.user === owner && db === sessionDb) syncRemote();
+      }, 5000);
+    }
+    lastSaveError = message;
+  }
   syncing = false;
   if(syncAgain){ syncAgain = false; syncRemote(); }
 }
