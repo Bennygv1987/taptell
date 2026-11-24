@@ -8,6 +8,8 @@ import re as _re
 _m = _re.search(r"var SUPABASE_JS = '([^']+)', SUPABASE_JS_SRI = '([^']+)'", r('app.js'))
 SUPABASE_JS, SUPABASE_JS_SRI = _m.group(1), _m.group(2)
 app = r('app.js').replace('%%TT_LOGO%%', logo).replace('%%TT_LOGO_W%%', logow)
+mail_module = (d.parent/'supabase/functions/_shared/automation-mail.mjs').read_text()
+mail_script = 'var TTMail = (function(){\n' + mail_module.replace('export function ', 'function ') + '\nreturn {renderAutomationEmail, sampleLead, varsFor, renderText};})();'
 def page(config_tag):
     return f"""<!DOCTYPE html>
 <html lang="de">
@@ -37,6 +39,8 @@ def page(config_tag):
 {r('templates.js')}
 </script>
 <script>
+{r('media.js')}
+{mail_script}
 {app}
 </script>
 </body>
