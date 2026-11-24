@@ -32,6 +32,7 @@ var IP = {
   fItalic:'<path d="M10 5h8M6 19h8M14 5l-4 14"/>',
   fUnder:'<path d="M7 4v7a5 5 0 0010 0V4M5 20h14"/>',
   fHl:'<path d="M7 7h10M7 11h7"/><path d="M4 18c5-3.2 11-3.2 16 0"/>',
+  inkDrop:'<path d="M12 3c-1.6 3.4-6.1 7.7-6.1 10.8a6.1 6.1 0 0 0 12.2 0C18.1 10.7 13.6 6.4 12 3Z"/><path d="M9 14a3 3 0 0 0 3 3"/>',
   fAccent:'<path d="M6 16l6-12 6 12M8.5 11h7"/><path d="M4 20h16" stroke-width="3"/>',
   fMark:'<path d="M9 15l-4 4h6l1-1"/><path d="M14 4l6 6-8 8-6-6z"/>',
   fSmall:'<path d="M3 18l5-12 5 12M4.8 14h6.4"/><path d="M16 12h5"/>',
@@ -241,7 +242,7 @@ function modal(opts){
   bg.innerHTML = '<div class="modal '+(opts.size||'')+'"><div class="mh"><div><h2>'+esc(opts.title)+'</h2>'+(opts.sub?'<p>'+esc(opts.sub)+'</p>':'')+'</div><button class="btn ghost sm ic x" data-close>'+I('x')+'</button></div><div class="mb">'+opts.body+'</div>'+(opts.foot?'<div class="mf">'+opts.foot+'</div>':'')+'</div>';
   document.body.appendChild(bg);
   var close = function(){ bg.remove(); document.removeEventListener('keydown', onk); if(opts.onClose) opts.onClose(); };
-  var onk = function(e){ if(e.key === 'Escape') close(); };
+  var onk = function(e){ if(e.key === 'Escape' && Array.from(document.querySelectorAll('.mbg')).pop() === bg) close(); };
   document.addEventListener('keydown', onk);
   bg.addEventListener('mousedown', function(e){ if(e.target === bg) close(); });
   bg.addEventListener('click', function(e){ if(e.target.closest('[data-close]')) close(); });
@@ -274,10 +275,82 @@ function readImage(file, maxW, cb){
   rd.onload = function(){
     if(/svg/.test(file.type)) return cb(rd.result);
     var img = new Image(); img.onload = function(){ var c = document.createElement('canvas'), sc = Math.min(1, maxW/img.width); c.width = img.width*sc; c.height = img.height*sc; c.getContext('2d').drawImage(img,0,0,c.width,c.height); cb(c.toDataURL(/png/.test(file.type)?'image/png':'image/jpeg', .82)); };
+    img.onerror = function(){ toast('Dieses Bildformat konnte nicht geladen werden.'); };
     img.src = rd.result;
   };
+  rd.onerror = function(){ toast('Bild konnte nicht gelesen werden.'); };
   rd.readAsDataURL(file);
 }
+function mediaServer(){ return REMOTE ? sb : null; }
+function libraryButton(){
+  return '<button type="button" class="btn sm" data-media-pick>'+I('images',13)+'Mediathek</button>';
+}
+function mediaModal(select){
+  if(!isAdmin()) return;
+  var page = 0, rows = [], request = 0;
+  modal({title:'Mediathek', size:'mid', body:'<div class="media-tools"><label class="btn sm">'+I('upload',14)+'Bild hochladen<input type="file" accept="image/*" data-media-file></label></div><div class="media-items" aria-live="polite"></div><div class="media-nav"></div>',
+    onOpen:function(el, close){
+      var grid = el.querySelector('.media-items'), nav = el.querySelector('.media-nav');
+      async function refresh(){
+        var seq = ++request;
+        grid.textContent = 'Bilder werden geladen …'; nav.innerHTML = '';
+        try{
+          var loaded = await TTMedia.list(mediaServer(),db,page);
+          if(seq !== request || !el.isConnected) return;
+          if(!loaded.length && page){ page--; return refresh(); }
+          rows = loaded.slice(0,TTMedia.pageSize);
+          grid.innerHTML = rows.map(function(row,i){
+            var thumb = '<img loading="lazy" src="'+esc(row.src)+'" alt=""><span>'+esc(row.name)+'</span>';
+            return '<div class="media-item">'+(select ? '<button type="button" class="media-thumb" data-use="'+i+'" title="Bild verwenden">'+thumb+'</button>' : '<div class="media-thumb">'+thumb+'</div>')
+              +'<button type="button" class="btn sm ic" data-remove="'+i+'" aria-label="'+esc(row.name)+' aus der Mediathek entfernen">'+I('trash',14)+'</button></div>';
+          }).join('') || '<p class="hint">Noch keine Bilder hochgeladen.</p>';
+          nav.innerHTML = (page ? '<button type="button" class="btn sm" data-back>Zurück</button>' : '')+(loaded.length > rows.length ? '<button type="button" class="btn sm" data-next>Weitere Bilder</button>' : '');
+        }catch(e){ if(seq === request){ grid.textContent = 'Mediathek konnte nicht geladen werden: '+e.message; } }
+      }
+      el.addEventListener('change',function(e){
+        if(!e.target.matches('[data-media-file]') || !e.target.files[0]) return;
+        var file = e.target.files[0]; e.target.value = '';
+        readImage(file,1400,async function(src){
+          try{ await TTMedia.storeImage(mediaServer(),file.name,src); page=0; await refresh(); }
+          catch(err){ toast('Bild konnte nicht gespeichert werden: '+err.message); }
+        });
+      });
+      el.addEventListener('click',function(e){
+        var b = e.target.closest('button');
+        if(!b) return;
+        if(b.hasAttribute('data-back')){ page--; refresh(); }
+        if(b.hasAttribute('data-next')){ page++; refresh(); }
+        if(b.hasAttribute('data-use') && select){ var row=rows[+b.dataset.use]; close(); select(row.src); }
+        if(b.hasAttribute('data-remove')){
+          var item=rows[+b.dataset.remove];
+          confirmBox('Bild aus Mediathek entfernen?', '„'+item.name+'“ bleibt in bestehenden Funnels sichtbar.', 'Entfernen', async function(){
+            try{ await TTMedia.remove(mediaServer(),item.id); await refresh(); }
+            catch(err){ toast('Bild konnte nicht entfernt werden: '+err.message); }
+          },true);
+        }
+      });
+      refresh();
+    }});
+}
+function applyEditorImage(input,src){
+  if(!isAdmin() || !input.isConnected) return;
+  snap(true);
+  if(input.hasAttribute('data-arrimg')){
+    var k=input.dataset.arrimg, props=selBlock().props; props[k]=(props[k] || []).concat([src]); touch();
+  } else if(input.hasAttribute('data-optimg')){
+    selBlock().props.options[+input.dataset.optimg].img=src; touch();
+  } else setScoped(input.dataset.scope,input.dataset.img,src);
+  renderCanvas(true); renderRight();
+}
+function uploadAdminImage(file,width,apply){
+  readImage(file,width,async function(src){
+    // Existing upload fields remain usable while the media migration is pending.
+    apply(src);
+    try{ await TTMedia.storeImage(mediaServer(),file.name,src); }
+    catch(e){ toast('Bild verwendet. Speichern in der Mediathek fehlgeschlagen: '+e.message); }
+  });
+}
+
 /* Vorlagen-Galerie: beim Überfahren blättern die Seiten der Vorlage durch (nur mit Maus) */
 var TPLPREV = {}, tplT = null, tplCard = null;
 document.addEventListener('mouseover', function(e){
@@ -347,6 +420,37 @@ function render(){
 }
 
 /* ---------- views: funnels ---------- */
+var OVERVIEW_COLORS = {blue:'Blau', green:'Grün', amber:'Bernstein', purple:'Violett', red:'Rot'};
+
+function overviewColorPicker(f, anchor){
+  if(!isAdmin()) return;
+  var current = Object.hasOwn(OVERVIEW_COLORS, f.overviewColor) ? f.overviewColor : '';
+  var options = [''].concat(Object.keys(OVERVIEW_COLORS)).map(function(key){
+    return '<button type="button" class="btn" data-mark="'+key+'" aria-pressed="'+(current === key)+'"><i aria-hidden="true"></i>'+esc(OVERVIEW_COLORS[key] || 'Keine Farbe')+(current === key ? I('check',14) : '')+'</button>';
+  }).join('');
+  modal({title:'Übersichtsfarbe', sub:f.name, body:'<div class="overview-colors">'+options+'</div>',
+    onClose:function(){ if(anchor.isConnected) anchor.focus(); },
+    onOpen:function(el, close){
+      var group = el.querySelector('.overview-colors');
+      group.querySelector('[aria-pressed="true"]').focus();
+      group.onclick = function(e){
+        var button = e.target.closest('[data-mark]');
+        if(!button || !isAdmin()) return;
+        var color = button.dataset.mark;
+        if(color !== current){
+          f.overviewColor = color;
+          save(true);
+          var thumb = anchor.closest('.fcard').querySelector('.thumb');
+          if(color) thumb.dataset.mark = color; else thumb.removeAttribute('data-mark');
+          anchor.setAttribute('aria-label', overviewMenuLabel(f));
+        }
+        close();
+      };
+    }});
+}
+function overviewMenuLabel(f){
+  return 'Optionen für '+f.name+(OVERVIEW_COLORS[f.overviewColor] ? ', Markierung '+OVERVIEW_COLORS[f.overviewColor] : '');
+}
 function viewFunnels(){
   var SF = scopedFunnels(), SL = scopedLeads();
   var fs = SF.filter(function(f){ return (S.filter === 'all' || f.status === S.filter) && (!S.q || f.name.toLowerCase().indexOf(S.q.toLowerCase()) >= 0) && (!S.fclient || (S.fclient === '-' ? !f.clientId : f.clientId === S.fclient)); });
@@ -363,7 +467,7 @@ function viewFunnels(){
   h += '<div class="grid">';
   fs.forEach(function(f){
     var lc = leadsOf(f.id).length;
-    h += '<div class="fcard" data-a="edit" data-id="'+f.id+'"><div class="menu"><button class="btn sm ic" data-a="fmenu" data-id="'+f.id+'">'+I('more')+'</button></div><div class="thumb">'+mini(f)+'</div>'
+    h += '<div class="fcard" data-a="edit" data-id="'+f.id+'"><div class="menu"><button class="btn sm ic" data-a="fmenu" data-id="'+f.id+'" aria-label="'+esc(overviewMenuLabel(f))+'">'+I('more')+'</button></div><div class="thumb"'+(OVERVIEW_COLORS[f.overviewColor] ? ' data-mark="'+esc(f.overviewColor)+'"' : '')+'>'+mini(f)+'</div>'
       + '<div class="meta"><div class="nm"><span>'+esc(f.name)+'</span><span class="pill '+(f.status==='live'?'live':'draft')+'" style="flex:none">'+(f.status==='live'?'Live':'Entwurf')+'</span></div>'
       + '<div class="who">'+(f.clientId && clientById(f.clientId) ? I('folder',12)+'<span>'+esc(clientById(f.clientId).name)+'</span>'+(f.shared?'<span class="sh" title="Für den Kunden freigeschaltet">'+I('eye',12)+'</span>':'') : '<span>Intern</span>')+'<span class="dt">· '+fmtRel(f.updatedAt)+'</span></div>'
       + '<div class="fst"><div><b>'+fmtNum(f.stats.views)+'</b><small>Aufrufe</small></div><div><b>'+lc+'</b><small>Leads</small></div><div><b>'+conv(f).toFixed(1).replace('.',',')+' %</b><small>Conversion</small></div></div></div></div>';
@@ -396,6 +500,7 @@ function funnelMenu(btn, id){
     {k:'e', l:'Bearbeiten', ic:'edit', fn:function(){ go('editor', id); }},
     {k:'p', l:'Vorschau', ic:'eye', fn:function(){ openPreview(f); }},
     {k:'r', l:'Umbenennen', ic:'type', fn:function(){ promptBox('Funnel umbenennen','Name',f.name,function(v){ f.name = v; save(); render(); }); }},
+    {k:'color', l:'Übersichtsfarbe', ic:'palette', fn:function(){ overviewColorPicker(f, btn); }},
     {k:'d', l:'Duplizieren', ic:'dup', fn:function(){ duplicateFunnel(f); }},
     {k:'s', l:f.status==='live'?'Offline nehmen':'Live schalten', ic:'rocket', fn:function(){ f.status = f.status==='live'?'draft':'live'; save(); render(); toast(f.status==='live'?'Funnel ist live':'Funnel ist jetzt Entwurf'); }},
     {k:'x', l:'Exportieren / Einbetten', ic:'code', fn:function(){ publishModal(f); }},
@@ -536,7 +641,7 @@ function viewAnalytics(){
     chs.forEach(function(b){
       var k = FP.keyOf(b), cnt = {}, tot = 0;
       ls.forEach(function(l){ var v = l.answers && l.answers[k]; if(v == null) return; [].concat(v).forEach(function(id){ cnt[id] = (cnt[id]||0) + 1; tot++; }); });
-      h += '<div><div style="font-weight:600;margin-bottom:12px;font-size:var(--fs-13)">'+esc(String(b.props.question||k).replace(/\*\*|==/g,''))+'</div><div class="dist">' + b.props.options.map(function(o){ var c = cnt[o.id]||0, pc = ls.length ? Math.round(c/ls.length*100) : 0; return '<div class="dr"><div class="top"><span>'+esc((o.icon?o.icon+' ':'')+o.label)+'</span><span style="color:var(--mut)">'+c+' · '+pc+' %</span></div><div class="tr"><i style="width:'+pc+'%"></i></div></div>'; }).join('') + '</div></div>';
+      h += '<div><div style="font-weight:600;margin-bottom:12px;font-size:var(--fs-13)">'+esc(FP.stripInk(b.props.question||k).replace(/\*\*|==/g,''))+'</div><div class="dist">' + b.props.options.map(function(o){ var c = cnt[o.id]||0, pc = ls.length ? Math.round(c/ls.length*100) : 0; return '<div class="dr"><div class="top"><span>'+esc((o.icon?o.icon+' ':'')+o.label)+'</span><span style="color:var(--mut)">'+c+' · '+pc+' %</span></div><div class="tr"><i style="width:'+pc+'%"></i></div></div>'; }).join('') + '</div></div>';
     });
     h += '</div></div>';
   }
@@ -557,6 +662,7 @@ function viewSettings(){
     + '<div class="fld"><label>Standard-Webhook für neue Funnels</label><input class="inp" data-def="webhook" value="'+esc(db.defaults.webhook||'')+'" placeholder="https://hook.eu1.make.com/…"></div>'
     + '<p class="hint" style="margin-top:-6px">Jeder exportierte Funnel sendet Leads als JSON per POST an diese URL – z. B. an Make, Zapier, n8n oder eine Supabase Edge Function.</p>'
     + '<div class="callout" style="margin-top:14px">'+I('info')+'<div>Leads aus dem Live-Funnel kommen über den Webhook in dein System. In diesem Dashboard landen Leads aus der Vorschau sowie importierte Daten.</div></div></div></div>';
+  h += '<div class="card"><div class="ch">'+I('images')+'<h3>Mediathek</h3></div><div class="cb"><button class="btn" data-a="manageMedia">Bilder verwalten</button></div></div>';
   h += listsCard();
   h += '<div class="card"><div class="ch">'+I('file')+'<h3>Daten exportieren</h3></div><div class="cb"><p class="hint" style="margin:0 0 12px">Komplettes Backup (Funnels, Kontakte, Brand-Kit) als JSON.</p><button class="btn" data-a="exportAll">'+I('copy')+'Backup kopieren</button></div></div>';
   h += '<div class="card"><div class="ch">'+I('upload')+'<h3>Daten importieren</h3></div><div class="cb"><textarea class="inp" id="impj" placeholder="Backup- oder Funnel-JSON hier einfügen …" style="min-height:80px;font-family:ui-monospace,monospace;font-size:var(--fs-12)"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-a="importJ">Importieren</button><span style="flex:1"></span><button class="btn danger" data-a="resetAll">'+I('refresh',14)+'Zurücksetzen</button></div></div></div>';
@@ -609,8 +715,8 @@ function toHex(v){ v = String(v||''); if(/^#[0-9a-f]{6}$/i.test(v)) return v; if
 
 /* ================= EDITOR ================= */
 var FIELDS = {
-  heading:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzentfarbe== · [[Marker]] · {{name}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
-  text:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzent== · [[Marker]] · {{name}}, {{total}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
+  heading:[['text','textarea','Text','Für einzelne Textfarben: Text im Handy doppelklicken, Wörter markieren und die Schriftfarbe wählen. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzentfarbe== · [[Marker]] · {{name}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['hlColor','color','Farbe der Hervorhebung'],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
+  text:[['text','textarea','Text','Für einzelne Textfarben: Text im Handy doppelklicken, Wörter markieren und die Schriftfarbe wählen. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzent== · [[Marker]] · {{name}}, {{total}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['hlColor','color','Farbe der Hervorhebung'],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
   badge:[['text','text','Text'],['variant','seg','Stil',[['','Soft'],['filled','Gefüllt'],['outline','Rahmen'],['grey','Grau']]],['upper','toggle','Großbuchstaben']],
   compare:[['bleed','toggle','Volle Breite ohne Seitenrand'],['before','image','Vorher-Bild (links)'],['after','image','Nachher-Bild (rechts)'],['row2','row',[['labelBefore','text','Text links'],['labelAfter','text','Text rechts']]],['ratio','select','Seitenverhältnis',[['4:3','4:3'],['1:1','1:1'],['16:9','16:9'],['3:4','3:4 (hoch)']]],['start','range','Startposition',[5,95,1,'%']],['radius','range','Ecken',[0,40,1]]],
   image:[['src','image','Bild'],['bleed','toggle','Volle Breite ohne Seitenrand','Das Bild reicht bis an den Rand des Bildschirms. Die Höhe bestimmst du weiter unten.'],['ratio','select','Seitenverhältnis',[['','Feste Höhe'],['2:1','2:1'],['16:9','16:9'],['4:3','4:3'],['1:1','1:1'],['auto','Original']]],['height','range','Höhe',[80,420,10],function(p){ return !p.ratio; }],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text'],
@@ -649,7 +755,7 @@ var FIELDS = {
     ['calRadius','range','Ecken der Karte',[0,32,1,'px',18],function(p){ return p.calStyle !== 'strip'; }]],
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  checkbox:[['text','textarea','Text','Link: Doppelklick auf den Text im Handy, Wort markieren, Link-Symbol – oder hier [Datenschutzerklärung](https://…) schreiben. Links öffnen sich in einem neuen Fenster.'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
+  checkbox:[['text','textarea','Text','Link: Doppelklick auf den Text im Handy, Wort markieren, Link-Symbol – oder hier [Datenschutzerklärung](https://…) schreiben. Links öffnen sich in einem neuen Fenster.'],['size','num','Schriftgröße (px)'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['whatsapp','WhatsApp (einfarbig)'],['br-whatsapp','WhatsApp (Original)'],['br-instagram','Instagram (Original)'],['br-facebook','Facebook (Original)'],['br-tiktok','TikTok (Original)'],['br-linkedin','LinkedIn (Original)'],['br-youtube','YouTube (Original)'],['br-x','X (Original)'],['br-telegram','Telegram (Original)'],['none','Kein Icon']]],['row2','row',[['bSize','num','Schriftgröße (px)'],['icColor','color','Icon-Farbe']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['row2','row',[['btnBw','num','Rahmen (px)'],['btnBc','color','Rahmenfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
   summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }],['sticky','toggle','Unten fixieren','Bleibt beim Scrollen am unteren Rand sichtbar, solange das Element weiter unten auf der Seite steht.']],
   box:[['count','num','Enthält die nächsten … Elemente','Die Elemente direkt darunter liegen in der Box. Mit den Pfeilen in der Element-Leiste schiebst du Elemente hinein oder heraus.'],['bxStyle','seg','Stil',[['card','Karte'],['sand','Sand'],['tint','Getönt'],['outline','Rahmen'],['glass','Glas'],['soft','Soft UI'],['solid','Farbig'],['plain','Ohne']]],['_bh','note','Hintergrund, Rahmen, Schatten, Ecken und Innenabstand stellst du unten unter „Stil → Box“ ein.']],
@@ -831,7 +937,7 @@ function field(spec, p, scope){
     case 'note': return '<div class="hint" style="margin:-2px 0 12px">'+esc(label)+'</div>';
     case 'lottie': return w('<div class="upl">'+(v ? '<span class="pill">Eigene Datei geladen</span>' : '')+'<label class="btn sm">'+I('upload',13)+(v ? 'Ersetzen' : 'Lottie-Datei (.json)')+'<input type="file" accept=".json,application/json" data-lottie="'+k+'"></label>'+(v ? '<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Entfernen">'+I('trash')+'</button>' : '')+'</div>');
     case 'imgstrings': return w((v||[]).map(function(x, i){ var isImg = /^(https?:|data:|\/)/.test(x); return '<div class="strl">'+(isImg ? '<span class="sthumb" style="background-image:url(&quot;'+esc(x)+'&quot;)"></span><input class="inp" value="'+(/^data:/.test(x) ? 'Hochgeladenes Bild' : esc(x))+'" disabled>' : '<input class="inp" data-arr="'+k+'" data-ai="'+i+'" value="'+esc(x)+'">')+'<button class="ibtn" data-a="arrDel" data-k="'+k+'" data-i="'+i+'" title="Entfernen">'+I('x')+'</button></div>'; }).join('')
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-a="arrAdd" data-k="'+k+'">'+I('plus',13)+'Text</button><label class="btn sm">'+I('upload',13)+'Bild hochladen<input type="file" accept="image/*" data-arrimg="'+k+'"></label></div>');
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-a="arrAdd" data-k="'+k+'">'+I('plus',13)+'Text</button><label class="btn sm">'+I('upload',13)+'Bild hochladen<input type="file" accept="image/*" data-arrimg="'+k+'"></label>'+libraryButton()+'</div>');
     case 'pad4':
       var pk = extra.keys, pph = typeof extra.ph === 'function' ? extra.ph(p) : (extra.ph || [0,0,0,0]), pnames = ['Oben','Rechts','Unten','Links'];
       var pset = pk.some(function(x){ return p[x] !== undefined && p[x] !== ''; });
@@ -845,7 +951,7 @@ function field(spec, p, scope){
     case 'sec': return '<div class="flab fsec">'+esc(label)+'</div>';
     case 'color': return w('<div style="display:flex;gap:6px">'+colorField(scope, k, v||'')+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Zurücksetzen">'+I('x')+'</button>':'')+'</div>');
     case 'toggle': var inv = spec[5] === true; return '<label class="tgl"><span>'+esc(label)+'</span><input type="checkbox" '+a+' data-bool data-rp'+(inv ? ' data-inv' : '')+((inv ? v !== false : v)?' checked':'')+'><span class="sw"></span></label>'+(hint?'<div style="margin:-6px 0 12px">'+hint+'</div>':'');
-    case 'image': return w('<div class="upl"><div class="pv" style="'+(v?'background-image:url(&quot;'+esc(v)+'&quot;)':'')+'">'+(v?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+(v?'Ersetzen':'Hochladen')+'<input type="file" accept="image/*" data-img="'+k+'" data-scope="'+scope+'"></label>'+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Entfernen">'+I('trash')+'</button>':'')+'</div>');
+    case 'image': return w('<div class="upl"><div class="pv" style="'+(v?'background-image:url(&quot;'+esc(v)+'&quot;)':'')+'">'+(v?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+(v?'Ersetzen':'Hochladen')+'<input type="file" accept="image/*" data-img="'+k+'" data-scope="'+scope+'"></label>'+libraryButton()+(v?'<button class="ibtn" data-a="clearProp" data-scope="'+scope+'" data-k="'+k+'" title="Entfernen">'+I('trash')+'</button>':'')+'</div>');
     case 'key': return '<div class="fld"><label>'+esc(label)+'</label><input class="inp" '+a+' value="'+esc(v)+'" placeholder="automatisch" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)"><div class="hint">Für Variablen ({{'+esc(v||'schluessel')+'}}), Webhook &amp; Export.</div></div>';
     case 'page': return w('<select class="inp" '+a+'>'+pageOptions(v, 'Nächste Seite (Standard)')+'</select>');
     case 'strings': return w((v||[]).map(function(s, i){ return '<div class="strl"><input class="inp" data-arr="'+k+'" data-ai="'+i+'" value="'+esc(s)+'"><button class="ibtn" data-a="arrDel" data-k="'+k+'" data-i="'+i+'">'+I('x')+'</button></div>'; }).join('') + '<button class="btn sm" data-a="arrAdd" data-k="'+k+'">'+I('plus',13)+'Hinzufügen</button>');
@@ -870,7 +976,7 @@ function optionsEditor(p){
       + (openSet[o.id] ? '<div class="fld"><label>Icon</label><div class="icgrid">' + [''].concat(Object.keys(FP.ICONS)).map(function(nm){ return '<button class="icb'+((o.ic||'')===nm?' on':'')+'" data-a="optIc" data-i="'+i+'" data-v="'+nm+'" title="'+(nm||'Kein Icon')+'" aria-label="'+(nm||'Kein Icon')+'">'+(nm ? FP.ICONS[nm] : I('x',12))+'</button>'; }).join('') + '</div><div class="hint">Ersetzt das Emoji. Die Farbe kommt aus dem Theme.</div></div>' : '')
       + '<div class="fld"><label>Bei Auswahl springen zu</label><select class="inp" data-o="goto" data-oi="'+i+'">'+pageOptions(o.goto,'Keine Verzweigung')+'</select></div>'
       + (p.layout==='image'&&o.img?'<div class="fld"><label>Bildausschnitt</label><select class="inp" data-o="pos" data-oi="'+i+'">'+[['','Mitte'],['top','Oben'],['bottom','Unten'],['left','Links'],['right','Rechts']].map(function(x){ return '<option value="'+x[0]+'"'+((o.pos||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></div>':'')
-      + (p.layout==='image'?'<div class="fld"><label>Bild</label><div class="upl"><div class="pv" style="'+(o.img?'background-image:url(&quot;'+esc(o.img)+'&quot;)':'')+'">'+(o.img?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-optimg="'+i+'"></label>'+(o.img?'<button class="ibtn" data-a="optImgDel" data-i="'+i+'">'+I('trash')+'</button>':'')+'</div></div>':'')
+      + (p.layout==='image'?'<div class="fld"><label>Bild</label><div class="upl"><div class="pv" style="'+(o.img?'background-image:url(&quot;'+esc(o.img)+'&quot;)':'')+'">'+(o.img?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-optimg="'+i+'"></label>'+libraryButton()+(o.img?'<button class="ibtn" data-a="optImgDel" data-i="'+i+'">'+I('trash')+'</button>':'')+'</div></div>':'')
       + '</div></div>';
   }).join('') + '<button class="btn sm" data-a="optAdd">'+I('plus',13)+'Antwort hinzufügen</button>';
 }
@@ -1238,7 +1344,14 @@ function inlTarget(blk, b){ var c = b && INL[b.type]; if(!c || !blk) return null
 /* HTML aus dem Bearbeitungsfeld zurück ins Text-Format */
 function htmlToMd(root){
   var walk = function(n){
-    if(n.nodeType === 3) return n.nodeValue.replace(/ /g, ' ');
+    if(n.nodeType === 3){
+      var text = n.nodeValue.replace(/ /g, ' ');
+      for(var parent = n.parentElement; parent && parent !== root; parent = parent.parentElement){
+        var color = parent.style.color || (parent.tagName === 'FONT' && parent.getAttribute('color'));
+        if(color) return '{farbe:'+toHex(color)+'}'+text+'{/farbe}';
+      }
+      return text;
+    }
     if(n.nodeType !== 1) return '';
     var tag = n.tagName.toLowerCase(), cl = n.classList;
     if(tag === 'svg' || cl.contains('rq') || cl.contains('fp-var-x')) return '';
@@ -1329,23 +1442,45 @@ function inlSize(d){
   var nv = Math.max(10, Math.min(72, cur + d)); b.props.size = nv; inl.el.style.fontSize = nv + 'px'; touch(); inlPlace();
   var f = $('#rp [data-p="size"]'); if(f) f.value = nv;
 }
+/* Der native Farbdialog kann den Fokus und die aktuelle Textauswahl übernehmen. */
+function inlPickInk(picker){
+  var sel = getSelection(), range = sel.rangeCount ? sel.getRangeAt(0) : null;
+  if(!range || !inl.el.contains(range.commonAncestorContainer)) range = inl.lastRange;
+  if(!range || range.collapsed){ toast('Markiere zuerst den Text, den du einfärben möchtest'); return; }
+  inl.inkRange = range.cloneRange();
+  var start = range.startContainer;
+  picker.value = toHex(getComputedStyle(start.nodeType === 1 ? start : start.parentElement).color);
+  picker.click();
+}
+function inlApplyInk(picker){
+  var range = inl && inl.inkRange;
+  if(!range || !inl.el.contains(range.commonAncestorContainer)) return;
+  inl.inkRange = null;
+  inl.el.focus();
+  var sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  document.execCommand('foreColor', false, picker.value);
+  inlInput(); inlState();
+}
 function inlAlign(v){ if(!inl) return; inl.b.props.align = v; inl.blk.style.textAlign = v; touch(); inlState(); inlPlace(); }
 function inlBar(){
   var scr = $('#scr'); if(!scr || !inl) return;
   var old = $('#inlbar'); if(old) old.remove();
   var bar = document.createElement('div'); bar.className = 'inlbar'; bar.id = 'inlbar';
   var B = function(a, ic, t, v){ return '<button type="button" data-inl="'+a+'"'+(v ? ' data-v="'+v+'"' : '')+' title="'+t+'" aria-label="'+t+'">'+I(ic, 15)+'</button>'; };
-  var sizeable = inl.b.type === 'heading' || inl.b.type === 'text';
+  var sizeable = inl.b.type === 'heading' || inl.b.type === 'text' || inl.b.type === 'checkbox';
   bar.innerHTML = B('bold','fBold','Fett (⌘B)') + B('italic','fItalic','Kursiv (⌘I)') + B('underline','fUnder','Unterstrichen (⌘U)') + '<i></i>'
-    + B('hl','fHl','Hervorheben (Stil im Design-Tab)') + B('accent','fAccent','Akzentfarbe') + B('mark','fMark','Marker') + B('link','link','Link') + '<i></i>'
+    + B('hl','fHl','Hervorheben (Stil im Design-Tab)') + B('accent','fAccent','Akzentfarbe') + B('ink','inkDrop','Schriftfarbe für markierten Text') + '<input type="color" class="inl-ink-picker" tabindex="-1" aria-label="Schriftfarbe wählen">' + B('mark','fMark','Marker') + B('link','link','Link') + '<i></i>'
     + (sizeable ? B('small','fSmall','Kleiner') + B('big','fBig','Größer') + '<i></i>' : '')
     + B('align','fLeft','Links','left') + B('align','fCenter','Mitte','center') + B('align','fRight','Rechts','right') + '<i></i>'
     + B('clear','fClear','Formatierung entfernen') + '<button type="button" class="ok" data-inl="done" title="Fertig (Esc)">Fertig</button>';
+  var picker = bar.querySelector('.inl-ink-picker');
+  picker.addEventListener('change', function(){ inlApplyInk(picker); });
   bar.addEventListener('mousedown', function(e){ e.preventDefault(); }); /* Markierung im Text behalten */
   bar.addEventListener('click', function(e){
     var btn = e.target.closest('[data-inl]'); if(!btn) return; var a = btn.getAttribute('data-inl');
     if(a === 'bold' || a === 'italic' || a === 'underline') inlCmd(a);
     else if(a === 'hl') inlWrap('fp-ul', 'span');
+    else if(a === 'ink') inlPickInk(picker);
     else if(a === 'accent') inlWrap('fp-hl', 'span');
     else if(a === 'mark') inlWrap('fp-mk', 'mark');
     else if(a === 'small') inlSize(-2); else if(a === 'big') inlSize(2);
@@ -1377,6 +1512,10 @@ function inlPlace(){
 function inlState(){
   var bar = $('#inlbar'); if(!bar || !inl) return;
   var sel = getSelection(), node = sel.rangeCount ? sel.getRangeAt(0).commonAncestorContainer : null; node = node && (node.nodeType === 1 ? node : node.parentNode);
+  if(node && inl.el.contains(node)){
+    inl.lastRange = sel.getRangeAt(0).cloneRange();
+    bar.querySelector('[data-inl="ink"]').style.setProperty('--ink-swatch', getComputedStyle(node).color);
+  }
   [['bold','strong,b'],['italic','em,i'],['underline','u'],['hl','.fp-ul'],['accent','.fp-hl'],['mark','mark']].forEach(function(x){ var b2 = bar.querySelector('[data-inl="'+x[0]+'"]'); if(b2) b2.classList.toggle('on', !!(node && inl.el.contains(node) && node.closest(x[1]))); });
   var al = inl.b.props.align || 'left'; bar.querySelectorAll('[data-inl="align"]').forEach(function(b2){ b2.classList.toggle('on', b2.getAttribute('data-v') === al); });
 }
@@ -1976,13 +2115,6 @@ function autoSummary(f){
     ['globe', 'Eigene Domain', (f.settings.domain && f.settings.domain.hostname) ? f.settings.domain.hostname : 'keine', f.settings.domain && f.settings.domain.status === 'active']
   ];
 }
-/* Beispielwerte für Vorschau: Variablen des Funnels mit Platzhaltern */
-function sampleVars(f){
-  var v = {funnel:f.name, vorname:'Max', name:'Max Mustermann', email:'max@beispiel.de', telefon:'+49 170 1234567', total:FP.money(2490, f.settings.currency), datum:new Date().toLocaleString('de-DE'), link:location.origin + location.pathname + '#contacts'};
-  FP.vars(f).forEach(function(x){ if(v[x.key] == null) v[x.key] = x.type === 'choice' ? 'Beispiel-Auswahl' : x.type === 'rating' ? '4 / 5' : 'Beispiel'; });
-  return v;
-}
-function renderTpl(t, v){ return String(t||'').replace(/\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g, function(m, k, fb){ return v[k] ? v[k] : (fb||'').trim(); }); }
 /* ================= E-MAIL-EDITOR (formatierbar, Emojis, Platzhalter) =================
    Gespeichert wird bereinigtes HTML mit {{platzhalter}} (Positivliste: p, br, b/strong, i/em, u, a, ul/ol/li, h2/h3, hr).
    mailRender() macht daraus E-Mail-taugliches HTML mit Inline-Styles – identisch in der Edge Function. */
@@ -2026,17 +2158,32 @@ function mailFromEditor(ed){
   box.querySelectorAll('span.rv').forEach(function(sp){ sp.replaceWith(document.createTextNode('{{' + sp.getAttribute('data-v') + '}}')); });
   return mailSanitize(box.innerHTML);
 }
-function mailRender(html, v, primary){
-  var P = primary || '#18181b';
-  var out = String(html || '').replace(/\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g, function(m, k, fb){ return esc(v[k] ? v[k] : (fb || '').trim()); });
-  return out
-    .replace(/<p>/g, '<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#3d424d">')
-    .replace(/<h2>/g, '<h2 style="margin:0 0 10px;font-size:20px;line-height:1.3;color:#12141a">')
-    .replace(/<h3>/g, '<h3 style="margin:0 0 8px;font-size:17px;line-height:1.35;color:#12141a">')
-    .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 12px;padding-left:22px;font-size:15px;line-height:1.6;color:#3d424d">')
-    .replace(/<hr>/g, '<hr style="border:0;border-top:1px solid #e6e8ec;margin:18px 0">')
-    .replace(/<a data-btn="[^"]*" href="([^"]*)">|<a href="([^"]*)" data-btn="[^"]*">/g, function(m, h1, h2){ return '<a href="' + (h1 || h2) + '" style="display:inline-block;background:' + P + ';color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 18px;border-radius:8px;margin:4px 0 12px">'; })
-    .replace(/<a href="([^"]*)">/g, '<a href="$1" style="color:' + P + '">');
+function mailTextFromHtml(html){
+  var box = document.createElement('div'); box.innerHTML = html;
+  box.querySelectorAll('p,div,h2,h3,li').forEach(function(block){
+    if(block.childNodes.length === 1 && block.firstChild.nodeName === 'BR') block.firstChild.remove();
+    block.appendChild(document.createTextNode('\n'));
+  });
+  box.querySelectorAll('br').forEach(function(br){ br.replaceWith(document.createTextNode('\n')); });
+  return box.textContent.replace(/\n$/, '');
+}
+function insertMailChip(ed, range, variable){
+  ed.focus();
+  if(!range || !ed.contains(range.commonAncestorContainer)){
+    range = document.createRange();
+    var lastLine = ed.lastElementChild;
+    var end = lastLine && lastLine === ed.lastChild && lastLine.matches('p,div,h2,h3,li') ? lastLine : ed;
+    range.selectNodeContents(end);
+    range.collapse(false);
+    if(end.lastChild && end.lastChild.nodeName === 'BR') range.setStartBefore(end.lastChild);
+    range.collapse(true);
+  }
+  var chip = document.createElement('span');
+  chip.className = 'rv'; chip.contentEditable = 'false';
+  chip.setAttribute('data-v',variable.key); chip.textContent = variable.label;
+  range.deleteContents(); range.insertNode(chip);
+  range.setStartAfter(chip); range.collapse(true);
+  restoreSel(range);
 }
 function plainToMail(t){ return t ? '<p>' + esc(t).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>') + '</p>' : ''; }
 function rte(path, html, f){
@@ -2048,7 +2195,7 @@ function rte(path, html, f){
     + b('emoji','😊','Emoji', ' emo') + b('var',I('user',13)+'<span>Platzhalter</span>','Eingabe des Interessenten einfügen', ' var')
     + '</div><div class="rte-ed" contenteditable="true" spellcheck="true">'+mailToEditor(html, f)+'</div></div>';
 }
-function saveSel(ed){ var sl = window.getSelection(); if(!sl.rangeCount) return null; var rg = sl.getRangeAt(0); return ed && !ed.contains(rg.commonAncestorContainer) ? null : rg.cloneRange(); }
+function saveSel(ed){ var sl = window.getSelection(); if(!sl || !sl.rangeCount) return null; var rg = sl.getRangeAt(0); return ed && !ed.contains(rg.commonAncestorContainer) ? null : rg.cloneRange(); }
 function restoreSel(rg){ if(!rg) return; var sl = window.getSelection(); sl.removeAllRanges(); sl.addRange(rg); }
 /* Emoji-Auswahl: wächst aus dem Knopf, schließt bei Klick daneben oder Esc */
 function emojiPop(btn, fn){
@@ -2072,13 +2219,11 @@ function btnBox(cb){
     onOpen:function(el, close){ setTimeout(function(){ el.querySelector('#bbl').focus(); }, 30); el.querySelector('[data-bbok]').onclick = function(){ var l = el.querySelector('#bbl').value.trim(), u = el.querySelector('#bbu').value.trim(); if(!l || !u) return toast('Bitte Beschriftung und Adresse eingeben'); if(!/^(https?:|mailto:|tel:)/i.test(u)) u = 'https://' + u; close(); cb(l, u); }; }});
 }
 function emailPreview(f, kind){
-  var a = auto(f), v = sampleVars(f), t = f.theme || {}, p = t.primary || '#1c2e3d';
-  var c = kind === 'confirm' ? a.confirm : a.notify;
-  var subject = renderTpl(c.subject, v), intro = renderTpl(c.body, v), introHtml = mailRender(c.html || plainToMail(c.body), v, p);
-  var rows = FP.vars(f).filter(function(x){ return x.type !== 'calc' && (kind !== 'confirm' || ['email','telefon'].indexOf(x.key) < 0); }).slice(0, 8).map(function(x){ return '<tr><td style="padding:9px 0;border-bottom:1px solid #eef0f3;color:#737985;font-size:13px;width:42%">'+esc(x.label)+'</td><td style="padding:9px 0;border-bottom:1px solid #eef0f3;font-size:14px;color:#12141a">'+esc(v[x.key])+'</td></tr>'; }).join('');
-  if(c.fields === false) rows = '';
-  var logo = t.logoImg && !/^data:/.test(t.logoImg) ? t.logoImg : (t.logoImg || '');
-  return {subject:subject, html:'<!doctype html><html><body style="margin:0;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif"><div style="padding:24px 12px"><div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6e8ec"><div style="height:4px;background:'+esc(p)+'"></div><div style="padding:24px 28px 6px">'+(logo?'<img src="'+esc(logo)+'" style="height:32px;display:block;margin-bottom:18px" alt="">':'')+'<h1 style="margin:0 0 8px;font-size:19px;line-height:1.3;color:#12141a">'+esc(subject)+'</h1><div style="font-size:15px;line-height:1.6;color:#3d424d">'+introHtml+'</div></div>'+(rows?'<div style="padding:12px 28px 0"><table style="width:100%;border-collapse:collapse">'+rows+'</table></div>':'')+'<div style="padding:12px 28px 0"><div style="background:#f5f6f8;border-radius:8px;padding:11px 13px;font-size:14px;color:#3d424d">Gesamt: <b style="color:#12141a">'+esc(v.total)+'</b></div></div>'+(kind!=='confirm'?'<div style="padding:20px 28px 0"><span style="display:inline-block;background:'+esc(p)+';color:#fff;font-weight:600;font-size:14px;padding:11px 16px;border-radius:8px">Im Dashboard öffnen</span></div>':'')+'<div style="padding:24px 28px;font-size:12px;color:#9aa0ab">'+(kind==='confirm'?esc(f.name):'Gesendet mit TapTell')+'</div></div></div></body></html>'};
+  var c = auto(f)[kind], lead = TTMail.sampleLead(f), vars = TTMail.varsFor(lead,f,location.origin);
+  var subject = TTMail.renderText(c.subject,vars);
+  var message = TTMail.automationMessage({config:c, vars:vars, kind:kind, fields:lead.data.fields, funnel:f, origin:location.origin, subject:subject});
+  var html = message.html ?? '<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit"><span>'+esc(message.text)+'</span></pre>';
+  return {subject:subject, html:html};
 }
 function autoModal(f, tab){
   tab = tab || 'notify';
@@ -2087,6 +2232,31 @@ function autoModal(f, tab){
   var fldv = function(label, inner, hint){ return '<div class="fld"><div class="flh"><label>'+label+'</label><button class="varbtn" data-a="insVar">'+I('user',12)+'Variable</button></div>'+inner+(hint?'<div class="hint">'+hint+'</div>':'')+'</div>'; };
   var flds = function(label, inner){ return '<div class="fld"><div class="flh"><label>'+label+'</label><span style="display:flex;gap:4px"><button class="varbtn" data-subj-emoji title="Emoji einfügen">😊</button><button class="varbtn" data-a="insVar">'+I('user',12)+'Variable</button></span></div>'+inner+'</div>'; };
   var tgl = function(k, on, label){ return '<label class="tgl"><span>'+label+'</span><input type="checkbox" data-au="'+k+'" data-bool'+(on?' checked':'')+'><span class="sw"></span></label>'; };
+  function messageEditor(kind){
+    var c = a[kind], plain = c.format === 'plain';
+    var format = fld('E-Mail-Format', '<select class="inp" data-au="'+kind+'.format"><option value="html"'+(plain?'':' selected')+'>Formatiert</option><option value="plain"'+(plain?' selected':'')+'>Klartext</option></select>');
+    if(!plain) return format + fld('Nachricht', rte(kind, c.html ?? plainToMail(c.body), f));
+    return format + '<div class="fld"><div class="flh"><label for="plain-mail-'+kind+'">Nachricht</label><button type="button" class="varbtn" data-mail-var>Platzhalter</button></div>'
+      + '<textarea class="inp" rows="8" id="plain-mail-'+kind+'" data-au="'+kind+'.plainBody">'+esc((c.plainBody ?? c.body ?? '').replace(/^\n/,'\n\n'))+'</textarea></div>';
+  }
+  function layoutControls(kind){
+    var c = a[kind];
+    function textOption(key,label,fallback){
+      return fld(label,'<input class="inp" data-au="'+kind+'.'+key+'" value="'+esc(c[key] ?? fallback)+'">','Zum Ausblenden leer lassen.');
+    }
+    var ruleSubject = kind === 'notify' && a.rules.length ? tgl('notify.ruleSubject', c.ruleSubject !== false, 'Passende Regeln im Betreff nennen') : '';
+    if(c.format === 'plain') return ruleSubject;
+    return tgl(kind+'.fields', c.fields !== false, 'Antworten anhängen')
+      + tgl(kind+'.total', c.total ?? (c.fields !== false), 'Gesamtpreis anhängen')
+      + ruleSubject
+      + tgl(kind+'.customLayout', !!c.customLayout, 'Eigenes HTML-Layout verwenden')
+      + (!c.customLayout ? tgl(kind+'.showLogo',c.showLogo !== false,'Funnel-Logo anzeigen')
+        + textOption('headingText','Überschrift','{{betreff}}')
+        + textOption('footerText','Fußzeile',kind === 'confirm' ? '{{funnel}}' : 'Gesendet mit TapTell')
+        + (kind === 'notify' ? textOption('buttonText','Dashboard-Button','Im Dashboard öffnen') : '') : '')
+      + (c.customLayout ? fld('HTML der gesamten E-Mail', '<textarea class="inp" rows="8" data-au="'+kind+'.layoutHtml">'+esc(c.layoutHtml ?? '{{nachricht_html}}')+'</textarea>',
+        'Eigene Texte, Links, Bilder und Inline-CSS. Verfügbar sind deine Variablen sowie {{betreff}}, {{nachricht_html}}, {{antworten_html}} und {{preis_html}}. Nur eingefügte Bausteine erscheinen.') : '');
+  }
   var listChips = function(sel, path){ return lists().length ? '<div class="chips-l">'+lists().map(function(l){ var on = (sel||[]).indexOf(l.id) >= 0; return '<button class="chip'+(on?' on':'')+'" data-a="auList" data-path="'+path+'" data-id="'+l.id+'">'+esc(l.name)+' <span style="opacity:.6">('+l.emails.length+')</span></button>'; }).join('')+'</div>' : '<div class="hint" style="margin:0">Noch keine Listen. Lege sie unter <b>Einstellungen → Empfängerlisten</b> an.</div>'; };
   var demoNote = REMOTE ? '' : '<div class="callout" style="margin-bottom:14px">'+I('info')+'<div><b>Demo-Modus:</b> Du kannst alles einrichten und als Vorschau ansehen. Echt versendet wird, sobald TapTell mit Supabase verbunden ist.</div></div>';
   var body = function(){
@@ -2096,19 +2266,19 @@ function autoModal(f, tab){
         + fld('Empfänger', '<input class="inp" data-au="notify.to" value="'+esc(a.notify.to||'')+'" placeholder="info@firma.de, vertrieb@firma.de">', 'Mehrere Adressen mit Komma trennen.')
         + fld('Empfängerlisten', listChips(a.notify.lists, 'notify.lists'))
         + flds('Betreff', '<input class="inp" data-au="notify.subject" value="'+esc(a.notify.subject||'')+'">')
-        + '<div class="fld"><label>Nachricht</label>'+rte('notify', a.notify.html || plainToMail(a.notify.body), f)+'<div class="hint">Formatieren, Emojis und Platzhalter wie „Vorname“ – in der Mail steht der echte Wert.</div></div>'
-        + tgl('notify.fields', a.notify.fields !== false, 'Alle Antworten und den Preis darunter anhängen')
+        + messageEditor('notify')
+        + layoutControls('notify')
         + '<div style="display:flex;gap:8px"><button class="btn sm" data-a="auTest" data-k="email">'+I('send',13)+'Testmail an mich</button></div></div>'
-        + '<div class="au-prev"><div class="au-subj">'+I('mail',13)+'<span>'+esc(emailPreview(f,'notify').subject)+'</span></div><iframe title="Vorschau" data-prev="notify"></iframe></div></div>';
+        + '<div class="au-prev"><div class="au-subj">'+I('mail',13)+'<span>'+esc(emailPreview(f,'notify').subject)+'</span></div><iframe sandbox="" title="Vorschau" data-prev="notify"></iframe></div></div>';
     } else if(tab === 'confirm'){
       h += '<div class="au2"><div>' + tgl('confirm.enabled', a.confirm.enabled, 'Interessent erhält eine Bestätigung')
         + flds('Betreff', '<input class="inp" data-au="confirm.subject" value="'+esc(a.confirm.subject||'')+'">')
-        + '<div class="fld"><label>Nachricht</label>'+rte('confirm', a.confirm.html || plainToMail(a.confirm.body), f)+'<div class="hint">Persönlich mit „Vorname“, Emojis und eigenem Button, z. B. zu deiner Website oder WhatsApp.</div></div>'
-        + tgl('confirm.fields', a.confirm.fields !== false, 'Übersicht der Auswahl anhängen (ohne Kontaktdaten)')
+        + messageEditor('confirm')
+        + layoutControls('confirm')
         + fld('Antworten gehen an', '<input class="inp" data-au="confirm.replyTo" value="'+esc(a.confirm.replyTo||'')+'" placeholder="info@firma.de">', 'Wenn der Interessent auf die Mail antwortet.')
         + '<div class="hint">Wird nur verschickt, wenn im Funnel ein E-Mail-Feld ausgefüllt wurde.</div>'
         + '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" data-a="auTest" data-k="confirm">'+I('send',13)+'Testmail an mich</button></div></div>'
-        + '<div class="au-prev"><div class="au-subj">'+I('mail',13)+'<span>'+esc(emailPreview(f,'confirm').subject)+'</span></div><iframe title="Vorschau" data-prev="confirm"></iframe></div></div>';
+        + '<div class="au-prev"><div class="au-subj">'+I('mail',13)+'<span>'+esc(emailPreview(f,'confirm').subject)+'</span></div><iframe sandbox="" title="Vorschau" data-prev="confirm"></iframe></div></div>';
     } else if(tab === 'rules'){
       var vars = FP.vars(f).filter(function(x){ return x.key !== 'total_exakt' && x.key !== 'total'; }).concat([{key:'total', label:'Gesamtpreis (€)'}]);
       h += '<p class="hint" style="margin:0 0 12px">Zusätzliche Empfänger, wenn eine Bedingung zutrifft – z. B. <b>Sofort-Alarm</b> an den Chef bei schlechter Bewertung oder an die Verkaufsleitung ab einem bestimmten Preis. Der Betreff erhält dann einen Hinweis.</p>'
@@ -2148,16 +2318,32 @@ function autoModal(f, tab){
       paint();
       /* Editor: speichern, Werkzeugleiste, Emojis, Platzhalter */
       var rteSave = function(ed){ var k = ed.closest('[data-rte]').getAttribute('data-rte'); a[k].html = mailFromEditor(ed); a[k].body = ed.innerText.trim(); changed(false); };
-      var lastInp = null;
-      el.addEventListener('focusin', function(e){ if(e.target.classList && e.target.classList.contains('rte-ed')){ try{ document.execCommand('defaultParagraphSeparator', false, 'p'); }catch(x){} } if(e.target.matches && e.target.matches('input.inp')) lastInp = e.target; });
-      el.addEventListener('mousedown', function(e){ if(e.target.closest('.rtb') || e.target.closest('.emopop')) e.preventDefault(); });
+      var caret = new WeakMap();
+      function rememberCaret(e){
+        var ed = e.target.closest && e.target.closest('.rte-ed');
+        if(ed){ var r = saveSel(ed); if(r) caret.set(ed,r); }
+      }
+      ['keyup','pointerup','input','focusout'].forEach(function(type){ el.addEventListener(type,rememberCaret); });
+      el.addEventListener('focusin', function(e){ if(e.target.classList && e.target.classList.contains('rte-ed')){ try{ document.execCommand('defaultParagraphSeparator', false, 'p'); }catch(x){} } });
+      el.addEventListener('mousedown', function(e){ if(e.target.closest('.rtb,[data-mail-var]') || e.target.closest('.emopop')) e.preventDefault(); });
       el.addEventListener('keydown', function(e){ if(e.target.classList && e.target.classList.contains('rte-ed') && (e.metaKey || e.ctrlKey) && /^[biu]$/i.test(e.key)){ setTimeout(function(){ rteSave(e.target); }, 0); } });
       el.addEventListener('click', function(e){
+        var plainVar = e.target.closest('[data-mail-var]');
+        if(plainVar){
+          e.stopPropagation();
+          var field = plainVar.closest('.fld').querySelector('textarea');
+          var start = field.selectionStart, end = field.selectionEnd;
+          dropdown(plainVar, mailVars(f).map(function(v,i){ return {k:String(i), ic:'user', l:v.label, fn:function(){
+            field.focus(); field.setRangeText('{{'+v.key+'}}',start,end,'end');
+            field.dispatchEvent(new Event('input',{bubbles:true}));
+          }}; }));
+          return;
+        }
         var sj = e.target.closest('[data-subj-emoji]');
         if(sj){ e.stopPropagation(); var inp = sj.closest('.fld').querySelector('input.inp'); emojiPop(sj, function(em){ var st = inp.selectionStart != null ? inp.selectionStart : inp.value.length; inp.value = inp.value.slice(0, st) + em + inp.value.slice(inp.selectionEnd != null ? inp.selectionEnd : st); inp.focus(); inp.setSelectionRange(st + em.length, st + em.length); inp.dispatchEvent(new Event('input', {bubbles:true})); }); return; }
         var rb = e.target.closest('[data-rc]'); if(!rb) return;
         e.stopPropagation(); /* sonst schließt der Dokument-Klick das Platzhalter-Menü sofort wieder */
-        var ed = rb.closest('[data-rte]').querySelector('.rte-ed'), c = rb.getAttribute('data-rc'), r = saveSel(ed);
+        var ed = rb.closest('[data-rte]').querySelector('.rte-ed'), c = rb.getAttribute('data-rc'), r = saveSel(ed) || caret.get(ed);
         ed.focus(); restoreSel(r);
         var ins = function(htm){ ed.focus(); restoreSel(r); document.execCommand('insertHTML', false, htm); rteSave(ed); };
         if(c === 'bold' || c === 'italic' || c === 'underline') document.execCommand(c);
@@ -2168,13 +2354,26 @@ function autoModal(f, tab){
         else if(c === 'link'){ var txt = r ? r.toString() : ''; promptBox('Link einfügen', 'Adresse (https://, mailto: oder tel:)', 'https://', function(u){ u = String(u||'').trim(); if(!u || u === 'https://') return; if(!/^(https?:|mailto:|tel:)/i.test(u)) u = 'https://' + u; if(txt){ ed.focus(); restoreSel(r); document.execCommand('createLink', false, u); rteSave(ed); } else ins('<a href="'+esc(u)+'">'+esc(u.replace(/^(https?:\/\/|mailto:|tel:)/,''))+'</a>&nbsp;'); }); return; }
         else if(c === 'btn'){ btnBox(function(label, url){ ins('<p><a data-btn="1" href="'+esc(url)+'">'+esc(label)+'</a></p><p><br></p>'); }); return; }
         else if(c === 'emoji'){ emojiPop(rb, function(em){ ed.focus(); restoreSel(r); document.execCommand('insertText', false, em); r = saveSel(ed); rteSave(ed); }); return; }
-        else if(c === 'var'){ dropdown(rb, mailVars(f).map(function(v){ return {k:v.key, ic:'user', l:v.label, fn:function(){ ins('<span class="rv" contenteditable="false" data-v="'+v.key+'">'+esc(v.label)+'</span>&nbsp;'); }}; })); return; }
+        else if(c === 'var'){
+          dropdown(rb, mailVars(f).map(function(v,i){ return {k:String(i), ic:'user', l:v.label, fn:function(){
+            insertMailChip(ed,r,v); caret.set(ed,saveSel(ed)); rteSave(ed);
+          }}; }));
+          return;
+        }
         rteSave(ed);
       });
       el.addEventListener('input', function(e){
         var t = e.target;
         if(t.classList && t.classList.contains('rte-ed')){ rteSave(t); return; }
-        if(t.hasAttribute('data-au')){ setPath(t.getAttribute('data-au'), t.hasAttribute('data-bool') ? t.checked : t.value); changed(false); }
+        if(t.hasAttribute('data-au')){
+          var path = t.getAttribute('data-au');
+          if(path.endsWith('.fields') && a[tab].total == null) a[tab].total = a[tab].fields !== false;
+          if(path.endsWith('.format') && t.value === 'plain' && a[tab].plainBody == null){
+            a[tab].plainBody = a[tab].html != null ? mailTextFromHtml(a[tab].html) : (a[tab].body || '');
+          }
+          setPath(path, t.hasAttribute('data-bool') ? t.checked : t.value);
+          changed(path.endsWith('.customLayout') || path.endsWith('.format'));
+        }
         else if(t.hasAttribute('data-ar')){ var r = a.rules[+t.getAttribute('data-ar')], rk = t.getAttribute('data-rk'); if(rk === 'list') r.lists = t.value ? [t.value] : []; else r[rk] = t.value; changed(rk === 'op'); }
         else if(t.hasAttribute('data-aw')){ var w = a.webhooks[+t.getAttribute('data-aw')], wk = t.getAttribute('data-wk'); w[wk] = t.hasAttribute('data-bool') ? t.checked : t.value.trim(); changed(false); if(wk === 'url'){ var tb = t.closest('.rule').querySelector('[data-a="auTest"]'); if(tb) tb.disabled = !w.url; } }
       });
@@ -2203,7 +2402,7 @@ function autoTest(f, kind, hook){
   if(!REMOTE){
     if(kind === 'webhook'){ toast('Demo-Modus: Webhook-Test geht erst mit Supabase. Beispiel-Daten stehen unter Veröffentlichen → Erweitert.'); return; }
     var pv = emailPreview(f, kind === 'confirm' ? 'confirm' : 'notify');
-    modal({title:'Test-E-Mail (Vorschau)', sub:'Im Demo-Modus wird nichts versendet – so käme die Mail an.', size:'mid', body:'<div class="au-subj">'+I('mail',13)+'<span>'+esc(pv.subject)+'</span></div><iframe class="au-big" title="Vorschau" srcdoc="'+esc(pv.html)+'"></iframe>', foot:'<button class="btn pri" data-close>Schließen</button>'});
+    modal({title:'Test-E-Mail (Vorschau)', sub:'Im Demo-Modus wird nichts versendet – so käme die Mail an.', size:'mid', body:'<div class="au-subj">'+I('mail',13)+'<span>'+esc(pv.subject)+'</span></div><iframe sandbox="" class="au-big" title="Vorschau" srcdoc="'+esc(pv.html)+'"></iframe>', foot:'<button class="btn pri" data-close>Schließen</button>'});
     return;
   }
   toast(kind === 'webhook' ? 'Sende Test an Webhook …' : 'Sende Testmail …');
@@ -2395,7 +2594,7 @@ function clientModal(id, tab){
         + '<div class="dsec">Anschrift</div>'+fi('street','Straße und Hausnummer','Musterstraße 1')+'<div class="row2" style="grid-template-columns:120px minmax(0,1fr)">'+fi('zip','PLZ','12345')+fi('city','Ort','Musterstadt')+'</div>'
         + '<div class="dsec">Vertrag</div><div class="row3"><div class="fld"><label>Paket</label><select class="inp" data-cd="plan"><option value="">–</option>'+PLANS.map(function(x){ return '<option'+(d.plan===x?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></div>'+fi('price','Preis / Monat (€)','0','number')+fi('since','Vertragsbeginn','','date')+'</div>'
         + '<div class="fld"><label>Notizen (nur für dich)</label><textarea class="inp" data-cd="notes" rows="3" placeholder="z. B. Ansprechpartner im Urlaub bis …">'+esc(d.notes||'')+'</textarea></div>'
-        + '<div class="fld"><label>Logo (erscheint im Kundenportal)</label><div class="upl"><div class="pv" style="'+(c.logo?'background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;)':'')+'">'+(c.logo?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-clogo></label></div></div>'
+        + '<div class="fld"><label>Logo (erscheint im Kundenportal)</label><div class="upl"><div class="pv" style="'+(c.logo?'background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;)':'')+'">'+(c.logo?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-clogo></label>'+libraryButton()+'</div></div>'
         + '<div style="border-top:1px solid var(--line2);margin-top:18px;padding-top:14px;display:flex;justify-content:space-between;align-items:center"><span class="hint" style="margin:0">Funnels bleiben beim Löschen erhalten, die Zuordnung wird entfernt.</span><button class="btn sm danger" data-cdel>'+I('trash',13)+'Kunde löschen</button></div>';
     }
     return t;
@@ -2406,6 +2605,7 @@ function clientModal(id, tab){
       var re = function(){ el.querySelector('#cmb').innerHTML = body(); };
       el.addEventListener('click', function(e){
         var x;
+        if(e.target.closest('[data-media-pick]')){ mediaModal(function(src){ c.logo=src; save(); re(); }); return; }
         if((x = e.target.closest('[data-ct]'))){ tab = x.getAttribute('data-ct'); re(); }
         else if((x = e.target.closest('[data-cedit]'))){ close(); go('editor', x.getAttribute('data-cedit')); }
         else if((x = e.target.closest('[data-cunassign]'))){ var f = getF(x.getAttribute('data-cunassign')); f.clientId = null; f.shared = false; save(); re(); }
@@ -2419,7 +2619,7 @@ function clientModal(id, tab){
       el.addEventListener('change', function(e){
         var x = e.target;
         if(x.hasAttribute('data-cshare')){ var f = getF(x.getAttribute('data-cshare')); f.shared = x.checked; save(); toast(f.shared ? 'Freigeschaltet' : 'Freigabe entfernt'); re(); }
-        if(x.hasAttribute('data-clogo') && x.files[0]) readImage(x.files[0], 400, function(url){ c.logo = url; save(); re(); });
+        if(x.hasAttribute('data-clogo') && x.files[0]) uploadAdminImage(x.files[0], 400, function(url){ c.logo = url; save(); re(); });
       });
       el.addEventListener('input', function(e){ var x = e.target; if(x.hasAttribute('data-cf')){ c[x.getAttribute('data-cf')] = x.value; save(); } else if(x.hasAttribute('data-cd')){ c.data = c.data || {}; c.data[x.getAttribute('data-cd')] = x.value; save(); } });
     }});
@@ -2460,7 +2660,7 @@ var SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/di
 function loadScript(src, sri){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; if(sri){ s.integrity = sri; s.crossOrigin = 'anonymous'; } s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 var SNAP = {funnels:{}, leads:{}, clients:{}, settings:''}, syncing = false, syncAgain = false;
 function funnelToRow(f){ ensureSlug(f); var r = {id:f.id, name:f.name, slug:f.slug, status:f.status, client_id:f.clientId || null, shared:!!f.shared, theme:f.theme, settings:f.settings, pages:f.pages, created_at:new Date(f.createdAt||Date.now()).toISOString(), updated_at:new Date(f.updatedAt||Date.now()).toISOString()}; if(HAS_PUB) r.published = f.published || null; return r; }
-function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, status:r.status, clientId:r.client_id, shared:r.shared, published:r.published || null, versions:r.versions || [], theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
+function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, overviewColor:r.overview_color || '', status:r.status, clientId:r.client_id, shared:r.shared, published:r.published || null, versions:r.versions || [], theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
 var LEAD_COLS = ['id','funnelId','funnelName','name','email','phone','total','status','notes','createdAt'];
 function leadToRow(l){ var data = {}; Object.keys(l).forEach(function(k){ if(LEAD_COLS.indexOf(k) < 0) data[k] = l[k]; }); return {id:l.id, funnel_id:l.funnelId || null, funnel_name:l.funnelName || '', name:l.name || null, email:l.email || null, phone:l.phone || null, total:l.total || 0, status:l.status || 'neu', notes:l.notes || '', data:data, created_at:new Date(l.createdAt||Date.now()).toISOString()}; }
 function rowToLead(r){ return Object.assign({}, r.data || {}, {id:r.id, funnelId:r.funnel_id, funnelName:r.funnel_name, name:r.name, email:r.email, phone:r.phone, total:+r.total || 0, status:r.status, notes:r.notes || '', createdAt:Date.parse(r.created_at)}); }
@@ -2485,6 +2685,8 @@ async function loadRemote(){
   db = emptyDb();
   var pubProbe = await sb.from('funnels').select('published').limit(1); HAS_PUB = !pubProbe.error; /* Spalten aus versionen.sql vorhanden? */
   db.clients = (q[0].data || []).map(rowToClient);
+  savedOverviewColors.clear();
+  (q[1].data || []).forEach(function(r){ if(r.overview_color) savedOverviewColors.set(r.id, r.overview_color); });
   db.funnels = (q[1].data || []).map(function(r){ return rowToFunnel(r, stats[r.id]); }).sort(function(a, b){ return b.updatedAt - a.updatedAt; });
   db.leads = (q[2].data || []).map(rowToLead);
   db.lists = (q[6].data || []).map(rowToList);
@@ -2508,6 +2710,17 @@ async function syncTable(table, list, toRow, onlyCols){
   }
   if(dels.length){ var r3 = await sb.from(table).delete().in('id', dels); if(r3.error) throw r3.error; dels.forEach(function(id){ delete snap[id]; }); }
 }
+/* Separater PATCH: Eine Markierung berührt weder den Entwurf noch den Live-Stand. */
+var savedOverviewColors = new Map();
+async function syncOverviewColors(){
+  for(var f of db.funnels){
+    var color = f.overviewColor || '';
+    if(color === (savedOverviewColors.get(f.id) || '')) continue;
+    var result = await sb.from('funnels').update({overview_color:color || null}).eq('id', f.id).select('id').single();
+    if(result.error) throw result.error;
+    if(color) savedOverviewColors.set(f.id, color); else savedOverviewColors.delete(f.id);
+  }
+}
 async function syncRemote(){
   if(!sb || !S.user) return;
   if(syncing){ syncAgain = true; return; }
@@ -2521,6 +2734,7 @@ async function syncRemote(){
       var sp = JSON.stringify(settingsPayload()); if(sp !== SNAP.settings){ var r = await sb.from('app_settings').upsert({id:1, data:settingsPayload()}); if(r.error) throw r.error; SNAP.settings = sp; }
       await syncTable('leads', db.leads, leadToRow);
       try{ await syncTable('recipient_lists', lists(), listToRow); }catch(e){ console.warn('recipient_lists:', e.message || e); }
+      await syncOverviewColors();
     } else {
       await syncTable('leads', visibleLeads(), leadToRow, ['status','notes']);
     }
@@ -2565,6 +2779,7 @@ var ACT = {
   scope:function(el){ scopeMenu(el); },
   useTpl:function(el){ createFromTpl(el.getAttribute('data-id')); },
   tcat:function(el){ S.tcat = el.getAttribute('data-v'); render(); },
+  manageMedia:function(){ mediaModal(); },
   fmenu:function(el){ funnelMenu(el, el.getAttribute('data-id')); },
   ffilter:function(el){ S.filter = el.getAttribute('data-v'); render(); },
   cstat:function(el){ S.cf.status = el.getAttribute('data-v'); S.csel = {}; render(); },
@@ -2675,6 +2890,11 @@ function setScoped(scope, k, v){
 }
 
 document.addEventListener('click', function(e){
+  var mediaPick = e.target.closest('[data-media-pick]');
+  if(mediaPick && !mediaPick.closest('#cmb')){
+    var imageInput = mediaPick.parentElement.querySelector('input[type=file]');
+    mediaModal(function(src){ applyEditorImage(imageInput,src); }); return;
+  }
   if(!e.target.closest('.dd') && !e.target.closest('[data-a="fmenu"]') && !e.target.closest('[data-a="pmenu"]')) closeDD();
   // table row checkboxes / selects should not open lead
   var stop = e.target.closest('[data-stop]');
@@ -2741,14 +2961,9 @@ document.addEventListener('change', function(e){
     var lr = new FileReader(); lr.onload = function(){ try{ var j = JSON.parse(lr.result); if(!j.layers) throw 0; snap(true); setScoped('p', el.getAttribute('data-lottie'), lr.result); renderCanvas(true); renderRight(); toast('Animation geladen'); }catch(x){ toast('Das ist keine gültige Lottie-Datei'); } };
     lr.readAsText(lf); return;
   }
-  if(el.hasAttribute && el.hasAttribute('data-arrimg') && el.files[0]){
-    var ak = el.getAttribute('data-arrimg');
-    readImage(el.files[0], 600, function(url){ var b = selBlock(); if(!b) return; snap(true); b.props[ak] = (b.props[ak] || []).concat([url]); touch(); renderCanvas(true); renderRight(); toast('Bild hinzugefügt'); });
-    return;
-  }
-  if(el.hasAttribute && el.hasAttribute('data-img') && el.files[0]){
-    var k = el.getAttribute('data-img'), scope = el.getAttribute('data-scope');
-    readImage(el.files[0], k === 'logoImg' ? 600 : 1400, function(url){ snap(true); setScoped(scope, k, url); renderCanvas(true); renderRight(); toast('Bild hochgeladen'); });
+  if(el.matches && el.matches('input[data-arrimg],input[data-img],input[data-optimg]') && el.files[0]){
+    var size = el.hasAttribute('data-optimg') ? 900 : el.hasAttribute('data-arrimg') || el.dataset.img === 'logoImg' ? 600 : 1400;
+    uploadAdminImage(el.files[0],size,function(src){ applyEditorImage(el,src); });
     return;
   }
   if(el.hasAttribute && el.hasAttribute('data-fontup') && el.files[0]){
@@ -2757,10 +2972,7 @@ document.addEventListener('change', function(e){
       promptBox('Schrift benennen','Name der Schrift', name, function(n){ db.fonts.uploaded = (db.fonts.uploaded||[]).filter(function(x){ return x.name !== n; }).concat([{name:n, data:rd.result}]); injectUploaded(); save(); toast('„'+n+'“ hochgeladen'); renderRight(); }); };
     rd.readAsDataURL(file); return;
   }
-  if(el.hasAttribute && el.hasAttribute('data-optimg') && el.files[0]){
-    var i = +el.getAttribute('data-optimg');
-    readImage(el.files[0], 900, function(url){ snap(true); selBlock().props.options[i].img = url; touch(); renderCanvas(true); renderRight(); });
-  }
+
 });
 
 document.addEventListener('keydown', function(e){

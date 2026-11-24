@@ -10,6 +10,7 @@
 /src/__pycache__
 /src/deploy
 /src/funnel-studio.html
+/src/media.js
 /src/app.js
 /src/app.css
 /src/*.runtime.js
@@ -18,6 +19,7 @@
 /design
 /docs
 /supabase
+/tests
 /.claude
 /.agents
 /CLAUDE.md

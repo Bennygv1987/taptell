@@ -266,7 +266,7 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp.is-edit .fp-vis-mobile,.fp.is-edit .fp-vis-desktop{display:block!important;opacity:.4}
 
 .fp-ul{position:relative;white-space:nowrap;display:inline-block;z-index:0}
-.fp-ulsv{position:absolute;display:none;overflow:visible;pointer-events:none;color:var(--p);z-index:-1}
+.fp-ulsv{position:absolute;display:none;overflow:visible;pointer-events:none;color:var(--hl-ink,var(--p));z-index:-1}
 .fp-ulsv path{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:max(2px,.08em)}
 /* Schwung – wie im Onepage-Original: flacher Bogen unter dem ganzen Ausdruck */
 .hl-swoosh .fp-ulsv.u{display:block;left:0;width:100%;bottom:-.04em;height:.26em}
@@ -275,17 +275,26 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .hl-circle .fp-ulsv.c{display:block;left:-.28em;width:calc(100% + .56em);top:-.1em;height:calc(100% + .2em)}
 .hl-circle .fp-ulsv.c path{stroke-width:max(2px,.065em)}
 /* Linie – gerade, kräftige Unterstreichung */
-.hl-line .fp-ul{background:linear-gradient(var(--p),var(--p)) 0 92%/100% .1em no-repeat;padding-bottom:.06em}
+.hl-line .fp-ul{background:linear-gradient(var(--hl-ink,var(--p)),var(--hl-ink,var(--p))) 0 92%/100% .1em no-repeat;padding-bottom:.06em}
 /* Marker – Fläche mit runden Ecken */
-.hl-marker .fp-ul{background:color-mix(in srgb,var(--p) 22%,transparent);border-radius:.3em;padding:0 .22em;margin:0 -.04em}
+.hl-marker .fp-ul{background:color-mix(in srgb,var(--hl-ink,var(--p)) 22%,transparent);border-radius:.3em;padding:0 .22em;margin:0 -.04em}
 /* Textmarker – untere Hälfte wie mit dem Stift markiert */
-.hl-half .fp-ul{background:linear-gradient(color-mix(in srgb,var(--p) 42%,transparent),color-mix(in srgb,var(--p) 42%,transparent)) 0 86%/100% .48em no-repeat;padding:0 .1em;border-radius:.12em}
+.hl-half .fp-ul{background:linear-gradient(color-mix(in srgb,var(--hl-ink,var(--p)) 42%,transparent),color-mix(in srgb,var(--hl-ink,var(--p)) 42%,transparent)) 0 86%/100% .48em no-repeat;padding:0 .1em;border-radius:.12em}
 /* Fläche – volle Farbe, Text in Kontrastfarbe */
-.hl-pill .fp-ul{background:var(--p);color:var(--pt);border-radius:.3em;padding:0 .24em;margin:0 .02em}
+.hl-pill .fp-ul{background:var(--hl-ink,var(--p));color:var(--pt);border-radius:.3em;padding:0 .24em;margin:0 .02em}
 /* Rahmen – Kontur mit runden Ecken */
-.hl-stroke .fp-ul{box-shadow:inset 0 0 0 max(2px,.06em) var(--p);border-radius:.32em;padding:0 .22em}
+.hl-stroke .fp-ul{box-shadow:inset 0 0 0 max(2px,.06em) var(--hl-ink,var(--p));border-radius:.32em;padding:0 .22em}
 /* Farbe – nur in der Akzentfarbe */
-.hl-color .fp-ul{color:var(--p)}
+.hl-color .fp-ul{color:var(--hl-ink,var(--p))}
+/* Nur der Farbauftrag wird geneigt. Die Schrift behält ihre Grundlinie. */
+:is(.hl-marker-tilt,.hl-half-tilt,.hl-brush-ink,.hl-brush-dry) .fp-ul{max-width:100%;white-space:normal;overflow-wrap:anywhere;padding:0 .12em}
+:is(.hl-marker-tilt,.hl-half-tilt,.hl-brush-ink,.hl-brush-dry) .fp-ul::before{content:"";position:absolute;z-index:-1;pointer-events:none;inset:.09em -.04em;background:var(--hl-ink,var(--p))}
+.hl-marker-tilt .fp-ul::before{background:color-mix(in srgb,var(--hl-ink,var(--p)) 25%,transparent);border-radius:.22em;transform:rotate(-1.6deg) skewX(-5deg)}
+.hl-half-tilt .fp-ul::before{inset:auto -.04em 12%;height:.46em;background:color-mix(in srgb,var(--hl-ink,var(--p)) 46%,transparent);border-radius:.09em;transform:rotate(-1.8deg) skewX(-8deg)}
+:is(.hl-brush-ink,.hl-brush-dry) .fp-ul{padding:0 .25em}
+:is(.hl-brush-ink,.hl-brush-dry) .fp-ul::before{inset:.02em -.05em;transform:rotate(-1deg);-webkit-mask:var(--brush-mask) center/100% 100% no-repeat;mask:var(--brush-mask) center/100% 100% no-repeat}
+.hl-brush-ink{--brush-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M7 8 Q29 4 57 6 T127 5 Q158 3 189 5 L217 3 202 6 225 5 218 8 232 8 224 11 236 12 226 15 238 16 226 18 233 20 223 22 230 24 217 26 224 28 199 31 217 31 195 34 Q158 32 129 35 T60 35 L26 36 32 34 8 34 14 31 5 31 9 28 3 27 9 23 3 22 8 18 2 17 10 14 5 12 14 10 Z M16 10 Q37 7 65 8 Q36 9 16 11 Z M81 32 Q111 30 134 31 L103 32 Z M177 8 L212 6 192 8 Z M200 25 L225 21 213 24 Z M9 26 L25 23 19 25 Z M143 33 L172 30 164 32 Z'/%3E%3Cpath d='M5 10l10 -2 -5 2z M199 35l17 -2 -9 2z M228 27l9 -2 -6 2z'/%3E%3C/svg%3E")}
+.hl-brush-dry{--brush-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M12 8 L38 7 18 6 47 5 Q73 3 100 5 T156 4 L197 4 211 3 207 5 228 5 215 7 235 7 224 9 237 10 217 12 231 13 223 15 238 16 230 18 237 19 221 21 234 22 224 24 235 25 218 27 229 28 214 30 222 31 192 32 201 34 171 33 Q145 36 120 34 T72 35 L36 35 50 33 11 34 35 31 6 31 29 28 8 29 16 26 3 26 24 23 6 23 27 20 8 19 19 17 3 16 27 14 10 13 28 11 4 11 20 9 Z M10 15 L62 10 42 13 Z M38 8 L73 6 65 7 Z M16 20 Q47 15 59 16 L42 18 Z M23 23 L53 20 45 22 Z M15 28 L64 24 49 26 Z M42 30 Q67 26 83 27 L62 29 Z M48 33 L83 30 73 32 Z M80 9 L109 7 103 8 Z M139 32 L169 29 161 31 Z M173 8 L214 6 198 8 Z M195 14 L225 10 215 13 Z M193 26 L231 20 212 24 Z M180 31 L217 27 204 30 Z'/%3E%3Cpath d='M2 9l14 -1 -7 2z M3 13l7 -1 -5 2z M0 21l12 -1 -8 2z M1 30l13 -2 -9 2z M12 35l24 -2 -14 2z M60 37l27 -1 -15 2z M209 33l20 -2 -10 2z M230 8l8 -2 -5 2z M234 23l6 -1 -4 2z'/%3E%3C/svg%3E")}
 /* Beim Öffnen einer Seite zeichnet sich die Hervorhebung einmal ein (nicht im Editor, nicht bei reduzierter Bewegung) */
 @keyframes fpHlDraw{from{clip-path:inset(-20% 100% -20% 0)}to{clip-path:inset(-20% 0 -20% 0)}}
 @keyframes fpHlGrow{from{background-size:0 var(--hlh,100%)}}
