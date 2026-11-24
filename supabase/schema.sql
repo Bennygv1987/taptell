@@ -30,6 +30,7 @@ create table if not exists public.funnels (
   status      text not null default 'draft' check (status in ('draft','live')),
   client_id   text references public.clients(id) on delete set null,
   shared      boolean not null default false,
+  overview_color text,
   theme       jsonb not null default '{}'::jsonb,
   settings    jsonb not null default '{}'::jsonb,
   pages       jsonb not null default '[]'::jsonb,

@@ -101,6 +101,16 @@ svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-widt
 @media (hover:hover) and (pointer:fine){.fcard:hover{box-shadow:var(--sh-md);transform:translateY(-2px);border-color:color-mix(in srgb,var(--line) 55%,var(--accL))}}
 .fcard:active{transform:scale(.99)}
 .fcard .thumb{height:232px;background:linear-gradient(160deg,var(--n100),var(--n150));position:relative;overflow:hidden;display:flex;justify-content:center;padding-top:22px;border-bottom:1px solid var(--line2)}
+[data-mark="blue"]{--mark:var(--info)}
+[data-mark="green"]{--mark:var(--ok)}
+[data-mark="amber"]{--mark:var(--warn)}
+[data-mark="purple"]{--mark:var(--pur)}
+[data-mark="red"]{--mark:var(--bad)}
+.fcard .thumb[data-mark]{background:linear-gradient(160deg,color-mix(in srgb,var(--mark) 12%,var(--card)),color-mix(in srgb,var(--mark) 22%,var(--card)))}
+.overview-colors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--r-md)}
+.overview-colors i{width:1em;height:1em;flex:none;border-radius:var(--r-pill);background:var(--mark,var(--n200))}
+.overview-colors [aria-pressed="true"]{border-color:var(--ink2)}
+.overview-colors .i{margin-inline-start:auto}
 .mini{width:390px;height:780px;transform:scale(.46);transform-origin:top center;border-radius:40px;overflow:hidden;box-shadow:0 20px 40px -12px rgba(15,17,23,.25),0 0 0 10px #111,0 0 0 11px #2a2a2a;pointer-events:none;flex:none;background:#fff}
 .mini>.fp{min-height:100%}
 .fcard .thumb .mini{margin-top:0}

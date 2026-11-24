@@ -1027,6 +1027,16 @@ svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-widt
 @media (hover:hover) and (pointer:fine){.fcard:hover{box-shadow:var(--sh-md);transform:translateY(-2px);border-color:color-mix(in srgb,var(--line) 55%,var(--accL))}}
 .fcard:active{transform:scale(.99)}
 .fcard .thumb{height:232px;background:linear-gradient(160deg,var(--n100),var(--n150));position:relative;overflow:hidden;display:flex;justify-content:center;padding-top:22px;border-bottom:1px solid var(--line2)}
+[data-mark="blue"]{--mark:var(--info)}
+[data-mark="green"]{--mark:var(--ok)}
+[data-mark="amber"]{--mark:var(--warn)}
+[data-mark="purple"]{--mark:var(--pur)}
+[data-mark="red"]{--mark:var(--bad)}
+.fcard .thumb[data-mark]{background:linear-gradient(160deg,color-mix(in srgb,var(--mark) 12%,var(--card)),color-mix(in srgb,var(--mark) 22%,var(--card)))}
+.overview-colors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--r-md)}
+.overview-colors i{width:1em;height:1em;flex:none;border-radius:var(--r-pill);background:var(--mark,var(--n200))}
+.overview-colors [aria-pressed="true"]{border-color:var(--ink2)}
+.overview-colors .i{margin-inline-start:auto}
 .mini{width:390px;height:780px;transform:scale(.46);transform-origin:top center;border-radius:40px;overflow:hidden;box-shadow:0 20px 40px -12px rgba(15,17,23,.25),0 0 0 10px #111,0 0 0 11px #2a2a2a;pointer-events:none;flex:none;background:#fff}
 .mini>.fp{min-height:100%}
 .fcard .thumb .mini{margin-top:0}
@@ -4662,6 +4672,37 @@ function render(){
 }
 
 /* ---------- views: funnels ---------- */
+var OVERVIEW_COLORS = {blue:'Blau', green:'Grün', amber:'Bernstein', purple:'Violett', red:'Rot'};
+
+function overviewColorPicker(f, anchor){
+  if(!isAdmin()) return;
+  var current = Object.hasOwn(OVERVIEW_COLORS, f.overviewColor) ? f.overviewColor : '';
+  var options = [''].concat(Object.keys(OVERVIEW_COLORS)).map(function(key){
+    return '<button type="button" class="btn" data-mark="'+key+'" aria-pressed="'+(current === key)+'"><i aria-hidden="true"></i>'+esc(OVERVIEW_COLORS[key] || 'Keine Farbe')+(current === key ? I('check',14) : '')+'</button>';
+  }).join('');
+  modal({title:'Übersichtsfarbe', sub:f.name, body:'<div class="overview-colors">'+options+'</div>',
+    onClose:function(){ if(anchor.isConnected) anchor.focus(); },
+    onOpen:function(el, close){
+      var group = el.querySelector('.overview-colors');
+      group.querySelector('[aria-pressed="true"]').focus();
+      group.onclick = function(e){
+        var button = e.target.closest('[data-mark]');
+        if(!button || !isAdmin()) return;
+        var color = button.dataset.mark;
+        if(color !== current){
+          f.overviewColor = color;
+          save(true);
+          var thumb = anchor.closest('.fcard').querySelector('.thumb');
+          if(color) thumb.dataset.mark = color; else thumb.removeAttribute('data-mark');
+          anchor.setAttribute('aria-label', overviewMenuLabel(f));
+        }
+        close();
+      };
+    }});
+}
+function overviewMenuLabel(f){
+  return 'Optionen für '+f.name+(OVERVIEW_COLORS[f.overviewColor] ? ', Markierung '+OVERVIEW_COLORS[f.overviewColor] : '');
+}
 function viewFunnels(){
   var SF = scopedFunnels(), SL = scopedLeads();
   var fs = SF.filter(function(f){ return (S.filter === 'all' || f.status === S.filter) && (!S.q || f.name.toLowerCase().indexOf(S.q.toLowerCase()) >= 0) && (!S.fclient || (S.fclient === '-' ? !f.clientId : f.clientId === S.fclient)); });
@@ -4678,7 +4719,7 @@ function viewFunnels(){
   h += '<div class="grid">';
   fs.forEach(function(f){
     var lc = leadsOf(f.id).length;
-    h += '<div class="fcard" data-a="edit" data-id="'+f.id+'"><div class="menu"><button class="btn sm ic" data-a="fmenu" data-id="'+f.id+'">'+I('more')+'</button></div><div class="thumb">'+mini(f)+'</div>'
+    h += '<div class="fcard" data-a="edit" data-id="'+f.id+'"><div class="menu"><button class="btn sm ic" data-a="fmenu" data-id="'+f.id+'" aria-label="'+esc(overviewMenuLabel(f))+'">'+I('more')+'</button></div><div class="thumb"'+(OVERVIEW_COLORS[f.overviewColor] ? ' data-mark="'+esc(f.overviewColor)+'"' : '')+'>'+mini(f)+'</div>'
       + '<div class="meta"><div class="nm"><span>'+esc(f.name)+'</span><span class="pill '+(f.status==='live'?'live':'draft')+'" style="flex:none">'+(f.status==='live'?'Live':'Entwurf')+'</span></div>'
       + '<div class="who">'+(f.clientId && clientById(f.clientId) ? I('folder',12)+'<span>'+esc(clientById(f.clientId).name)+'</span>'+(f.shared?'<span class="sh" title="Für den Kunden freigeschaltet">'+I('eye',12)+'</span>':'') : '<span>Intern</span>')+'<span class="dt">· '+fmtRel(f.updatedAt)+'</span></div>'
       + '<div class="fst"><div><b>'+fmtNum(f.stats.views)+'</b><small>Aufrufe</small></div><div><b>'+lc+'</b><small>Leads</small></div><div><b>'+conv(f).toFixed(1).replace('.',',')+' %</b><small>Conversion</small></div></div></div></div>';
@@ -4711,6 +4752,7 @@ function funnelMenu(btn, id){
     {k:'e', l:'Bearbeiten', ic:'edit', fn:function(){ go('editor', id); }},
     {k:'p', l:'Vorschau', ic:'eye', fn:function(){ openPreview(f); }},
     {k:'r', l:'Umbenennen', ic:'type', fn:function(){ promptBox('Funnel umbenennen','Name',f.name,function(v){ f.name = v; save(); render(); }); }},
+    {k:'color', l:'Übersichtsfarbe', ic:'palette', fn:function(){ overviewColorPicker(f, btn); }},
     {k:'d', l:'Duplizieren', ic:'dup', fn:function(){ duplicateFunnel(f); }},
     {k:'s', l:f.status==='live'?'Offline nehmen':'Live schalten', ic:'rocket', fn:function(){ f.status = f.status==='live'?'draft':'live'; save(); render(); toast(f.status==='live'?'Funnel ist live':'Funnel ist jetzt Entwurf'); }},
     {k:'x', l:'Exportieren / Einbetten', ic:'code', fn:function(){ publishModal(f); }},
@@ -6775,7 +6817,7 @@ var SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/di
 function loadScript(src, sri){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; if(sri){ s.integrity = sri; s.crossOrigin = 'anonymous'; } s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 var SNAP = {funnels:{}, leads:{}, clients:{}, settings:''}, syncing = false, syncAgain = false;
 function funnelToRow(f){ ensureSlug(f); var r = {id:f.id, name:f.name, slug:f.slug, status:f.status, client_id:f.clientId || null, shared:!!f.shared, theme:f.theme, settings:f.settings, pages:f.pages, created_at:new Date(f.createdAt||Date.now()).toISOString(), updated_at:new Date(f.updatedAt||Date.now()).toISOString()}; if(HAS_PUB) r.published = f.published || null; return r; }
-function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, status:r.status, clientId:r.client_id, shared:r.shared, published:r.published || null, versions:r.versions || [], theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
+function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, overviewColor:r.overview_color || '', status:r.status, clientId:r.client_id, shared:r.shared, published:r.published || null, versions:r.versions || [], theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
 var LEAD_COLS = ['id','funnelId','funnelName','name','email','phone','total','status','notes','createdAt'];
 function leadToRow(l){ var data = {}; Object.keys(l).forEach(function(k){ if(LEAD_COLS.indexOf(k) < 0) data[k] = l[k]; }); return {id:l.id, funnel_id:l.funnelId || null, funnel_name:l.funnelName || '', name:l.name || null, email:l.email || null, phone:l.phone || null, total:l.total || 0, status:l.status || 'neu', notes:l.notes || '', data:data, created_at:new Date(l.createdAt||Date.now()).toISOString()}; }
 function rowToLead(r){ return Object.assign({}, r.data || {}, {id:r.id, funnelId:r.funnel_id, funnelName:r.funnel_name, name:r.name, email:r.email, phone:r.phone, total:+r.total || 0, status:r.status, notes:r.notes || '', createdAt:Date.parse(r.created_at)}); }
@@ -6800,6 +6842,8 @@ async function loadRemote(){
   db = emptyDb();
   var pubProbe = await sb.from('funnels').select('published').limit(1); HAS_PUB = !pubProbe.error; /* Spalten aus versionen.sql vorhanden? */
   db.clients = (q[0].data || []).map(rowToClient);
+  savedOverviewColors.clear();
+  (q[1].data || []).forEach(function(r){ if(r.overview_color) savedOverviewColors.set(r.id, r.overview_color); });
   db.funnels = (q[1].data || []).map(function(r){ return rowToFunnel(r, stats[r.id]); }).sort(function(a, b){ return b.updatedAt - a.updatedAt; });
   db.leads = (q[2].data || []).map(rowToLead);
   db.lists = (q[6].data || []).map(rowToList);
@@ -6823,6 +6867,17 @@ async function syncTable(table, list, toRow, onlyCols){
   }
   if(dels.length){ var r3 = await sb.from(table).delete().in('id', dels); if(r3.error) throw r3.error; dels.forEach(function(id){ delete snap[id]; }); }
 }
+/* Separater PATCH: Eine Markierung berührt weder den Entwurf noch den Live-Stand. */
+var savedOverviewColors = new Map();
+async function syncOverviewColors(){
+  for(var f of db.funnels){
+    var color = f.overviewColor || '';
+    if(color === (savedOverviewColors.get(f.id) || '')) continue;
+    var result = await sb.from('funnels').update({overview_color:color || null}).eq('id', f.id).select('id').single();
+    if(result.error) throw result.error;
+    if(color) savedOverviewColors.set(f.id, color); else savedOverviewColors.delete(f.id);
+  }
+}
 async function syncRemote(){
   if(!sb || !S.user) return;
   if(syncing){ syncAgain = true; return; }
@@ -6836,6 +6891,7 @@ async function syncRemote(){
       var sp = JSON.stringify(settingsPayload()); if(sp !== SNAP.settings){ var r = await sb.from('app_settings').upsert({id:1, data:settingsPayload()}); if(r.error) throw r.error; SNAP.settings = sp; }
       await syncTable('leads', db.leads, leadToRow);
       try{ await syncTable('recipient_lists', lists(), listToRow); }catch(e){ console.warn('recipient_lists:', e.message || e); }
+      await syncOverviewColors();
     } else {
       await syncTable('leads', visibleLeads(), leadToRow, ['status','notes']);
     }
