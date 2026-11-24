@@ -850,6 +850,10 @@ table.dnst code{background:var(--n50);padding:2px 6px;border-radius:var(--r-xs);
 #scr .fp-b.editing .fp-btn{cursor:text}
 @media (hover:hover) and (pointer:fine){#scr .fp-b.sel:not(.editing)[data-type=heading],#scr .fp-b.sel:not(.editing)[data-type=text],#scr .fp-b.sel:not(.editing)[data-type=badge]{cursor:text}}
 .inlbar{position:fixed;z-index:60;border:1px solid var(--toolLine);display:flex;align-items:center;gap:1px;padding:3px;border-radius:var(--r-md);background:var(--tool);color:#fff;box-shadow:0 10px 28px -8px rgba(0,0,0,.45);transform-origin:50% 100%;animation:inlIn 150ms var(--ease-out)}
+.inlbar{max-width:calc(100vw - 1rem);flex-wrap:wrap}
+.inlbar [data-inl="ink"]{position:relative}
+.inlbar [data-inl="ink"]::after{content:"";position:absolute;bottom:.1em;width:60%;height:.24em;border-radius:var(--r-sm);background:var(--ink-swatch,currentColor);outline:1px solid var(--toolLine)}
+.inl-ink-picker{position:absolute;left:35%;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none}
 .inlbar.below{transform-origin:50% 0}
 @keyframes inlIn{from{opacity:0;transform:scale(.96) translateY(3px)}}
 .inlbar button{appearance:none;border:0;background:none;color:inherit;width:28px;height:28px;border-radius:var(--r-sm);display:grid;place-items:center;cursor:pointer;opacity:.82;transition:background-color var(--dur-fast) ease,opacity var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}

@@ -4,10 +4,25 @@ var FP = {};
 var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 /* Hervorhebung __Wort__: Schwung (wie Onepage: flacher Bogen, feine Linie) und Kreis als SVG; Marker, Fläche, Rahmen usw. per CSS (Klasse hl-* am Element) */
 var UL = '<svg class="fp-ulsv u" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 0,30 q 50,-35 100,0"/></svg><svg class="fp-ulsv c" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 54,4 C 82,3 99,10 98,21 C 97,33 74,38 48,37 C 20,36 2,30 3,19 C 4,9 22,3 44,4 C 50,4 57,6 62,8"/></svg>';
-var md = function(s){ return esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g,'$1<em>$2</em>').replace(/\+\+(.+?)\+\+/g,'<u>$1</u>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>'); };
+function stripInk(text){ return String(text).replace(/\{farbe:#[0-9a-f]{6}\}|\{\/farbe\}/gi, ''); }
+FP.stripInk = stripInk;
+/* Nur Textknoten einfärben. Generierte Linkattribute und SVGs bleiben intakt. */
+function renderInk(html){
+  if(html.indexOf('{farbe:') < 0) return html;
+  var ink = '';
+  return html.split(/(<[^>]+>)/g).map(function(part){
+    if(part.charAt(0) === '<') return part;
+    return part.split(/(\{farbe:#[0-9a-f]{6}\}|\{\/farbe\})/gi).map(function(run){
+      if(/^\{farbe:#[0-9a-f]{6}\}$/i.test(run)){ ink = run.slice(7, -1); return ''; }
+      if(run === '{/farbe}'){ ink = ''; return ''; }
+      return ink && run ? '<span style="color:'+ink+'">'+run+'</span>' : run;
+    }).join('');
+  }).join('');
+}
+var md = function(s){ return renderInk(esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g,'$1<em>$2</em>').replace(/\+\+(.+?)\+\+/g,'<u>$1</u>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>')); };
 FP.esc = esc; FP.md = md;
 /* Stile für die Hervorhebung __Wort__ (Design-Tab und pro Überschrift) */
-FP.HL_STYLES = [['swoosh','Schwung'],['line','Linie'],['marker','Marker'],['half','Textmarker'],['pill','Fläche'],['stroke','Rahmen'],['circle','Kreis'],['color','Farbe']];
+FP.HL_STYLES = [['swoosh','Schwung'],['line','Linie'],['marker','Marker'],['half','Textmarker'],['marker-tilt','Marker schräg'],['half-tilt','Textmarker schräg'],['brush-ink','Breitpinsel'],['brush-dry','Trockenpinsel'],['pill','Fläche'],['stroke','Rahmen'],['circle','Kreis'],['color','Farbe']];
 
 
 var IC = {
@@ -302,7 +317,7 @@ FP.readable = function(f, answers){
     else if(b.type === 'signature'){ val = 'Unterschrieben'; extra = v; }
     else if(b.type === 'upload'){ val = v.name; extra = v.data || null; }
     else if(typeof v === 'object') return;
-    out.push({key:k, label:String(label).replace(/\*\*|==/g,''), value:String(val), type:b.type, image:extra, inputType:p.inputType});
+    out.push({key:k, label:stripInk(label).replace(/\*\*|==/g,''), value:String(val), type:b.type, image:extra, inputType:p.inputType});
   }); });
   return out;
 };
@@ -324,7 +339,7 @@ FP.values = function(f, answers){
     var label = function(id){ var o = (p.options||[]).filter(function(o){ return o.id === id; })[0]; return o ? (o.value != null && o.value !== '' ? o.value : o.label) : ''; };
     if(b.type === 'choice') put(p.key, p.multi ? [].concat(v).map(label).filter(Boolean) : label([].concat(v)[0]));
     else if(b.type === 'rating' || b.type === 'slider') put(p.key, +v);
-    else if(b.type === 'checkbox') put(p.key, v ? String(p.text||'').replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1') : '');
+    else if(b.type === 'checkbox') put(p.key, v ? stripInk(p.text||'').replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1') : '');
     else if(b.type === 'calendar') put(p.key, (v.date||'') + (v.time ? ' ' + v.time : ''));
     else if(b.type === 'upload') put(p.key, v.name || '');
     else if(b.type === 'signature') put(p.key, 'Unterschrieben');
@@ -341,7 +356,7 @@ FP.values = function(f, answers){
 FP.onepagePayload = function(f, answers, path, meta){
   meta = meta || {};
   var s = f.settings || {}, pages = f.pages || [], now = new Date().toISOString();
-  var plain = function(t){ return String(t||'').replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1'); };
+  var plain = function(t){ return stripInk(t||'').replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1'); };
   var opt = function(o){ var r = {_id: o.oid || o.id, value: o.value != null && o.value !== '' ? o.value : o.label}; if(o.odesc !== undefined) r.description = o.odesc; else if(o.sub) r.description = o.sub; return r; };
   var fields = [], map = {};
   var show = function(v){ return Array.isArray(v) ? v.map(function(x){ return x && x.value; }).join(', ') : v && typeof v === 'object' ? [v.firstName, v.middleName, v.lastName].filter(Boolean).join(' ') : (v == null ? '' : String(v)); };
@@ -392,7 +407,7 @@ FP.vars = function(f){
   var out = [], seen = {}, add = function(k, l, t){ if(!k || seen[k]) return; seen[k] = 1; out.push({key:k, label:l, type:t}); };
   (f.pages||[]).forEach(function(pg){ (pg.blocks||[]).forEach(function(b){
     var p = b.props || {}; if(!p.key || ['choice','input','slider','rating','calendar'].indexOf(b.type) < 0) return;
-    add(p.key, String(p.label || p.question || pg.name || p.key).replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\{\{[^}]*\}\}/g,'…').trim(), b.type);
+    add(p.key, stripInk(p.label || p.question || pg.name || p.key).replace(/\*\*|==|__|\[\[|\]\]/g,'').replace(/\{\{[^}]*\}\}/g,'…').trim(), b.type);
   }); });
   if(seen.name && !seen.vorname) add('vorname', 'Vorname (aus Name)', 'input');
   add('total', 'Gesamtpreis (wie angezeigt)', 'calc'); add('total_exakt', 'Gesamtpreis (exakt)', 'calc'); add('score', 'Punktzahl', 'calc');
@@ -698,7 +713,7 @@ FP.renderBlock = function(b, ctx){
       h = label(p.label) + '<div class="fp-sig'+(v?' has':'')+'" data-sig="'+b.id+'"><canvas data-key="'+esc(k)+'" data-bid="'+b.id+'"></canvas><div class="line"></div><div class="fp-sigh">'+esc(p.hint||'Hier mit dem Finger unterschreiben')+'</div><button class="clr" data-act="sigclr" data-bid="'+b.id+'">Löschen</button></div>';
       break;
     case 'checkbox':
-      h = '<div class="fp-cb'+(v?' on':'')+'" role="checkbox" tabindex="0" aria-checked="'+(!!v)+'" data-act="cb" data-bid="'+b.id+'"><span class="box">'+IC.check+'</span><span>'+T(p.text)+rq+'</span></div>';
+      h = '<div class="fp-cb'+(v?' on':'')+'" role="checkbox" tabindex="0" aria-checked="'+(!!v)+'" data-act="cb" data-bid="'+b.id+'"><span class="box">'+IC.check+'</span><span'+(+p.size > 0 && isFinite(+p.size) ? ' style="font-size:'+(+p.size)+'px"' : '')+'>'+T(p.text)+rq+'</span></div>';
       break;
     case 'box':
       /* Box: umschließt die nächsten Elemente (sie bleiben normale Elemente der Seite) */
@@ -772,6 +787,7 @@ FP.renderBlock = function(b, ctx){
   if(b.type === 'box') cl0 += ' fp-box bx-' + esc(p.bxStyle || 'card');
   if(hv0(p.oIconC)) cl0 += ' oic-c';
   var st = 'text-align:'+(p.align||'left')+';margin-top:'+(+p.mt||0)+'px;margin-bottom:'+(p.mb!=null&&p.mb!==''?+p.mb+'px':'var(--bk,16px)')+';';
+  if(p.hlColor && /^(?:#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|rgba?\([\d.,%\s]+\))$/i.test(p.hlColor)) st += '--hl-ink:'+p.hlColor+';';
   if(p.ff) st += '--ff:'+FP.fontStack(p.ff)+';--hf:'+FP.fontStack(p.ff)+';font-family:var(--ff);';
   if(p.fw) st += '--hw:'+p.fw+';--tw:'+p.fw+';--bw:'+p.fw+';font-weight:'+p.fw+';';
   if(p.scale && +p.scale !== 100) st += '--sc:'+((+t0.scale||100)/100*(+p.scale/100))+';';
@@ -1142,7 +1158,7 @@ FP.mount = function(root, f, opts){
       var pg = pages[i], q = ''; if(!pg) return null;
       (pg.blocks || []).some(function(b){ var pp = b.props || {}; if(b.type === 'heading' && pp.text){ q = pp.text; return true; } if(pp.question){ q = pp.question; return true; } return false; });
       var a = FP.readable({pages:[pg]}, st.answers).map(function(x){ return x.value; }).join(', ');
-      q = String(FP.interp(q, f, st.answers)).replace(/\*\*|==|__|~~|\n/g, ' ').replace(/\s+/g, ' ').trim();
+      q = stripInk(FP.interp(q, f, st.answers)).replace(/\*\*|==|__|~~|\n/g, ' ').replace(/\s+/g, ' ').trim();
       return a ? {q: q.length > 90 ? q.slice(0, 88) + ' …' : q, a: a.length > 120 ? a.slice(0, 118) + ' …' : a} : null;
     }).filter(Boolean);
   }

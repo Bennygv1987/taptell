@@ -32,6 +32,7 @@ var IP = {
   fItalic:'<path d="M10 5h8M6 19h8M14 5l-4 14"/>',
   fUnder:'<path d="M7 4v7a5 5 0 0010 0V4M5 20h14"/>',
   fHl:'<path d="M7 7h10M7 11h7"/><path d="M4 18c5-3.2 11-3.2 16 0"/>',
+  inkDrop:'<path d="M12 3c-1.6 3.4-6.1 7.7-6.1 10.8a6.1 6.1 0 0 0 12.2 0C18.1 10.7 13.6 6.4 12 3Z"/><path d="M9 14a3 3 0 0 0 3 3"/>',
   fAccent:'<path d="M6 16l6-12 6 12M8.5 11h7"/><path d="M4 20h16" stroke-width="3"/>',
   fMark:'<path d="M9 15l-4 4h6l1-1"/><path d="M14 4l6 6-8 8-6-6z"/>',
   fSmall:'<path d="M3 18l5-12 5 12M4.8 14h6.4"/><path d="M16 12h5"/>',
@@ -640,7 +641,7 @@ function viewAnalytics(){
     chs.forEach(function(b){
       var k = FP.keyOf(b), cnt = {}, tot = 0;
       ls.forEach(function(l){ var v = l.answers && l.answers[k]; if(v == null) return; [].concat(v).forEach(function(id){ cnt[id] = (cnt[id]||0) + 1; tot++; }); });
-      h += '<div><div style="font-weight:600;margin-bottom:12px;font-size:var(--fs-13)">'+esc(String(b.props.question||k).replace(/\*\*|==/g,''))+'</div><div class="dist">' + b.props.options.map(function(o){ var c = cnt[o.id]||0, pc = ls.length ? Math.round(c/ls.length*100) : 0; return '<div class="dr"><div class="top"><span>'+esc((o.icon?o.icon+' ':'')+o.label)+'</span><span style="color:var(--mut)">'+c+' · '+pc+' %</span></div><div class="tr"><i style="width:'+pc+'%"></i></div></div>'; }).join('') + '</div></div>';
+      h += '<div><div style="font-weight:600;margin-bottom:12px;font-size:var(--fs-13)">'+esc(FP.stripInk(b.props.question||k).replace(/\*\*|==/g,''))+'</div><div class="dist">' + b.props.options.map(function(o){ var c = cnt[o.id]||0, pc = ls.length ? Math.round(c/ls.length*100) : 0; return '<div class="dr"><div class="top"><span>'+esc((o.icon?o.icon+' ':'')+o.label)+'</span><span style="color:var(--mut)">'+c+' · '+pc+' %</span></div><div class="tr"><i style="width:'+pc+'%"></i></div></div>'; }).join('') + '</div></div>';
     });
     h += '</div></div>';
   }
@@ -714,8 +715,8 @@ function toHex(v){ v = String(v||''); if(/^#[0-9a-f]{6}$/i.test(v)) return v; if
 
 /* ================= EDITOR ================= */
 var FIELDS = {
-  heading:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzentfarbe== · [[Marker]] · {{name}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
-  text:[['text','textarea','Text','Tipp: Doppelklick auf den Text im Handy bearbeitet ihn direkt. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzent== · [[Marker]] · {{name}}, {{total}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
+  heading:[['text','textarea','Text','Für einzelne Textfarben: Text im Handy doppelklicken, Wörter markieren und die Schriftfarbe wählen. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzentfarbe== · [[Marker]] · {{name}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['hlColor','color','Farbe der Hervorhebung'],['level','seg','Größe',[[1,'H1'],[2,'H2'],[3,'H3']]],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
+  text:[['text','textarea','Text','Für einzelne Textfarben: Text im Handy doppelklicken, Wörter markieren und die Schriftfarbe wählen. **fett** · *kursiv* · ++unterstrichen++ · __Hervorhebung__ · ==Akzent== · [[Marker]] · {{name}}, {{total}}'],['hl','select','Stil der Hervorhebung',[['','Wie im Design-Tab']].concat(FP.HL_STYLES)],['hlColor','color','Farbe der Hervorhebung'],['row2','row',[['size','num','Schriftgröße (px)'],['lh','lh','Zeilenhöhe']]]],
   badge:[['text','text','Text'],['variant','seg','Stil',[['','Soft'],['filled','Gefüllt'],['outline','Rahmen'],['grey','Grau']]],['upper','toggle','Großbuchstaben']],
   compare:[['bleed','toggle','Volle Breite ohne Seitenrand'],['before','image','Vorher-Bild (links)'],['after','image','Nachher-Bild (rechts)'],['row2','row',[['labelBefore','text','Text links'],['labelAfter','text','Text rechts']]],['ratio','select','Seitenverhältnis',[['4:3','4:3'],['1:1','1:1'],['16:9','16:9'],['3:4','3:4 (hoch)']]],['start','range','Startposition',[5,95,1,'%']],['radius','range','Ecken',[0,40,1]]],
   image:[['src','image','Bild'],['bleed','toggle','Volle Breite ohne Seitenrand','Das Bild reicht bis an den Rand des Bildschirms. Die Höhe bestimmst du weiter unten.'],['ratio','select','Seitenverhältnis',[['','Feste Höhe'],['2:1','2:1'],['16:9','16:9'],['4:3','4:3'],['1:1','1:1'],['auto','Original']]],['height','range','Höhe',[80,420,10],function(p){ return !p.ratio; }],['radius','range','Ecken',[0,40,1]],['fit','seg','Darstellung',[['cover','Füllen'],['contain','Einpassen']]],['alt','text','Alt-Text'],
@@ -754,7 +755,7 @@ var FIELDS = {
     ['calRadius','range','Ecken der Karte',[0,32,1,'px',18],function(p){ return p.calStyle !== 'strip'; }]],
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  checkbox:[['text','textarea','Text','Link: Doppelklick auf den Text im Handy, Wort markieren, Link-Symbol – oder hier [Datenschutzerklärung](https://…) schreiben. Links öffnen sich in einem neuen Fenster.'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
+  checkbox:[['text','textarea','Text','Link: Doppelklick auf den Text im Handy, Wort markieren, Link-Symbol – oder hier [Datenschutzerklärung](https://…) schreiben. Links öffnen sich in einem neuen Fenster.'],['size','num','Schriftgröße (px)'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['whatsapp','WhatsApp (einfarbig)'],['br-whatsapp','WhatsApp (Original)'],['br-instagram','Instagram (Original)'],['br-facebook','Facebook (Original)'],['br-tiktok','TikTok (Original)'],['br-linkedin','LinkedIn (Original)'],['br-youtube','YouTube (Original)'],['br-x','X (Original)'],['br-telegram','Telegram (Original)'],['none','Kein Icon']]],['row2','row',[['bSize','num','Schriftgröße (px)'],['icColor','color','Icon-Farbe']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['row2','row',[['btnBw','num','Rahmen (px)'],['btnBc','color','Rahmenfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
   summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }],['sticky','toggle','Unten fixieren','Bleibt beim Scrollen am unteren Rand sichtbar, solange das Element weiter unten auf der Seite steht.']],
   box:[['count','num','Enthält die nächsten … Elemente','Die Elemente direkt darunter liegen in der Box. Mit den Pfeilen in der Element-Leiste schiebst du Elemente hinein oder heraus.'],['bxStyle','seg','Stil',[['card','Karte'],['sand','Sand'],['tint','Getönt'],['outline','Rahmen'],['glass','Glas'],['soft','Soft UI'],['solid','Farbig'],['plain','Ohne']]],['_bh','note','Hintergrund, Rahmen, Schatten, Ecken und Innenabstand stellst du unten unter „Stil → Box“ ein.']],
@@ -1343,7 +1344,14 @@ function inlTarget(blk, b){ var c = b && INL[b.type]; if(!c || !blk) return null
 /* HTML aus dem Bearbeitungsfeld zurück ins Text-Format */
 function htmlToMd(root){
   var walk = function(n){
-    if(n.nodeType === 3) return n.nodeValue.replace(/ /g, ' ');
+    if(n.nodeType === 3){
+      var text = n.nodeValue.replace(/ /g, ' ');
+      for(var parent = n.parentElement; parent && parent !== root; parent = parent.parentElement){
+        var color = parent.style.color || (parent.tagName === 'FONT' && parent.getAttribute('color'));
+        if(color) return '{farbe:'+toHex(color)+'}'+text+'{/farbe}';
+      }
+      return text;
+    }
     if(n.nodeType !== 1) return '';
     var tag = n.tagName.toLowerCase(), cl = n.classList;
     if(tag === 'svg' || cl.contains('rq') || cl.contains('fp-var-x')) return '';
@@ -1434,23 +1442,45 @@ function inlSize(d){
   var nv = Math.max(10, Math.min(72, cur + d)); b.props.size = nv; inl.el.style.fontSize = nv + 'px'; touch(); inlPlace();
   var f = $('#rp [data-p="size"]'); if(f) f.value = nv;
 }
+/* Der native Farbdialog kann den Fokus und die aktuelle Textauswahl übernehmen. */
+function inlPickInk(picker){
+  var sel = getSelection(), range = sel.rangeCount ? sel.getRangeAt(0) : null;
+  if(!range || !inl.el.contains(range.commonAncestorContainer)) range = inl.lastRange;
+  if(!range || range.collapsed){ toast('Markiere zuerst den Text, den du einfärben möchtest'); return; }
+  inl.inkRange = range.cloneRange();
+  var start = range.startContainer;
+  picker.value = toHex(getComputedStyle(start.nodeType === 1 ? start : start.parentElement).color);
+  picker.click();
+}
+function inlApplyInk(picker){
+  var range = inl && inl.inkRange;
+  if(!range || !inl.el.contains(range.commonAncestorContainer)) return;
+  inl.inkRange = null;
+  inl.el.focus();
+  var sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  document.execCommand('foreColor', false, picker.value);
+  inlInput(); inlState();
+}
 function inlAlign(v){ if(!inl) return; inl.b.props.align = v; inl.blk.style.textAlign = v; touch(); inlState(); inlPlace(); }
 function inlBar(){
   var scr = $('#scr'); if(!scr || !inl) return;
   var old = $('#inlbar'); if(old) old.remove();
   var bar = document.createElement('div'); bar.className = 'inlbar'; bar.id = 'inlbar';
   var B = function(a, ic, t, v){ return '<button type="button" data-inl="'+a+'"'+(v ? ' data-v="'+v+'"' : '')+' title="'+t+'" aria-label="'+t+'">'+I(ic, 15)+'</button>'; };
-  var sizeable = inl.b.type === 'heading' || inl.b.type === 'text';
+  var sizeable = inl.b.type === 'heading' || inl.b.type === 'text' || inl.b.type === 'checkbox';
   bar.innerHTML = B('bold','fBold','Fett (⌘B)') + B('italic','fItalic','Kursiv (⌘I)') + B('underline','fUnder','Unterstrichen (⌘U)') + '<i></i>'
-    + B('hl','fHl','Hervorheben (Stil im Design-Tab)') + B('accent','fAccent','Akzentfarbe') + B('mark','fMark','Marker') + B('link','link','Link') + '<i></i>'
+    + B('hl','fHl','Hervorheben (Stil im Design-Tab)') + B('accent','fAccent','Akzentfarbe') + B('ink','inkDrop','Schriftfarbe für markierten Text') + '<input type="color" class="inl-ink-picker" tabindex="-1" aria-label="Schriftfarbe wählen">' + B('mark','fMark','Marker') + B('link','link','Link') + '<i></i>'
     + (sizeable ? B('small','fSmall','Kleiner') + B('big','fBig','Größer') + '<i></i>' : '')
     + B('align','fLeft','Links','left') + B('align','fCenter','Mitte','center') + B('align','fRight','Rechts','right') + '<i></i>'
     + B('clear','fClear','Formatierung entfernen') + '<button type="button" class="ok" data-inl="done" title="Fertig (Esc)">Fertig</button>';
+  var picker = bar.querySelector('.inl-ink-picker');
+  picker.addEventListener('change', function(){ inlApplyInk(picker); });
   bar.addEventListener('mousedown', function(e){ e.preventDefault(); }); /* Markierung im Text behalten */
   bar.addEventListener('click', function(e){
     var btn = e.target.closest('[data-inl]'); if(!btn) return; var a = btn.getAttribute('data-inl');
     if(a === 'bold' || a === 'italic' || a === 'underline') inlCmd(a);
     else if(a === 'hl') inlWrap('fp-ul', 'span');
+    else if(a === 'ink') inlPickInk(picker);
     else if(a === 'accent') inlWrap('fp-hl', 'span');
     else if(a === 'mark') inlWrap('fp-mk', 'mark');
     else if(a === 'small') inlSize(-2); else if(a === 'big') inlSize(2);
@@ -1482,6 +1512,10 @@ function inlPlace(){
 function inlState(){
   var bar = $('#inlbar'); if(!bar || !inl) return;
   var sel = getSelection(), node = sel.rangeCount ? sel.getRangeAt(0).commonAncestorContainer : null; node = node && (node.nodeType === 1 ? node : node.parentNode);
+  if(node && inl.el.contains(node)){
+    inl.lastRange = sel.getRangeAt(0).cloneRange();
+    bar.querySelector('[data-inl="ink"]').style.setProperty('--ink-swatch', getComputedStyle(node).color);
+  }
   [['bold','strong,b'],['italic','em,i'],['underline','u'],['hl','.fp-ul'],['accent','.fp-hl'],['mark','mark']].forEach(function(x){ var b2 = bar.querySelector('[data-inl="'+x[0]+'"]'); if(b2) b2.classList.toggle('on', !!(node && inl.el.contains(node) && node.closest(x[1]))); });
   var al = inl.b.props.align || 'left'; bar.querySelectorAll('[data-inl="align"]').forEach(function(b2){ b2.classList.toggle('on', b2.getAttribute('data-v') === al); });
 }
