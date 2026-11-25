@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><title>Dein Tisch · Interaktive Auswahl</title>
+<link rel="stylesheet" href="/src/player.css">
+<style>body{margin:0;background:#eeeae4}main{max-width:560px;margin:auto;background:#fff;min-height:100svh}main>.fp{min-height:100svh}</style>
+</head>
+<body><main id="demo"></main>
+<script src="/src/player.js"></script><script src="/src/templates.js"></script>
+<script>
+const T = window.FS_T;
+const shape = T.fromLib('scene-shapes'), edge = T.fromLib('scene-edges');
+shape.props.key = 'form'; edge.props.key = 'kante';
+const funnel = {id:'interactive-preview',name:'Dein Tisch',theme:Object.assign(T.theme('clean'),{primary:'#44382d',headingFont:'Georgia',progress:'steps',logoText:'Tischatelier'}),
+settings:{},pages:[
+  T.P('Form',[shape]),T.P('Kante',[edge]),
+  T.P('Deine Auswahl',[T.B('heading',{text:'Dein Tisch'}),T.B('text',{text:'Form: **{{form}}**\nKante: **{{kante}}**'}),T.B('button',{label:'Erneut ausprobieren',action:'page',target:'form-start'})])
+]};
+funnel.pages[0].id='form-start';
+FP.mount(document.getElementById('demo'),funnel,{live:false});
+</script></body></html>

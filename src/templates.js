@@ -60,6 +60,11 @@ var DEF = {
   html:        function(){ return {code:'<div style="padding:16px;border-radius:12px;background:#f4f5f8;text-align:center">Eigener HTML-Code</div>'}; }
 };
 
+function scenePreset(edges){
+  var files = edges ? [['Gerade','gerade.jpg'],['Schweizer Kante','schweizer.jpg'],['Baumkante','baumkante.jpg']] : [['Eckig','form-eckig.jpg'],['Rund','form-rund.jpg'],['Oval','form-oval.jpg'],['Organisch','form-organisch.jpg']];
+  var asset = function(file){ return '/assets/gehlen/'+file; };
+  return {layout:'scene',sceneTitle:'Dein Tisch',question:edges?'Tischkante wählen':'Welche Form gefällt dir?',sceneImage:asset('bild-start.jpg'),autoNext:false,sceneSwap:true,options:files.map(function(item){return O(item[0],'',{img:edges?'/assets/interactive/'+item[1]:asset(item[1])});})};
+}
 var LIB = [
   {id:'heading', type:'heading', n:'Überschrift', ic:'heading', g:'Inhalt'},
   {id:'text', type:'text', n:'Text', ic:'type', g:'Inhalt'},
@@ -72,6 +77,8 @@ var LIB = [
   {id:'choice', type:'choice', n:'Auswahl', ic:'choice', g:'Fragen'},
   {id:'multi', type:'choice', n:'Mehrfach', ic:'checks', g:'Fragen', over:{question:'Was trifft zu? (Mehrfachauswahl)', multi:true, autoNext:false}},
   {id:'cards', type:'choice', n:'Kacheln', ic:'grid', g:'Fragen', over:{layout:'grid'}},
+  {id:'scene-shapes',type:'choice',n:'Formauswahl mit Slider',ic:'images',g:'Interactive Funnels',over:scenePreset(false)},
+  {id:'scene-edges',type:'choice',n:'Tischkante wählen',ic:'images',g:'Interactive Funnels',over:scenePreset(true)},
   {id:'imgchoice', type:'choice', n:'Bildauswahl', ic:'images', g:'Fragen', over:{layout:'image'}},
   {id:'input', type:'input', n:'Textfeld', ic:'cursor', g:'Fragen'},
   {id:'email', type:'input', n:'E-Mail', ic:'mail', g:'Fragen', over:{label:'E-Mail-Adresse', placeholder:'max@beispiel.de', inputType:'email', key:'email'}},
@@ -113,6 +120,7 @@ var P = function(name, blocks, extra){ return Object.assign({id:uid(), name:name
 var fromLib = function(libId){ var l = LIB.filter(function(x){return x.id===libId;})[0]; var b = B(l.type, clone(l.over||{})); if(b.props.options) b.props.options.forEach(function(o){ o.id = uid(); }); return b; };
 
 var SECTIONS = [
+  {id:'s-scene',n:'Interaktiver Konfigurator',ic:'images',make:function(){return [fromLib('scene-shapes')];}},
   {id:'s-contact', n:'Kontaktformular', ic:'user', make:function(){ return [B('heading',{text:'Fast geschafft! Wohin dürfen wir dein Angebot senden?', level:2}), B('input',{label:'Vor- und Nachname', placeholder:'Max Mustermann', key:'name', icon:'user'}), B('input',{label:'E-Mail-Adresse', placeholder:'max@beispiel.de', inputType:'email', key:'email'}), B('input',{label:'Telefonnummer', placeholder:'+49 170 1234567', inputType:'tel', key:'telefon'}), B('checkbox',{}), B('button',{label:'Jetzt anfragen', action:'submit'})]; }},
   {id:'s-hero', n:'Hero / Start', ic:'sparkles', make:function(){ return [B('badge',{}), B('heading',{text:'Finde in 60 Sekunden das ==perfekte Angebot==', align:'center'}), B('text',{text:'Beantworte ein paar kurze Fragen und erhalte sofort eine persönliche Einschätzung.', align:'center'}), B('button',{label:'Jetzt starten', sub:'Dauert nur 60 Sekunden'}), B('trust',{})]; }},
   {id:'s-thanks', n:'Danke-Seite', ic:'check', make:function(){ return [B('heading',{text:'Vielen Dank, {{vorname}}! 🎉', align:'center'}), B('text',{text:'Wir haben deine Anfrage erhalten und melden uns innerhalb von 24 Stunden.', align:'center'}), B('list',{items:['Wir prüfen deine Angaben','Du erhältst dein persönliches Angebot','Gemeinsam besprechen wir die Details'], icon:'number'})]; }},

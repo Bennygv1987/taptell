@@ -529,6 +529,33 @@ FP.loaderOf = function(page){ return ((page && page.blocks) || []).filter(functi
 FP.lqSrc = function(src){ src = String(src || ''); if(!/^https:\/\/images\.unsplash\.com\//.test(src)) return ''; return src.replace(/([?&])w=\d+/, '$1w=24').replace(/([?&])q=\d+/, '$1q=30') + (/[?&]w=/.test(src) ? '' : (src.indexOf('?') < 0 ? '?' : '&') + 'w=24&q=30') + '&blur=40'; };
 FP.lqStyle = function(src){ var lq = FP.lqSrc(src); return lq ? ' style="background-image:url(&quot;'+lq+'&quot;)"' : ''; };
 
+/* Die Szene benutzt dieselben Antwort-IDs wie alle anderen Choice-Layouts. */
+function scenePhoto(p, selected){
+  var options = p.options || [], id = selected[selected.length-1];
+  var active = options.find(function(o){return o.id === id;});
+  return (p.sceneSwap && active && (active.sceneBackdrop || active.img)) || p.sceneImage || (options[0] && options[0].img) || '';
+}
+function renderScene(b, selected, title, ctx, T){
+  var p=b.props, options=p.options||[], cols=Math.min(4,Math.max(2,+p.sceneCols||3));
+  var style='--scene-cols:'+cols+';--scene-height:'+Math.min(100,Math.max(45,+p.sceneHeight||85))+'svh;--scene-alpha:'+Math.min(100,Math.max(0,p.sceneOpacity==null?55:+p.sceneOpacity))/100+';';
+  [['sceneTitleColor','--scene-heading'],['sceneShade','--scene-shade'],['sceneSheet','--scene-sheet'],['sceneInk','--scene-ink'],['sceneAccent','--scene-accent']].forEach(function(pair){
+    var value=p[pair[0]];
+    if(/^(#[0-9a-f]{3,8}|rgba?\([\d.,%\s]+\))$/i.test(value)) style+=pair[1]+':'+value+';';
+  });
+  var photo=scenePhoto(p,selected), motion=['none','fade'].includes(p.sceneMotion)?p.sceneMotion:'slide';
+  var h='<section class="fp-scene" style="'+style+'"><img class="scene-photo" alt="" '+(photo?'src="'+esc(photo)+'"':'hidden')+'><div class="scene-veil"></div>';
+  if(p.sceneTitle) h+='<div class="scene-title">'+T(p.sceneTitle)+'</div>';
+  h+='<div class="scene-sheet motion-'+motion+'">'+title;
+  if(options.length>cols) h+='<div class="scene-arrows"><button type="button" data-act="scenePrev" data-bid="'+esc(b.id)+'" aria-label="Vorherige Antworten">‹</button><button type="button" data-act="sceneNext" data-bid="'+esc(b.id)+'" aria-label="Weitere Antworten">›</button></div>';
+  h+='<div class="scene-track">';
+  options.forEach(function(o){
+    var on=selected.includes(o.id), price=p.showPrices && (+o.price || +o.unitPrice);
+    h+='<button type="button" class="scene-option'+(on?' sel':'')+'" aria-pressed="'+on+'" data-act="opt" data-bid="'+esc(b.id)+'" data-oid="'+esc(o.id)+'">';
+    if(o.img) h+='<img alt="" src="'+esc(o.img)+'" style="object-position:'+(['top','bottom','left','right'].includes(o.pos)?o.pos:'center')+'">';
+    h+='<strong>'+esc(o.label)+'</strong>'+(o.sub?'<small>'+esc(o.sub)+'</small>':'')+(price?'<small>'+FP.money(+o.price||+o.unitPrice,(ctx.f.settings||{}).currency)+(!+o.price && o.unitLabel?' / '+esc(o.unitLabel):'')+'</small>':'')+'</button>';
+  });
+  return h+'</div>'+(ctx.sceneContinue?'<button class="fp-btn scene-confirm" data-act="next">'+esc(p.sceneCta||ctx.sceneButtonLabel||'Auswahl übernehmen')+'</button>':'')+'</div></section>';
+}
 FP.renderBlock = function(b, ctx){
   var p = b.props || {}, a = ctx.answers || {}, k = keyOf(b), err = ctx.errors && ctx.errors[b.id], v = a[k], cur = (ctx.f.settings||{}).currency, h = '';
   var T = function(s){
@@ -638,6 +665,7 @@ FP.renderBlock = function(b, ctx){
       var sel = [].concat(v == null ? [] : v), lay = p.layout || 'list';
       var cntH = p.multi ? '<span class="fp-cnt'+(sel.length?' on':'')+'" data-cnt="'+b.id+'">'+(sel.length ? sel.length+' gewählt' : '')+'</span>' : '';
       h = (p.question ? '<p class="fp-q">'+T(p.question)+rq+cntH+'</p>' : cntH) + (p.desc ? '<p class="fp-qd">'+T(p.desc)+'</p>' : '');
+      if(lay === 'scene'){ h=renderScene(b,sel,h,ctx,T); break; }
       if(lay === 'scale' && p.faceStyle === 'flat'){
         var sop = p.options || [];
         h += '<div class="fp-faces'+(p.faceBare?' bare':'')+(p.faceNoText?' notext':'')+'" style="--n:'+sop.length+'">' + sop.map(function(o, i){ return '<button class="fp-fc'+(sel.indexOf(o.id)>=0?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="'+esc(o.label)+'"><span class="fc">'+FP.FACES[FP.faceIdx(sop.length, i)]+'</span>'+(p.faceNoText ? '' : '<span class="fl">'+esc(o.label)+'</span>')+'</button>'; }).join('') + '</div>';
@@ -937,12 +965,14 @@ FP.renderPage = function(f, idx, ctx){
   var one = function(b, c){ var r = FP.renderBlock(b, c || ctx); return b.id === stickyId ? '<div class="fp-sticky">'+r+'</div>' : r; };
   /* Box-Elemente umschließen die nächsten n Elemente (auch verschachtelt) */
   var list = function(arr){ var out = '', i = 0; while(i < arr.length){ var b = arr[i]; if(b.type === 'box' && !chat){ var n = Math.max(0, Math.min(+b.props.count || 0, arr.length - i - 1)); out += one(b, Object.assign({}, ctx, {boxKids:list(arr.slice(i + 1, i + 1 + n))})); i += n + 1; } else { out += one(b); i++; } } return out; };
+  ctx.sceneContinue = blocks.length===1 && blocks[0].type==='choice' && blocks[0].props.layout==='scene' && !FP.hasButton(page) && idx<f.pages.length-1 && page.autoButton!==false;
+  ctx.sceneButtonLabel = page.buttonLabel;
   var inner = list(blocks);
   /* Chat-Modus: bisherige Antworten als Verlauf, beim ersten Öffnen einer Seite kurz „schreibt …“ */
   var chatIn = chat && nBot > 0 && !ctx.edit && !ctx.noAnim;
   if(chat && !ctx.edit && (ctx.chatHist||[]).length) inner = '<div class="fp-chist">' + ctx.chatHist.map(function(x){ return (x.q ? '<div class="q">'+esc(x.q)+'</div>' : '') + '<div class="a">'+esc(x.a)+'</div>'; }).join('') + '</div>' + (chatIn ? '<div class="fp-typing" aria-hidden="true"><i></i><i></i><i></i></div>' : '') + inner;
   else if(chatIn) inner = '<div class="fp-typing" aria-hidden="true"><i></i><i></i><i></i></div>' + inner;
-  if(!FP.hasButton(page) && idx < f.pages.length - 1 && page.autoButton !== false){
+  if(!ctx.sceneContinue && !FP.hasButton(page) && idx < f.pages.length - 1 && page.autoButton !== false){
     var av = t.btnVariant && t.btnVariant !== 'filled' ? t.btnVariant : '';
     var ab = '<div class="fp-b fp-auto" style="margin-top:6px"><button class="fp-btn shadow '+av+'" data-act="next"><span>'+esc(page.buttonLabel||t.nextLabel||'Weiter')+'</span>'+FP.BTN_ICONS.arrow+'</button></div>';
     inner += t.stickyCta ? '<div class="fp-sticky">'+ab+'</div>' : ab;
@@ -1055,6 +1085,14 @@ FP.mount = function(root, f, opts){
     var v = st.answers[keyOf(b)], sel = [].concat(v == null ? [] : v);
     if(b.type === 'choice'){
       root.querySelectorAll('[data-act="opt"][data-bid="'+b.id+'"]').forEach(function(el){ el.classList.toggle('sel', sel.indexOf(el.getAttribute('data-oid')) >= 0); });
+      if(b.props.layout==='scene'){
+        var block=root.querySelector('.fp-b[data-bid="'+b.id+'"]');
+        if(block){
+          var photo=block.querySelector('.scene-photo'), src=scenePhoto(b.props,sel);
+          if(photo && src && photo.getAttribute('src')!==src){ photo.src=src; photo.hidden=false; }
+          block.querySelectorAll('.scene-option').forEach(function(btn){ btn.setAttribute('aria-pressed',String(btn.classList.contains('sel'))); });
+        }
+      }
       var cn = root.querySelector('[data-cnt="'+b.id+'"]'); if(cn){ cn.textContent = sel.length ? sel.length + ' gewählt' : ''; cn.classList.toggle('on', !!sel.length); cn.classList.remove('pop'); void cn.offsetWidth; if(sel.length) cn.classList.add('pop'); }
     } else if(b.type === 'rating'){
       root.querySelectorAll('[data-act="rate"][data-bid="'+b.id+'"]').forEach(function(el){
@@ -1266,6 +1304,10 @@ FP.mount = function(root, f, opts){
         setTimeout(function(){ st.busy = false; go(p.target || null, true); }, 820); }
       else if(a === 'page') go(p.target);
       else go();
+    }
+    else if(act === 'sceneNext' || act === 'scenePrev'){
+      var track=el.closest('.scene-sheet').querySelector('.scene-track');
+      track.scrollBy({left:(act==='sceneNext'?1:-1)*track.clientWidth,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
     }
     else if(act === 'opt'){
       var oid = el.getAttribute('data-oid'), k = keyOf(b);
