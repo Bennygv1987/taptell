@@ -1,0 +1,24 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+const ctx = vm.createContext({window:{},crypto:globalThis.crypto});
+for(const name of ['player','templates']) vm.runInContext(readFileSync(new URL('../src/'+name+'.js', import.meta.url),'utf8'),ctx);
+const {FP,FS_T:T} = ctx.window;
+test('Vorlagen haben eigene IDs, ein Weiter und blätterbare Antworten',()=>{
+  const shape=T.fromLib('scene-shapes'), again=T.fromLib('scene-shapes'), edge=T.fromLib('scene-edges');
+  assert.notEqual(shape.props.options[0].id,again.props.options[0].id);
+  shape.props.key='form';
+  const f={theme:T.theme('clean'),settings:{},pages:[T.P('Form',[shape]),T.P('Kante',[edge])]};
+  const round=shape.props.options[1];
+  const html=FP.renderPage(f,0,{answers:{form:round.id}});
+  assert.equal((html.match(/data-act="opt"/g)||[]).length,4);
+  assert.equal((html.match(/data-act="next"/g)||[]).length,1);
+  assert.match(html,/data-act="sceneNext"/);
+  assert.match(html,/class="scene-photo" alt="" src="[^"]*form-rund.jpg"/);
+  shape.props.sceneSwap=false;
+  assert.match(FP.renderPage(f,0,{}),/class="scene-photo" alt="" src="[^"]*bild-start.jpg"/);
+  assert.doesNotMatch(FP.renderPage(f,1,{}),/data-act="sceneNext"/);
+  shape.props.layout='image';
+  assert.doesNotMatch(FP.renderPage(f,0,{}),/scene-sheet/);
+});

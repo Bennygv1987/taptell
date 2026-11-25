@@ -931,6 +931,31 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp-conf{position:fixed;inset:0;z-index:2147482000;pointer-events:none}
 .fp-conf.in{position:absolute;left:0;top:0}
 
+/* Interaktive Bildauswahl: die Antwortleiste scrollt unabhängig vom Seiteninhalt. */
+.fp-body:has(>.fp-page>.fp-b:only-child>.fp-scene){padding:0}
+.fp-page>.fp-b:only-child:has(>.fp-scene){margin:0!important}
+.fp-scene{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;gap:2rem;min-height:var(--scene-height,85svh);overflow:hidden;background:var(--scene-shade,#302a24);text-align:left}
+.fp-scene .scene-photo,.fp-scene .scene-veil{position:absolute;inset:0;width:100%;height:100%;z-index:-2;object-fit:cover}
+.fp-scene .scene-veil{z-index:-1;background:linear-gradient(180deg,var(--scene-shade,#201911),transparent 58%,var(--scene-shade,#201911));opacity:var(--scene-alpha,.55);pointer-events:none}
+.scene-title{font:var(--hw,650) clamp(2rem,10cqw,4rem)/1.06 var(--hf,serif);color:var(--scene-heading,#fff);padding:clamp(20px,7cqw,48px);overflow-wrap:anywhere}
+.scene-sheet{position:relative;margin-top:auto;padding:20px clamp(14px,4cqw,24px) max(20px,env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:var(--scene-sheet,var(--bg,#fff));color:var(--scene-ink,var(--tx));box-shadow:0 -8px 36px #0002}
+.fp-scene .fp-q{font:var(--hw,650) clamp(1.3rem,5.6cqw,2rem)/1.14 var(--hf);color:inherit;margin:0 0 12px}
+.fp-scene .fp-qd{color:inherit;margin:0 0 12px}
+.scene-arrows{display:flex;gap:6px;justify-content:flex-end;margin-bottom:6px}
+.scene-arrows button{font:600 1.25rem/1 var(--ff);background:transparent;color:inherit;border:1px solid currentColor;border-radius:50%;width:32px;height:32px;cursor:pointer}
+.scene-track{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - (var(--scene-cols) - 1)*8px)/var(--scene-cols));gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;padding:3px;margin:-3px;scrollbar-width:thin}
+.scene-option{position:relative;scroll-snap-align:start;min-width:0;align-self:start;appearance:none;background:transparent;color:inherit;border:2px solid transparent;border-radius:12px;padding:2px;cursor:pointer;text-align:center;font:inherit;overflow-wrap:anywhere}
+.scene-option img{width:100%;display:block;aspect-ratio:1/1;object-fit:cover;border-radius:8px}
+.scene-option strong,.scene-option small{display:block;padding:5px 2px;line-height:1.2}
+.scene-option strong{font-size:.875rem}
+.scene-option.sel{border-color:var(--scene-accent,var(--p))}
+.scene-option.sel::after{content:"✓";position:absolute;top:6px;right:6px;border-radius:50%;background:#25211e;color:white;font:700 12px/20px system-ui;width:20px;text-align:center}
+.scene-option:focus-visible,.scene-arrows button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
+.fp-scene .scene-confirm{margin-top:16px;width:100%}
+@keyframes fpSceneRise{from{transform:translateY(40%);opacity:.2}to{transform:none;opacity:1}}
+@keyframes fpSceneFade{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:no-preference){.motion-slide.scene-sheet{animation:fpSceneRise 280ms var(--ease-out) both}.motion-fade.scene-sheet{animation:fpSceneFade 220ms ease-out both}}
+
 </style>
 <style>
 :root{
@@ -2463,6 +2488,33 @@ FP.loaderOf = function(page){ return ((page && page.blocks) || []).filter(functi
 FP.lqSrc = function(src){ src = String(src || ''); if(!/^https:\/\/images\.unsplash\.com\//.test(src)) return ''; return src.replace(/([?&])w=\d+/, '$1w=24').replace(/([?&])q=\d+/, '$1q=30') + (/[?&]w=/.test(src) ? '' : (src.indexOf('?') < 0 ? '?' : '&') + 'w=24&q=30') + '&blur=40'; };
 FP.lqStyle = function(src){ var lq = FP.lqSrc(src); return lq ? ' style="background-image:url(&quot;'+lq+'&quot;)"' : ''; };
 
+/* Die Szene benutzt dieselben Antwort-IDs wie alle anderen Choice-Layouts. */
+function scenePhoto(p, selected){
+  var options = p.options || [], id = selected[selected.length-1];
+  var active = options.find(function(o){return o.id === id;});
+  return (p.sceneSwap && active && (active.sceneBackdrop || active.img)) || p.sceneImage || (options[0] && options[0].img) || '';
+}
+function renderScene(b, selected, title, ctx, T){
+  var p=b.props, options=p.options||[], cols=Math.min(4,Math.max(2,+p.sceneCols||3));
+  var style='--scene-cols:'+cols+';--scene-height:'+Math.min(100,Math.max(45,+p.sceneHeight||85))+'svh;--scene-alpha:'+Math.min(100,Math.max(0,p.sceneOpacity==null?55:+p.sceneOpacity))/100+';';
+  [['sceneTitleColor','--scene-heading'],['sceneShade','--scene-shade'],['sceneSheet','--scene-sheet'],['sceneInk','--scene-ink'],['sceneAccent','--scene-accent']].forEach(function(pair){
+    var value=p[pair[0]];
+    if(/^(#[0-9a-f]{3,8}|rgba?\([\d.,%\s]+\))$/i.test(value)) style+=pair[1]+':'+value+';';
+  });
+  var photo=scenePhoto(p,selected), motion=['none','fade'].includes(p.sceneMotion)?p.sceneMotion:'slide';
+  var h='<section class="fp-scene" style="'+style+'"><img class="scene-photo" alt="" '+(photo?'src="'+esc(photo)+'"':'hidden')+'><div class="scene-veil"></div>';
+  if(p.sceneTitle) h+='<div class="scene-title">'+T(p.sceneTitle)+'</div>';
+  h+='<div class="scene-sheet motion-'+motion+'">'+title;
+  if(options.length>cols) h+='<div class="scene-arrows"><button type="button" data-act="scenePrev" data-bid="'+esc(b.id)+'" aria-label="Vorherige Antworten">‹</button><button type="button" data-act="sceneNext" data-bid="'+esc(b.id)+'" aria-label="Weitere Antworten">›</button></div>';
+  h+='<div class="scene-track">';
+  options.forEach(function(o){
+    var on=selected.includes(o.id), price=p.showPrices && (+o.price || +o.unitPrice);
+    h+='<button type="button" class="scene-option'+(on?' sel':'')+'" aria-pressed="'+on+'" data-act="opt" data-bid="'+esc(b.id)+'" data-oid="'+esc(o.id)+'">';
+    if(o.img) h+='<img alt="" src="'+esc(o.img)+'" style="object-position:'+(['top','bottom','left','right'].includes(o.pos)?o.pos:'center')+'">';
+    h+='<strong>'+esc(o.label)+'</strong>'+(o.sub?'<small>'+esc(o.sub)+'</small>':'')+(price?'<small>'+FP.money(+o.price||+o.unitPrice,(ctx.f.settings||{}).currency)+(!+o.price && o.unitLabel?' / '+esc(o.unitLabel):'')+'</small>':'')+'</button>';
+  });
+  return h+'</div>'+(ctx.sceneContinue?'<button class="fp-btn scene-confirm" data-act="next">'+esc(p.sceneCta||ctx.sceneButtonLabel||'Auswahl übernehmen')+'</button>':'')+'</div></section>';
+}
 FP.renderBlock = function(b, ctx){
   var p = b.props || {}, a = ctx.answers || {}, k = keyOf(b), err = ctx.errors && ctx.errors[b.id], v = a[k], cur = (ctx.f.settings||{}).currency, h = '';
   var T = function(s){
@@ -2572,6 +2624,7 @@ FP.renderBlock = function(b, ctx){
       var sel = [].concat(v == null ? [] : v), lay = p.layout || 'list';
       var cntH = p.multi ? '<span class="fp-cnt'+(sel.length?' on':'')+'" data-cnt="'+b.id+'">'+(sel.length ? sel.length+' gewählt' : '')+'</span>' : '';
       h = (p.question ? '<p class="fp-q">'+T(p.question)+rq+cntH+'</p>' : cntH) + (p.desc ? '<p class="fp-qd">'+T(p.desc)+'</p>' : '');
+      if(lay === 'scene'){ h=renderScene(b,sel,h,ctx,T); break; }
       if(lay === 'scale' && p.faceStyle === 'flat'){
         var sop = p.options || [];
         h += '<div class="fp-faces'+(p.faceBare?' bare':'')+(p.faceNoText?' notext':'')+'" style="--n:'+sop.length+'">' + sop.map(function(o, i){ return '<button class="fp-fc'+(sel.indexOf(o.id)>=0?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="'+esc(o.label)+'"><span class="fc">'+FP.FACES[FP.faceIdx(sop.length, i)]+'</span>'+(p.faceNoText ? '' : '<span class="fl">'+esc(o.label)+'</span>')+'</button>'; }).join('') + '</div>';
@@ -2871,12 +2924,14 @@ FP.renderPage = function(f, idx, ctx){
   var one = function(b, c){ var r = FP.renderBlock(b, c || ctx); return b.id === stickyId ? '<div class="fp-sticky">'+r+'</div>' : r; };
   /* Box-Elemente umschließen die nächsten n Elemente (auch verschachtelt) */
   var list = function(arr){ var out = '', i = 0; while(i < arr.length){ var b = arr[i]; if(b.type === 'box' && !chat){ var n = Math.max(0, Math.min(+b.props.count || 0, arr.length - i - 1)); out += one(b, Object.assign({}, ctx, {boxKids:list(arr.slice(i + 1, i + 1 + n))})); i += n + 1; } else { out += one(b); i++; } } return out; };
+  ctx.sceneContinue = blocks.length===1 && blocks[0].type==='choice' && blocks[0].props.layout==='scene' && !FP.hasButton(page) && idx<f.pages.length-1 && page.autoButton!==false;
+  ctx.sceneButtonLabel = page.buttonLabel;
   var inner = list(blocks);
   /* Chat-Modus: bisherige Antworten als Verlauf, beim ersten Öffnen einer Seite kurz „schreibt …“ */
   var chatIn = chat && nBot > 0 && !ctx.edit && !ctx.noAnim;
   if(chat && !ctx.edit && (ctx.chatHist||[]).length) inner = '<div class="fp-chist">' + ctx.chatHist.map(function(x){ return (x.q ? '<div class="q">'+esc(x.q)+'</div>' : '') + '<div class="a">'+esc(x.a)+'</div>'; }).join('') + '</div>' + (chatIn ? '<div class="fp-typing" aria-hidden="true"><i></i><i></i><i></i></div>' : '') + inner;
   else if(chatIn) inner = '<div class="fp-typing" aria-hidden="true"><i></i><i></i><i></i></div>' + inner;
-  if(!FP.hasButton(page) && idx < f.pages.length - 1 && page.autoButton !== false){
+  if(!ctx.sceneContinue && !FP.hasButton(page) && idx < f.pages.length - 1 && page.autoButton !== false){
     var av = t.btnVariant && t.btnVariant !== 'filled' ? t.btnVariant : '';
     var ab = '<div class="fp-b fp-auto" style="margin-top:6px"><button class="fp-btn shadow '+av+'" data-act="next"><span>'+esc(page.buttonLabel||t.nextLabel||'Weiter')+'</span>'+FP.BTN_ICONS.arrow+'</button></div>';
     inner += t.stickyCta ? '<div class="fp-sticky">'+ab+'</div>' : ab;
@@ -2989,6 +3044,14 @@ FP.mount = function(root, f, opts){
     var v = st.answers[keyOf(b)], sel = [].concat(v == null ? [] : v);
     if(b.type === 'choice'){
       root.querySelectorAll('[data-act="opt"][data-bid="'+b.id+'"]').forEach(function(el){ el.classList.toggle('sel', sel.indexOf(el.getAttribute('data-oid')) >= 0); });
+      if(b.props.layout==='scene'){
+        var block=root.querySelector('.fp-b[data-bid="'+b.id+'"]');
+        if(block){
+          var photo=block.querySelector('.scene-photo'), src=scenePhoto(b.props,sel);
+          if(photo && src && photo.getAttribute('src')!==src){ photo.src=src; photo.hidden=false; }
+          block.querySelectorAll('.scene-option').forEach(function(btn){ btn.setAttribute('aria-pressed',String(btn.classList.contains('sel'))); });
+        }
+      }
       var cn = root.querySelector('[data-cnt="'+b.id+'"]'); if(cn){ cn.textContent = sel.length ? sel.length + ' gewählt' : ''; cn.classList.toggle('on', !!sel.length); cn.classList.remove('pop'); void cn.offsetWidth; if(sel.length) cn.classList.add('pop'); }
     } else if(b.type === 'rating'){
       root.querySelectorAll('[data-act="rate"][data-bid="'+b.id+'"]').forEach(function(el){
@@ -3200,6 +3263,10 @@ FP.mount = function(root, f, opts){
         setTimeout(function(){ st.busy = false; go(p.target || null, true); }, 820); }
       else if(a === 'page') go(p.target);
       else go();
+    }
+    else if(act === 'sceneNext' || act === 'scenePrev'){
+      var track=el.closest('.scene-sheet').querySelector('.scene-track');
+      track.scrollBy({left:(act==='sceneNext'?1:-1)*track.clientWidth,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
     }
     else if(act === 'opt'){
       var oid = el.getAttribute('data-oid'), k = keyOf(b);
@@ -3424,6 +3491,11 @@ var DEF = {
   html:        function(){ return {code:'<div style="padding:16px;border-radius:12px;background:#f4f5f8;text-align:center">Eigener HTML-Code</div>'}; }
 };
 
+function scenePreset(edges){
+  var files = edges ? [['Gerade','gerade.jpg'],['Schweizer Kante','schweizer.jpg'],['Baumkante','baumkante.jpg']] : [['Eckig','form-eckig.jpg'],['Rund','form-rund.jpg'],['Oval','form-oval.jpg'],['Organisch','form-organisch.jpg']];
+  var asset = function(file){ return '/assets/gehlen/'+file; };
+  return {layout:'scene',sceneTitle:'Dein Tisch',question:edges?'Tischkante wählen':'Welche Form gefällt dir?',sceneImage:asset('bild-start.jpg'),autoNext:false,sceneSwap:true,options:files.map(function(item){return O(item[0],'',{img:edges?'/assets/interactive/'+item[1]:asset(item[1])});})};
+}
 var LIB = [
   {id:'heading', type:'heading', n:'Überschrift', ic:'heading', g:'Inhalt'},
   {id:'text', type:'text', n:'Text', ic:'type', g:'Inhalt'},
@@ -3436,6 +3508,8 @@ var LIB = [
   {id:'choice', type:'choice', n:'Auswahl', ic:'choice', g:'Fragen'},
   {id:'multi', type:'choice', n:'Mehrfach', ic:'checks', g:'Fragen', over:{question:'Was trifft zu? (Mehrfachauswahl)', multi:true, autoNext:false}},
   {id:'cards', type:'choice', n:'Kacheln', ic:'grid', g:'Fragen', over:{layout:'grid'}},
+  {id:'scene-shapes',type:'choice',n:'Formauswahl mit Slider',ic:'images',g:'Interactive Funnels',over:scenePreset(false)},
+  {id:'scene-edges',type:'choice',n:'Tischkante wählen',ic:'images',g:'Interactive Funnels',over:scenePreset(true)},
   {id:'imgchoice', type:'choice', n:'Bildauswahl', ic:'images', g:'Fragen', over:{layout:'image'}},
   {id:'input', type:'input', n:'Textfeld', ic:'cursor', g:'Fragen'},
   {id:'email', type:'input', n:'E-Mail', ic:'mail', g:'Fragen', over:{label:'E-Mail-Adresse', placeholder:'max@beispiel.de', inputType:'email', key:'email'}},
@@ -3477,6 +3551,7 @@ var P = function(name, blocks, extra){ return Object.assign({id:uid(), name:name
 var fromLib = function(libId){ var l = LIB.filter(function(x){return x.id===libId;})[0]; var b = B(l.type, clone(l.over||{})); if(b.props.options) b.props.options.forEach(function(o){ o.id = uid(); }); return b; };
 
 var SECTIONS = [
+  {id:'s-scene',n:'Interaktiver Konfigurator',ic:'images',make:function(){return [fromLib('scene-shapes')];}},
   {id:'s-contact', n:'Kontaktformular', ic:'user', make:function(){ return [B('heading',{text:'Fast geschafft! Wohin dürfen wir dein Angebot senden?', level:2}), B('input',{label:'Vor- und Nachname', placeholder:'Max Mustermann', key:'name', icon:'user'}), B('input',{label:'E-Mail-Adresse', placeholder:'max@beispiel.de', inputType:'email', key:'email'}), B('input',{label:'Telefonnummer', placeholder:'+49 170 1234567', inputType:'tel', key:'telefon'}), B('checkbox',{}), B('button',{label:'Jetzt anfragen', action:'submit'})]; }},
   {id:'s-hero', n:'Hero / Start', ic:'sparkles', make:function(){ return [B('badge',{}), B('heading',{text:'Finde in 60 Sekunden das ==perfekte Angebot==', align:'center'}), B('text',{text:'Beantworte ein paar kurze Fragen und erhalte sofort eine persönliche Einschätzung.', align:'center'}), B('button',{label:'Jetzt starten', sub:'Dauert nur 60 Sekunden'}), B('trust',{})]; }},
   {id:'s-thanks', n:'Danke-Seite', ic:'check', make:function(){ return [B('heading',{text:'Vielen Dank, {{vorname}}! 🎉', align:'center'}), B('text',{text:'Wir haben deine Anfrage erhalten und melden uns innerhalb von 24 Stunden.', align:'center'}), B('list',{items:['Wir prüfen deine Angaben','Du erhältst dein persönliches Angebot','Gemeinsam besprechen wir die Details'], icon:'number'})]; }},
@@ -4904,7 +4979,7 @@ function applyEditorImage(input,src){
   if(input.hasAttribute('data-arrimg')){
     var k=input.dataset.arrimg, props=selBlock().props; props[k]=(props[k] || []).concat([src]); touch();
   } else if(input.hasAttribute('data-optimg')){
-    selBlock().props.options[+input.dataset.optimg].img=src; touch();
+    selBlock().props.options[+input.dataset.optimg][input.hasAttribute('data-backdrop')?'sceneBackdrop':'img']=src; touch();
   } else setScoped(input.dataset.scope,input.dataset.img,src);
   renderCanvas(true); renderRight();
 }
@@ -5303,7 +5378,7 @@ var FIELDS = {
   loader:[['anim','select','Animation',FP.LOADERS],['src','text','Lottie-Adresse (.json, z. B. von LottieFiles)',null,function(p){ return p.anim === 'custom'; }],['json','lottie','Oder Datei hochladen',null,function(p){ return p.anim === 'custom'; }],['duration','range','Dauer',[1,10,0.5,' s']],['size','range','Größe',[60,240,4]],['texts','strings','Wechselnde Hinweise','Wechseln gleichmäßig über die Dauer.'],['showBar','toggle','Ladebalken anzeigen'],['_n','note','Nach Ablauf geht es automatisch zur nächsten Seite. Wer zurückgeht, überspringt die Ladeseite.']],
   faq:[['items','faq','Fragen & Antworten']],
   countdown:[['label','text','Text darüber'],['minutes','num','Dauer in Minuten']],
-  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[3,'3'],[4,'4'],[1,'1']],function(p){ return p.layout==='image'; }],['zoom','toggle','Lupe zum Vergrößern','Zeigt eine Lupe auf jedem Bild. Sie öffnet das Bild groß, mit Wischen zwischen den Antworten und direktem Auswählen.',function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
+  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scene','Interaktive Szene'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[3,'3'],[4,'4'],[1,'1']],function(p){ return p.layout==='image'; }],['zoom','toggle','Lupe zum Vergrößern','Zeigt eine Lupe auf jedem Bild. Sie öffnet das Bild groß, mit Wischen zwischen den Antworten und direktem Auswählen.',function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
   input:[['label','text','Label'],['placeholder','text','Platzhalter'],['emoji','text','Emoji im Feld (optional)','z. B. ✉️ oder 📞 – ersetzt das Standard-Icon.'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['faces','Smileys flach mit Text'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='faces'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.style==='faces'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.style==='faces'; }],['faceLabels','strings','Texte unter den Smileys','Leer lassen für: Sehr schlecht, Schlecht, Okay, Gut, Super.',function(p){ return p.style==='faces' && !p.faceNoText; }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.style==='faces' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.style!=='faces' || (p.faceNoText && p.faceEnds); }],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
@@ -5333,6 +5408,21 @@ var FIELDS = {
 var TEXTY = {box:1,social:1,recap:1,steps:1,reviews:1,avatars:1,loader:1,heading:1,text:1,badge:1,list:1,button:1,choice:1,input:1,testimonial:1,faq:1,trust:1,summary:1,checkbox:1,rating:1,calendar:1,countdown:1,slider:1,upload:1,signature:1};
 var STYLE_KEYS = ['ff','fw','scale','lh','ls','tt','it','color','bgc','pad','padT','padR','padB','padL','brad','bwid','bc','shd','anim','delay','vis','iAcc','iAccText','iSurf','iMut','iRad','iLine','iBw','iShd','iShdC','iShdB','iShdS','iShdX','iShdY','iGap','inBg','inStyle','starColor','oCheck','oIcon','liStyle','oIconC','liColor'];
 /* Innere Gestaltung: gilt für Antworten, Felder, Kacheln, Icons … innerhalb des Elements */
+/* Felder nur beim Szenenlayout in der normalen Antwortauswahl zeigen. */
+var sceneFields = [
+  ['sceneTitle','text','Überschrift auf dem Bild'],['sceneImage','image','Hintergrundbild'],
+  ['sceneSwap','toggle','Antwortbild als Hintergrund', 'Beim Auswählen wechselt das große Bild.'],
+  ['sceneTitleColor','color','Farbe der Überschrift'],['sceneShade','color','Verlaufsfarbe'],
+  ['sceneOpacity','range','Verlaufsstärke',[0,100,5,'%',55]],
+  ['sceneSheet','color','Hintergrund der Antwortkarte'],['sceneInk','color','Text auf der Karte'],
+  ['sceneAccent','color','Auswahlrahmen'],['sceneCols','seg','Kacheln im Slider',[[2,'2'],[3,'3'],[4,'4']]],
+  ['sceneHeight','range','Szenenhöhe',[45,100,5,' vh',85]],
+  ['sceneMotion','select','Animation der Karte',[['slide','Hochschieben'],['fade','Einblenden'],['none','Keine']]],
+  ['sceneCta','text','Text der Weiter-Schaltfläche']
+];
+FIELDS.choice.splice.apply(FIELDS.choice,[3,0].concat(sceneFields.map(function(field){
+  field[4]=function(p){return p.layout==='scene';};return field;
+})));
 var INNER_T = {choice:1, rating:1, slider:1, input:1, checkbox:1, calendar:1, upload:1, signature:1, list:1, faq:1, testimonial:1, recap:1, summary:1, steps:1, countdown:1, reviews:1, avatars:1, badge:1, trust:1, loader:1, compare:1};
 var SURF_T = {choice:1, rating:1, input:1, calendar:1, upload:1, signature:1, faq:1, testimonial:1, recap:1, summary:1, steps:1, countdown:1};
 var STYLE_INNER = [
@@ -5546,8 +5636,9 @@ function optionsEditor(p){
       + '<div class="row2"><div class="fld"><label>Einheit (Anzeige)</label><input class="inp" data-o="unitLabel" data-oi="'+i+'" value="'+esc(o.unitLabel||'')+'" placeholder="m²"></div><div class="fld"><label>Punkte (Quiz)</label><input class="inp" type="number" data-o="score" data-oi="'+i+'" data-num value="'+(o.score||'')+'" placeholder="0"></div></div>'
       + (openSet[o.id] ? '<div class="fld"><label>Icon</label><div class="icgrid">' + [''].concat(Object.keys(FP.ICONS)).map(function(nm){ return '<button class="icb'+((o.ic||'')===nm?' on':'')+'" data-a="optIc" data-i="'+i+'" data-v="'+nm+'" title="'+(nm||'Kein Icon')+'" aria-label="'+(nm||'Kein Icon')+'">'+(nm ? FP.ICONS[nm] : I('x',12))+'</button>'; }).join('') + '</div><div class="hint">Ersetzt das Emoji. Die Farbe kommt aus dem Theme.</div></div>' : '')
       + '<div class="fld"><label>Bei Auswahl springen zu</label><select class="inp" data-o="goto" data-oi="'+i+'">'+pageOptions(o.goto,'Keine Verzweigung')+'</select></div>'
-      + (p.layout==='image'&&o.img?'<div class="fld"><label>Bildausschnitt</label><select class="inp" data-o="pos" data-oi="'+i+'">'+[['','Mitte'],['top','Oben'],['bottom','Unten'],['left','Links'],['right','Rechts']].map(function(x){ return '<option value="'+x[0]+'"'+((o.pos||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></div>':'')
-      + (p.layout==='image'?'<div class="fld"><label>Bild</label><div class="upl"><div class="pv" style="'+(o.img?'background-image:url(&quot;'+esc(o.img)+'&quot;)':'')+'">'+(o.img?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-optimg="'+i+'"></label>'+libraryButton()+(o.img?'<button class="ibtn" data-a="optImgDel" data-i="'+i+'">'+I('trash')+'</button>':'')+'</div></div>':'')
+      + ((p.layout==='image'||p.layout==='scene')&&o.img?'<div class="fld"><label>Bildausschnitt</label><select class="inp" data-o="pos" data-oi="'+i+'">'+[['','Mitte'],['top','Oben'],['bottom','Unten'],['left','Links'],['right','Rechts']].map(function(x){ return '<option value="'+x[0]+'"'+((o.pos||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></div>':'')
+      + ((p.layout==='image'||p.layout==='scene')?'<div class="fld"><label>Bild</label><div class="upl"><div class="pv" style="'+(o.img?'background-image:url(&quot;'+esc(o.img)+'&quot;)':'')+'">'+(o.img?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-optimg="'+i+'"></label>'+libraryButton()+(o.img?'<button class="ibtn" data-a="optImgDel" data-i="'+i+'">'+I('trash')+'</button>':'')+'</div></div>':'')
+      + (p.layout==='scene' && p.sceneSwap ? '<div class="fld"><label>Großes Antwortbild (optional)</label><div class="upl">'+(o.sceneBackdrop?'<img class="sthumb" src="'+esc(o.sceneBackdrop)+'" alt="">':'')+'<label class="btn sm">Hochladen<input type="file" accept="image/*" data-backdrop data-optimg="'+i+'"></label>'+libraryButton()+(o.sceneBackdrop?'<button class="ibtn" data-a="optImgDel" data-backdrop data-i="'+i+'" title="Entfernen">'+I('trash')+'</button>':'')+'</div><div class="hint">Ohne eigenes Großbild erscheint das Kachelbild.</div></div>' : '')
       + '</div></div>';
   }).join('') + '<button class="btn sm" data-a="optAdd">'+I('plus',13)+'Antwort hinzufügen</button>';
 }
@@ -5790,6 +5881,7 @@ function insertBlocks(blocks, pageIdx, at){
 }
 function makeFromLib(id){
   var sec = T.SECTIONS.filter(function(s){ return s.id === id; })[0];
+  if(sec && id === 's-scene') return makeFromLib('scene-shapes');
   if(sec) return sec.make();
   var b = T.fromLib(id);
   if(b.props.hasOwnProperty('key') && !b.props.key && b.type !== 'input') b.props.key = autoKey(b);
@@ -5799,7 +5891,7 @@ function makeFromLib(id){
 }
 function autoKey(b){ return uniqueKey(b.type === 'choice' ? 'frage' : b.type === 'slider' ? 'wert' : b.type); }
 function uniqueKey(base){ var f = F(), keys = FP.allBlocks(f).map(function(b){ return b.props.key; }); if(keys.indexOf(base) < 0) return base; var i = 2; while(keys.indexOf(base+i) >= 0) i++; return base + i; }
-var SECTION_PAGE = {'s-loader':{name:'Laden', extra:{hideProgress:true, vcenter:true, allowBack:false}}, 's-thanks':{name:'Danke', extra:{allowBack:false, autoButton:false, confetti:true}}, 's-hero':{name:'Start'}, 's-contact':{name:'Kontakt'}, 's-book':{name:'Termin'}};
+var SECTION_PAGE = {'s-scene':{name:'Form auswählen'},'s-loader':{name:'Laden', extra:{hideProgress:true, vcenter:true, allowBack:false}}, 's-thanks':{name:'Danke', extra:{allowBack:false, autoButton:false, confetti:true}}, 's-hero':{name:'Start'}, 's-contact':{name:'Kontakt'}, 's-book':{name:'Termin'}};
 function addSectionPage(id){
   var f = F(), sp = SECTION_PAGE[id] || {name:'Neue Seite'}; snap(true);
   var p = T.P(sp.name, makeFromLib(id), Object.assign({}, sp.extra||{}));
@@ -7479,7 +7571,7 @@ var ACT = {
   optDel:function(el){ var b = selBlock(); if(b.props.options.length < 2) return toast('Mindestens eine Antwort erforderlich'); snap(true); b.props.options.splice(+el.getAttribute('data-i'),1); touch(); renderCanvas(true); renderRight(); },
   optMove:function(el){ var b = selBlock(), i = +el.getAttribute('data-i'), d = +el.getAttribute('data-d'), n = i + d; if(n < 0 || n >= b.props.options.length) return; snap(true); var o = b.props.options.splice(i,1)[0]; b.props.options.splice(n,0,o); touch(); renderCanvas(true); renderRight(); },
   optToggle:function(el){ S.openOpts = S.openOpts || {}; var id = el.getAttribute('data-oid'); S.openOpts[id] = !S.openOpts[id]; renderRight(); },
-  optImgDel:function(el){ var b = selBlock(); snap(true); b.props.options[+el.getAttribute('data-i')].img = ''; touch(); renderCanvas(true); renderRight(); },
+  optImgDel:function(el){ var b = selBlock(); snap(true); b.props.options[+el.getAttribute('data-i')][el.hasAttribute('data-backdrop')?'sceneBackdrop':'img'] = ''; touch(); renderCanvas(true); renderRight(); },
   srAdd:function(){ var pg = curPage(); snap(true); pg.scoreRoutes = (pg.scoreRoutes||[]).concat([{min:0, max:5, goto:''}]); touch(); renderRight(); renderLeft(); },
   srDel:function(el){ var pg = curPage(); snap(true); pg.scoreRoutes.splice(+el.getAttribute('data-i'),1); touch(); renderRight(); renderLeft(); },
   fstatus:function(el){ var f = F(); f.status = el.getAttribute('data-v'); touch(); renderEditor(); toast(f.status==='live'?'Funnel ist live':'Funnel ist Entwurf'); },
