@@ -11,7 +11,7 @@
 //   VERCEL_PROJECT_ID  – optional, ID des Vercel-Projekts der App
 //   VERCEL_TEAM_ID     – optional, falls das Projekt in einem Team liegt
 // Deploy: supabase functions deploy domain-manage
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',

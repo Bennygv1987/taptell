@@ -1,6 +1,6 @@
 # TapTell – Go-Live-Checkliste
 
-Stand: 21.11.2026 · Repo-Stand `c7e6e7b`
+Stand: 26.11.2026 · Repo-Stand `b0a6d29`
 
 Ziel: TapTell produktiv schalten und den **Feedback-Funnel Holz Gehlen** ohne Unterbrechung von Onepage nach TapTell umziehen.
 Legende: 👤 = machst du selbst (Accounts, Zahlungen, Secrets, DNS) · 🤖 = kann ich nach deiner Freigabe übernehmen.
@@ -19,15 +19,15 @@ TapTell ist eine **statische Web-App** (Dashboard `app.html`, Funnel-Laufzeit `f
 
 | # | Schritt | Wer |
 |---|---|---|
-| 1.1 | Vercel-Account, Projekt aus dem GitHub-Repo `Bennygv1987/taptell` importieren (Framework: „Other“, kein Build-Befehl, Ausgabe = Repo-Wurzel) | 👤 |
+| 1.1 | ✅ Erledigt: Vercel-Projekt aus `Bennygv1987/taptell`, läuft unter `taptell.vercel.app` (Routen, CORS und `.vercelignore` geprüft) | 👤 |
 | 1.2 | **Domain-Aufteilung festlegen:** `taptell.de` = Landingpage + kurze Funnel-Links (`taptell.de/gehlen`), `app.taptell.de` = Dashboard | 👤 entscheidet |
 | 1.3 | ✅ Erledigt: `/` zeigt auf `taptell.de` die Landingpage. Weil auf Vercel eine vorhandene Datei Vorrang vor Rewrites hat, wird das Dashboard als `app.html` deployt. `index.html` gibt es nur noch lokal (gitignored, in `.vercelignore`). Nach dem ersten Deploy auf einer Preview prüfen, dass die Host-Regeln greifen | 🤖 |
 | 1.4 | ✅ Erledigt: Reservierte Adressen (`RESERVED_SLUGS` in `src/app.js`, u. a. `app`, `api`, `login`, `embed`, `config`, `impressum`, `datenschutz`) lassen sich im Dashboard nicht vergeben. `build.py` überträgt dieselbe Liste in den Slug-Rewrite von `vercel.json`. Offen: dieselbe Sperre zusätzlich in der Datenbank (Check-Constraint), falls Funnels je per API angelegt werden | 🤖 |
-| 1.5 | `config.js` für Produktion füllen: `supabaseUrl: 'https://ounjoeqznxlnnvcvyaoj.supabase.co'`, `supabaseAnonKey` (öffentlicher anon/publishable key), `publicUrl: 'https://taptell.de'`. Den anon-Key darfst du mir geben, er ist öffentlich. **Nie den service_role-Key** | 👤 Key · 🤖 eintragen |
+| 1.5 | ✅ Erledigt: `config.js` mit Projekt-URL und Publishable key, taptell.vercel.app nutzt die echte Datenbank. Offen: `publicUrl: 'https://taptell.de'` erst beim DNS-Wechsel setzen (sonst zeigen Links und QR-Codes auf Onepage) | 🤖 beim Umzug |
 | 1.6 | ✅ Erledigt: `.vercelignore` schließt Quellen, Build-Skript, `design/`, `docs/`, `supabase/`, `.claude/` und die lokale `index.html` aus | 🤖 |
 | 1.7 | ✅ Erledigt: supabase-js fest auf `2.119.0` mit Integritäts-Hash (SRI), in `f.html` und im Dashboard. Zum Aktualisieren URL und Hash in `src/app.js` tauschen, `build.py` übernimmt sie für `f.html` | 🤖 |
 
-> ⚠️ **taptell.de zeigt heute auf Onepage.** Dort laufen Funnels mit gedruckten QR-Codes (bekannt: `/gehlen`, `/koelner-zoo`, `/gehlen-konfigurator-2`). Die DNS von taptell.de erst umstellen, wenn **jeder** Onepage-Slug in TapTell mit **identischem Slug** live ist (siehe Abschnitt 4). Bis dahin testet TapTell unter der Vercel-Adresse oder `app.taptell.de`.
+> ⚠️ **taptell.de zeigt heute auf Onepage.** Live sind dort `/gehlen`, `/gehlen-konfigurator` und `/gehlen-angebot` (Stand 26.11.). Den genauen Ablauf des Umzugs beschreibt [`docs/UMZUG.md`](UMZUG.md). Die DNS von taptell.de erst umstellen, wenn **jeder** Onepage-Slug in TapTell mit **identischem Slug** live ist (siehe Abschnitt 4). Bis dahin testet TapTell unter der Vercel-Adresse oder `app.taptell.de`.
 
 ---
 
@@ -36,14 +36,18 @@ TapTell ist eine **statische Web-App** (Dashboard `app.html`, Funnel-Laufzeit `f
 Die SQL-Dateien liegen bewusst **außerhalb** von `supabase/migrations/`, damit die GitHub-Integration nichts automatisch einspielt.
 
 ### 2.1 Datenbank (SQL-Editor, genau in dieser Reihenfolge, alle mehrfach ausführbar)
+
+✅ **Stand 26.11.: alle sieben Dateien sind eingespielt** (lesend geprüft: Spalten und Tabellen vorhanden, ohne Login keine Daten sichtbar, Registrierung aus).
+
 | # | Datei | Inhalt | Wer |
 |---|---|---|---|
 | 1 | `supabase/schema.sql` | Tabellen clients, profiles, funnels, leads, events, app_settings · RLS · `get_public_funnel`, `submit_lead`, `track_event`, `funnel_stats` | 👤 ausführen (oder 🤖 nach Freigabe per CLI) |
 | 2 | `supabase/automation.sql` | Empfängerlisten, Zustell-Protokoll, Domains, `resolve_domain`, **sichere** `get_public_funnel` (ohne Automations-Daten), Trigger „neuer Lead → lead-notify“ | 👤 / 🤖 |
 | 3 | `supabase/kunden-v2.sql` | Spalte `clients.data` (Stammdaten, Paket, Preis) | 👤 / 🤖 |
 | 4 | `supabase/versionen.sql` | Entwurf vs. Live-Stand (`funnels.published`) und Backups (`funnels.versions`); `get_public_funnel` liefert den Live-Stand. **Nach** `automation.sql` ausführen | 👤 / 🤖 |
-| 5 | `supabase/uebersichtsfarbe.sql` | Farbmarkierungen der Funnelübersicht speichern | 👤 / 🤖 |
-| 6 | `supabase/mediathek.sql` | Admin-Mediathek und Übernahme eingebetteter Uploads (nach `versionen.sql`) | 👤 / 🤖 |
+| 5 | `supabase/versionen-2.sql` | Backups als eigene Zeilen in `funnel_versions` statt einer großen Liste (behebt Timeouts). **Nach** `versionen.sql` | 👤 / 🤖 |
+| 6 | `supabase/uebersichtsfarbe.sql` | Farbmarkierungen der Funnelübersicht speichern | 👤 / 🤖 |
+| 7 | `supabase/mediathek.sql` | Admin-Mediathek und Übernahme eingebetteter Uploads (nach `versionen.sql`) | 👤 / 🤖 |
 
 `automation.sql` muss **nach** `schema.sql` laufen, weil sie `get_public_funnel` absichert. Sonst wären Empfänger und Webhook-Daten öffentlich lesbar.
 
@@ -64,6 +68,10 @@ Die SQL-Dateien liegen bewusst **außerhalb** von `supabase/migrations/`, damit 
 | `ai-funnel` | `supabase functions deploy ai-funnel` | Funnel per KI aus einer Beschreibung erstellen (nur Admins, Claude Opus 5.5) |
 
 Deploy erst nach deiner Freigabe 🤖. `supabase login` führst du selbst im Terminal aus 👤.
+
+⚠️ **Stand 26.11.: keine der vier Functions ist deployt** (alle antworten 404). Ohne `lead-notify` gibt es keine Benachrichtigungs-Mails und keinen Server-Webhook zu taptell.info, ohne `invite-user` keine Kunden-Logins. Supabase CLI und Deno sind auf dem Mac noch nicht installiert (`brew install supabase/tap/supabase`).
+
+Abhängigkeiten sind fest gepinnt (`@supabase/supabase-js@2.119.0`, `@anthropic-ai/sdk@1.8.0`), damit ein Deploy nicht ungeprüft eine neue Version zieht. `ai-funnel` nutzt Claude Opus 5.5 mit Structured Outputs (`output_config.format`), `effort: medium` und Server-Fallback bei Ablehnungen (`fallbacks: 'default'`); die Parameter entsprechen der aktuellen API.
 
 ### 2.4 Secrets (👤 selbst setzen, nie in den Chat)
 | Secret | Wo | Wert |
@@ -154,21 +162,37 @@ Die DNS von taptell.de auf Onepage zurückstellen (alte Werte vorher notieren!).
 
 | Punkt | Auswirkung | Lösung |
 |---|---|---|
-| `config.js` leer | App läuft im **Demo-Modus** (Daten nur im Browser) | Abschnitt 1.5 |
+| Edge Functions nicht deployt | keine Mails, kein Server-Webhook, keine Einladungen, keine KI-Erstellung | Abschnitt 2.3 |
 | Browser-Webhook `text/plain` | Empfänger nimmt es evtl. nicht an, Werbeblocker | Server-Webhook (4.1.5) |
 | `lead-notify` mit Editor-HTML, Onepage-Format und `values` **nicht deployed und nicht typgeprüft** (Deno fehlte lokal) | Fehler erst beim Deploy sichtbar | Beim Deploy `deno check` laufen lassen, Testmail und Test-Webhook senden |
 | Bilder als Data-URL | große Funnel-Datensätze | Storage-Bucket (2.5), nach dem Start |
 | Demo-Daten im Browser (localStorage) | Test-Kunden/Listen aus dem Demo-Modus werden nicht übernommen | im Echtbetrieb neu anlegen |
-| `supabase/kunden-v2.sql` nicht eingespielt | Kunden-Stammdaten könnten nicht gespeichert werden | Abschnitt 2.1 |
 
 ---
 
-## 7. Reihenfolge auf einen Blick
+## 7. Funktionstest vor dem Start (26.11., Demo-Modus)
+
+Getestet im Player mit einem eigenen Test-Funnel (Absenden lokal abgefangen, kein Webhook, keine echten Daten) und im Editor:
+
+| Funktion | Ergebnis |
+|---|---|
+| Box | ✅ umschließt die folgenden Elemente wie eingestellt |
+| Chips | ✅ Auswahl, Pflichtfeld-Meldung „Bitte wähle eine Option.“ |
+| Logik-Regel im Player | ✅ „Zaun“ springt zur Zaun-Seite, „Terrasse“ geht den normalen Weg, Zurück funktioniert |
+| Logik-Builder im Editor | ✅ Ablauf-Grafik, Regel anlegen (Feld · ist · Antwort · Zielseite) speichert korrekt, Löschen funktioniert, keine Konsolenfehler |
+| Termin-Kalender | ✅ Monatsansicht, Wochenenden gesperrt, Monatswechsel, Uhrzeiten nach Tageswahl, Pflichtfeld „Bitte wähle Tag und Uhrzeit.“, im Lead als „Di, 01.12.2026 · 10:30 Uhr“ |
+| Konfetti | ✅ einmal pro Danke-Seite nach erfolgreichem Absenden |
+
+Noch nicht getestet: derselbe Ablauf live über `f.html` mit der echten Datenbank (veröffentlichter Stand, `submit_lead`). Das geht erst mit einem veröffentlichten Test-Funnel und nach Freigabe, Test-Leads danach löschen.
+
+---
+
+## 8. Reihenfolge auf einen Blick
 
 1. 👤 Vercel, Resend und DNS-Zugang bereitstellen, anon-Key nennen
-2. 👤/🤖 SQL einspielen (schema → automation → kunden-v2), Admin-Rolle setzen
+2. ✅ SQL eingespielt (alle sieben Dateien), Admin-Login angelegt, Registrierung aus
 3. 👤 Secrets setzen · 🤖 Edge Functions deployen (nach Freigabe)
-4. 🤖 `config.js` eintragen (Landing auf `/`, Slug-Sperre, supabase-js gepinnt, `.vercelignore`: ✅ erledigt)
+4. ✅ `config.js`, Landing auf `/`, Slug-Sperre, supabase-js gepinnt, `.vercelignore`
 5. 🤖 Holz Gehlen + Funnel `gehlen` anlegen, Server-Webhook, Test-Leads (nach Freigabe)
 6. 👤 Feldzuordnung und Folgefragen in taptell.info korrigieren
 7. 👤 Rechtstexte, AVV, Kontaktadresse

@@ -3,8 +3,8 @@
 // Secret:  supabase secrets set ANTHROPIC_API_KEY=…   (selbst setzen, nie in den Chat oder ins Repo)
 //
 // Antwort: { spec } im Format von FS_T.fromSpec (src/templates.js). Das Dashboard baut daraus den Funnel.
-import Anthropic from 'npm:@anthropic-ai/sdk';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import Anthropic from 'npm:@anthropic-ai/sdk@1.8.0';
+import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',

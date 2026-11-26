@@ -1,6 +1,6 @@
 // Supabase Edge Function: Kundenlogins einladen / löschen (nur für Admins)
 // Deploy: supabase functions deploy invite-user
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',

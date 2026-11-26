@@ -12,7 +12,7 @@
 //   APP_URL               – z. B. https://app.taptell.de (für Bilder & Dashboard-Link)
 // Deploy: supabase functions deploy lead-notify --no-verify-jwt
 import { automationMessage, sampleLead, varsFor, renderText } from '../_shared/automation-mail.mjs';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
