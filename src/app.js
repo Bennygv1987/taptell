@@ -2972,7 +2972,13 @@ async function afterLogin(u){
   var pr = await sb.from('profiles').select('*').eq('id', u.id).maybeSingle();
   if(pr.error || !pr.data){ await sb.auth.signOut(); toast('Für dieses Konto ist kein Zugang eingerichtet.'); S.user = null; return render(); }
   S.user = {id:u.id, email:u.email, name:pr.data.name || '', role:pr.data.role, clientId:pr.data.client_id};
-  try{ await loadRemote(); }catch(e){ toast('Daten konnten nicht geladen werden: ' + (e.message || e)); }
+  /* Laden mit bis zu 3 neuen Versuchen. Scheitert es ganz, keine leere Oberfläche zeigen (dort würde man versehentlich arbeiten), sondern einen klaren Hinweis. */
+  var loadErr = null;
+  for(var attempt = 0; attempt < 4; attempt++){
+    try{ await loadRemote(); loadErr = null; break; }
+    catch(e){ loadErr = e; if(attempt === 3) break; $('#app').innerHTML = '<div class="login"><div style="color:var(--mut);text-align:center">Supabase antwortet gerade nicht zuverlässig.<br>Neuer Versuch '+(attempt + 1)+' von 3 …</div></div>'; await new Promise(function(r){ setTimeout(r, [1500, 4000, 8000][attempt]); }); }
+  }
+  if(loadErr){ $('#app').innerHTML = '<div class="login"><div class="lcard" style="text-align:center"><h2 style="margin:0 0 8px">Daten konnten nicht geladen werden</h2><p class="hint" style="margin:0 0 16px">Die Datenbank (Supabase) antwortet gerade nicht. Deine Daten sind sicher – bitte gleich noch einmal versuchen.<br><small>'+esc(String(loadErr.message || loadErr).slice(0, 160))+'</small></p><button class="btn pri" onclick="location.reload()">Erneut versuchen</button></div></div>'; return; }
   if(S.view === 'editor' && !getF(S.fid)) S.view = 'funnels';
   render();
 }
@@ -3115,7 +3121,7 @@ async function syncRemote(){
     setSaved(stage === 'Versionsbackup' ? 'backup' : false);
     var message = stage + ': ' + (e.message || e);
     /* Verbindungsabbruch („Failed to fetch“): automatisch erneut versuchen – nach 4, 12 und 30 Sekunden */
-    var net = e instanceof TypeError || /failed to fetch|load failed|networkerror|network request failed/i.test(String(e.message || e));
+    var net = e instanceof TypeError || /failed to fetch|load failed|networkerror|network request failed|abort/i.test(String(e.message || e));
     if(net && netTries < 3 && timeoutRetry === null){
       var wait = [4000, 12000, 30000][netTries++], owner0 = S.user, db0 = db;
       if(netTries === 1) toast('Verbindung unterbrochen – Speichern wird gleich erneut versucht');
@@ -3137,7 +3143,14 @@ async function syncRemote(){
 async function bootRemote(){
   $('#app').innerHTML = '<div class="login"><div style="color:var(--mut)">Lädt …</div></div>';
   try{ await loadScript(SUPABASE_JS, SUPABASE_JS_SRI); }catch(e){ $('#app').innerHTML = '<div class="login"><div class="lcard">Supabase konnte nicht geladen werden.</div></div>'; return; }
-  sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+  /* Jede Anfrage bekommt ein Zeitlimit: hängt Supabase, bricht sie ab und wird erneut versucht, statt ewig zu warten */
+  var timedFetch = function(url, opts){
+    opts = opts || {}; var m = String(opts.method || 'GET').toUpperCase(), ms = m === 'GET' || m === 'HEAD' ? 20000 : 60000;
+    if(opts.signal || typeof AbortController === 'undefined') return fetch(url, opts);
+    var ac = new AbortController(), t = setTimeout(function(){ ac.abort(); }, ms);
+    return fetch(url, Object.assign({}, opts, {signal:ac.signal})).finally(function(){ clearTimeout(t); });
+  };
+  sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey, {global:{fetch:timedFetch}});
   var invite = /type=(invite|recovery|signup)/.test(location.hash + location.search);
   sb.auth.onAuthStateChange(function(ev){ if(ev === 'PASSWORD_RECOVERY'){ S.needPw = true; render(); } });
   var r = await sb.auth.getSession(), session = r.data && r.data.session;
