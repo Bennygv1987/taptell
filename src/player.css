@@ -39,23 +39,23 @@
 .fp-page>.fp-b,.fp-page>.fp-empty-drop,.fp-page>.fp-sticky{width:100%}
 .fp-page>.fp-b.half{width:calc(50% - 6px)}
 .fp-page.v-center{align-content:center}
-.fp-anim-slide{animation:fpSlide 320ms var(--ease-out)}
+.fp-anim-slide{animation:fpSlide var(--pgd,320ms) var(--ease-out)}
 .fp-anim-slide.back{animation-name:fpSlideB}
-.fp-anim-fade{animation:fpFade 260ms ease}
-.fp-anim-up{animation:fpUp 340ms var(--ease-out)}
-.fp-anim-zoom{animation:fpZoom 300ms var(--ease-out)}
+.fp-anim-fade{animation:fpFade var(--pgd,260ms) ease}
+.fp-anim-up{animation:fpUp var(--pgd,340ms) var(--ease-out)}
+.fp-anim-zoom{animation:fpZoom var(--pgd,300ms) var(--ease-out)}
 @keyframes fpSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
 @keyframes fpSlideB{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
 @keyframes fpFade{from{opacity:0}to{opacity:1}}
 @keyframes fpUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes fpZoom{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
 /* Weitere Seitenübergänge: Blur, Federnd, Wischen, Kippen, Gestaffelt */
-.fp-anim-blur{animation:fpBlur 380ms var(--ease-out)}
-.fp-anim-spring{animation:fpSpring 520ms var(--ease-out);animation-timing-function:linear(0,.22 8%,.6 18%,.94 30%,1.035 40%,1.045 46%,1.02 58%,.997 72%,1)}
+.fp-anim-blur{animation:fpBlur var(--pgd,380ms) var(--ease-out)}
+.fp-anim-spring{animation:fpSpring var(--pgd,520ms) var(--ease-out);animation-timing-function:linear(0,.22 8%,.6 18%,.94 30%,1.035 40%,1.045 46%,1.02 58%,.997 72%,1)}
 .fp-anim-spring.back{animation-name:fpSpringB}
-.fp-anim-wipe{animation:fpWipe 440ms var(--ease-in-out)}
-.fp-anim-tilt{animation:fpTilt 420ms var(--ease-out);transform-origin:50% 0}
-.fp-anim-stagger>*{animation:fpStag 380ms var(--ease-out) both}
+.fp-anim-wipe{animation:fpWipe var(--pgd,440ms) var(--ease-in-out)}
+.fp-anim-tilt{animation:fpTilt var(--pgd,420ms) var(--ease-out);transform-origin:50% 0}
+.fp-anim-stagger>*{animation:fpStag var(--pgd,380ms) var(--ease-out) both}
 .fp-anim-stagger>*:nth-child(2){animation-delay:45ms}.fp-anim-stagger>*:nth-child(3){animation-delay:90ms}.fp-anim-stagger>*:nth-child(4){animation-delay:130ms}
 .fp-anim-stagger>*:nth-child(5){animation-delay:165ms}.fp-anim-stagger>*:nth-child(6){animation-delay:195ms}.fp-anim-stagger>*:nth-child(n+7){animation-delay:220ms}
 @keyframes fpBlur{from{opacity:0;filter:blur(8px);transform:scale(1.015)}to{opacity:1;filter:none;transform:none}}
@@ -972,3 +972,43 @@ svg.dt .o{opacity:.35}
 .fp-cover.cc3 .cvl b{font-size:var(--cvs,13.5px)}.fp-cover.cc3 .cvl span{display:none}
 .fp.is-edit .fp-cv .cvi{transition:none}
 @media (prefers-reduced-motion:reduce){.fp-cv .cvi{transition:none}}
+
+/* ===== Animierte Icons im Text ({anim:name}) ===== */
+.fp-ai{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;color:var(--p);line-height:0;margin:0 .04em}
+.fp-ai svg{width:100%;height:100%;overflow:visible;display:block}
+.fp-ai svg *{transform-box:view-box}
+.fp-ail{width:1.3em;height:1.3em;vertical-align:-.28em}
+@media (prefers-reduced-motion:no-preference){
+  .ai-check .ai-draw{stroke-dasharray:20;animation:aiDraw 2.6s cubic-bezier(.23,1,.32,1) infinite}
+  .ai-herz svg{animation:aiBeat 1.5s ease-in-out infinite;transform-origin:50% 55%}
+  .ai-stern svg{animation:aiTwinkle 2.4s ease-in-out infinite}
+  .ai-funkeln .ai-s1,.ai-funkeln .ai-s2{transform-box:fill-box;transform-origin:center;animation:aiSpark 1.8s ease-in-out infinite}
+  .ai-funkeln .ai-s2{animation-delay:-.9s}
+  .ai-glocke .ai-bell{transform-origin:12px 3px;animation:aiRing 2.6s ease-in-out infinite}
+  .ai-pfeil .ai-arr{animation:aiNudge 1.4s cubic-bezier(.77,0,.175,1) infinite}
+  .ai-daumen .ai-thumb{transform-origin:6px 20px;animation:aiThumb 2.2s ease-in-out infinite}
+  .ai-feuer .ai-flame{transform-origin:12px 22px;animation:aiFlicker 1.1s ease-in-out infinite alternate}
+  .ai-uhr .ai-hand{transform-origin:12px 12px;animation:aiSpin 3s linear infinite}
+  .ai-geschenk .ai-gift{transform-origin:12px 21px;animation:aiShake 2.6s ease-in-out infinite}
+  .ai-blitz .ai-bolt{animation:aiFlash 1.8s ease-in-out infinite}
+  .ai-rakete .ai-rocket{animation:aiFloat 1.8s ease-in-out infinite}
+  .ai-punkt .ai-ring{transform-origin:12px 12px;animation:aiPulse 1.6s cubic-bezier(.23,1,.32,1) infinite}
+}
+@keyframes aiDraw{0%{stroke-dashoffset:20;opacity:1}40%,82%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+@keyframes aiBeat{0%,45%,100%{transform:scale(1)}15%{transform:scale(1.18)}30%{transform:scale(1.04)}}
+@keyframes aiTwinkle{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.14) rotate(16deg)}}
+@keyframes aiSpark{0%,100%{transform:scale(.62);opacity:.55}50%{transform:scale(1);opacity:1}}
+@keyframes aiRing{0%,55%,100%{transform:rotate(0)}10%{transform:rotate(14deg)}20%{transform:rotate(-12deg)}30%{transform:rotate(8deg)}40%{transform:rotate(-4deg)}}
+@keyframes aiNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+@keyframes aiThumb{0%,60%,100%{transform:rotate(0)}18%{transform:rotate(-14deg)}34%{transform:rotate(5deg)}}
+@keyframes aiFlicker{0%{transform:scale(1,1)}50%{transform:scale(.95,1.06)}100%{transform:scale(1.04,.96)}}
+@keyframes aiSpin{to{transform:rotate(360deg)}}
+@keyframes aiShake{0%,68%,100%{transform:rotate(0)}74%{transform:rotate(-9deg)}80%{transform:rotate(8deg)}86%{transform:rotate(-5deg)}92%{transform:rotate(3deg)}}
+@keyframes aiFlash{0%,100%{opacity:1}45%{opacity:.35}55%{opacity:1}}
+@keyframes aiFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(1.5px,-2px)}}
+@keyframes aiPulse{0%{transform:scale(.55);opacity:.7}100%{transform:scale(1.5);opacity:0}}
+
+/* ===== Block „Animation“ (Lottie) ===== */
+.fp-lot{display:inline-block;max-width:100%;vertical-align:top}
+.fp-lot svg{display:block}
+.fp-lot.empty{display:inline-grid;place-items:center;border:1.5px dashed color-mix(in srgb,var(--tx) 22%,transparent);border-radius:var(--r);color:var(--mt);font-size:12px;line-height:1.4;text-align:center;padding:8px}

@@ -16,6 +16,7 @@ var IP = {
   more:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
   edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
   eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff:'<path d="M10.6 5.1A10.8 10.8 0 0112 5c6.5 0 10 7 10 7a17.6 17.6 0 01-2.6 3.6M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.4"/><path d="M9.9 9.9a3 3 0 004.2 4.2M3 3l18 18"/>',
   copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/>',
   trash:'<path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>',
   down:'<path d="M12 4v12M6 10l6 6 6-6"/><path d="M4 20h16"/>', up:'<path d="M12 20V8M6 14l6-6 6 6"/><path d="M4 4h16"/>',
@@ -655,9 +656,10 @@ function viewAnalytics(){
   if(S.afid !== 'all' && (!S.afid || VF.map(function(x){ return x.id; }).indexOf(S.afid) < 0)) S.afid = multi ? 'all' : (VF[0] || {}).id;
   var f = S.afid === 'all' ? null : getF(S.afid);
   var who = isAdmin() && scopeId() ? scopeLabel() : '';
-  var h = '<div class="page"><div class="ph"><div><h1>Analytics'+(who?' <span style="color:var(--mut);font-weight:500">· '+esc(who)+'</span>':'')+'</h1><p>'+(S.afid==='all' ? 'Alle Funnels'+(who?' von '+esc(who):'')+' zusammen – und im Vergleich.' : 'Performance, Drop-off und Antwortverteilung pro Funnel.')+'</p></div><div class="sp"></div><select class="inp" style="width:240px;height:36px" id="afun">'+(multi?'<option value="all"'+(S.afid==='all'?' selected':'')+'>Alle Funnels ('+VF.length+')</option>':'')+VF.map(function(x){ return '<option value="'+x.id+'"'+(x.id===S.afid?' selected':'')+'>'+esc(x.name)+'</option>'; }).join('')+'</select></div>';
+  var h = '<div class="page"><div class="ph"><div><h1>Analytics'+(who?' <span style="color:var(--mut);font-weight:500">· '+esc(who)+'</span>':'')+'</h1><p>'+(S.afid==='all' ? 'Alle Funnels'+(who?' von '+esc(who):'')+' zusammen – und im Vergleich.' : 'Performance, Drop-off und Antwortverteilung pro Funnel.')+'</p></div><div class="sp"></div><select class="inp" style="width:240px;height:36px" id="afun">'+(multi?'<option value="all"'+(S.afid==='all'?' selected':'')+'>Alle Funnels ('+VF.length+')</option>':'')+VF.map(function(x){ return '<option value="'+x.id+'"'+(x.id===S.afid?' selected':'')+'>'+esc(x.name)+'</option>'; }).join('')+'</select><button class="btn sm noprint" data-a="printReport" title="Als PDF speichern oder ausdrucken – z. B. für das Gespräch mit dem Kunden">'+I('down',13)+'Bericht</button></div>';
   if(!VF.length) return h + '<div class="empty">Noch keine Funnels vorhanden.</div></div>';
   if(S.afid === 'all') return analyticsAll(VF, h);
+  loadInsights(f);
   var ls = leadsOf(f.id), st = f.stats;
   var avg = ls.length ? ls.reduce(function(a,l){ return a + (l.total||0); }, 0) / ls.length : 0;
   if(f.demo) h += '<div style="margin:-8px 0 16px"><span class="demo-note">'+I('info',13)+'Dieser Funnel enthält Demo-Daten zur Veranschaulichung.</span></div>';
@@ -672,6 +674,7 @@ function viewAnalytics(){
   if(!first) h += '<p style="color:var(--mut);margin:0">Noch keine Daten. Öffne die Vorschau, um Testdaten zu erzeugen.</p>';
   else f.pages.forEach(function(p, ix){ var c = st.pages[p.id] || 0, pc = first ? Math.round(c/first*100) : 0; h += '<div class="br"><span class="lb">'+(ix+1)+'. '+esc(p.name)+'</span><div class="tr"><i style="width:'+pc+'%"></i>'+(pc>12?'<span>'+pc+' %</span>':'')+'</div><span class="vv"><b>'+fmtNum(c)+'</b></span></div>'; });
   h += '</div></div></div>';
+  h += insightsHtml(f);
   // answer distribution
   var chs = FP.allBlocks(f).filter(function(b){ return b.type === 'choice'; });
   if(chs.length){
@@ -684,6 +687,61 @@ function viewAnalytics(){
     h += '</div></div>';
   }
   return h + '</div>';
+}
+
+/* ---------- Auswertung: Absprünge, Klicks, Geräte, Quellen, Tageszeit ---------- */
+/* Echte Daten kommen aus funnel_insights (supabase/tracking.sql); ohne sie wird aus den Seitenaufrufen geschätzt. */
+function loadInsights(f){
+  if(!REMOTE || !sb || f.demo) return;
+  if(f._ins && (f._ins.loading || Date.now() - f._ins.at < 60000)) return;
+  f._ins = {loading:true, at:Date.now()};
+  sb.rpc('funnel_insights', {p_funnel:f.id, p_days:90}).then(function(r){
+    f._ins = r.error ? {missing:true, at:Date.now()} : {data:r.data || {}, at:Date.now()};
+    if(S.view === 'analytics' && S.afid === f.id) render();
+  });
+}
+function insightsOf(f){
+  var st = f.stats || {}, real = f._ins && f._ins.data && f._ins.data.sessions > 0 ? f._ins.data : null;
+  var vis = f.pages.filter(function(p){ return !p.hidden; }), reach = {}, exits = {};
+  if(real){ reach = real.reach || {}; exits = real.exits || {}; }
+  else {
+    vis.forEach(function(p){ reach[p.id] = (st.pages || {})[p.id] || 0; });
+    vis.forEach(function(p, i){ var nx = vis[i + 1]; exits[p.id] = Math.max(0, reach[p.id] - (nx ? reach[nx.id] : (st.completes || 0))); });
+  }
+  var clicks = real ? (real.clicks || []) : Object.keys(st.clicks || {}).map(function(k){ var ix = k.indexOf('\u0001'); return {page:k.slice(0, ix), meta:k.slice(ix + 1), n:st.clicks[k]}; }).sort(function(a, b){ return b.n - a.n; });
+  return {real:!!real, sessions:real ? real.sessions : 0, pages:vis, reach:reach, exits:exits, secs:(real && real.secs) || {}, clicks:clicks, devices:(real && real.devices) || {}, sources:(real && real.sources) || {}, hours:(real && real.hours) || {}};
+}
+function fmtSecs(s){ s = Math.round(+s || 0); return s < 60 ? s + ' s' : Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' min'; }
+function insightsHtml(f){
+  var ins = insightsOf(f), st = f.stats || {}, views = st.views || 0, h = '';
+  if(f._ins && f._ins.missing) h += '<div class="callout" style="margin-bottom:16px">'+I('info')+'<div>Für Klicks, Absprünge pro Besuch, Verweildauer, Geräte und Quellen einmal <b>supabase/tracking.sql</b> in Supabase ausführen. Bis dahin sind die Absprünge aus den Seitenaufrufen geschätzt.</div></div>';
+  /* Absprünge pro Seite */
+  var maxEx = 0, maxId = null; ins.pages.forEach(function(p){ var e = ins.exits[p.id] || 0; if(e > maxEx){ maxEx = e; maxId = p.id; } });
+  h += '<div class="card ins"><div class="ch"><h3>Wo Besucher abspringen</h3><p>'+(ins.real ? 'Gemessen pro Besuch · '+fmtNum(ins.sessions)+' Besuche in 90 Tagen' : 'Geschätzt aus Seitenaufrufen')+'</p></div><div class="cb" style="padding:0">'
+    + '<table class="t ex"><thead><tr><th>Seite</th><th class="r">Erreicht</th><th class="r">Abgesprungen</th><th>Absprungquote</th><th class="r">Ø Zeit</th></tr></thead><tbody>'
+    + (ins.pages.map(function(p, i){
+        var r = ins.reach[p.id] || 0, e = ins.exits[p.id] || 0, q = r ? Math.round(e / r * 100) : 0, sc = ins.secs[p.id];
+        return '<tr><td><span class="nm">'+(i + 1)+'. '+esc(p.name)+'</span>'+(p.id === maxId && maxEx ? ' <span class="xtag">Größter Verlust</span>' : '')+'</td><td class="r">'+fmtNum(r)+'</td><td class="r">'+fmtNum(e)+'</td><td><div class="xq"><i style="width:'+q+'%"></i></div><span class="xqv">'+q+' %</span></td><td class="r">'+(sc != null ? fmtSecs(sc) : '–')+'</td></tr>';
+      }).join('') || '<tr><td colspan="5" class="sub">Noch keine Daten.</td></tr>')
+    + '</tbody></table></div></div>';
+  /* Klicks */
+  var host = function(u){ try{ return /^https?:/.test(u) ? new URL(u).hostname.replace(/^www\./, '') : u; }catch(e){ return u; } };
+  var pname = function(id){ var p = f.pages.filter(function(x){ return x.id === id; })[0]; return p ? p.name : ''; };
+  var rows = ins.clicks.map(function(c){ var m = {}; try{ m = JSON.parse(c.meta || '{}'); }catch(e){} return {l:m.l || host(m.u || '') || 'Link', u:m.u || '', page:pname(c.page), n:c.n}; });
+  h += '<div class="card ins"><div class="ch"><h3>Klicks auf Links & Buttons</h3><p>Buttons mit Link, WhatsApp, Text-Links, Social-Icons</p></div><div class="cb" style="padding:0">'
+    + (rows.length ? '<table class="t ex"><thead><tr><th>Link</th><th>Ziel</th><th>Seite</th><th class="r">Klicks</th><th class="r">pro Aufruf</th></tr></thead><tbody>' + rows.map(function(c){ return '<tr><td class="nm">'+esc(c.l)+'</td><td class="sub">'+esc(host(c.u))+'</td><td class="sub">'+esc(c.page)+'</td><td class="r">'+fmtNum(c.n)+'</td><td class="r">'+(views ? (c.n / views * 100).toFixed(1).replace('.', ',') + ' %' : '–')+'</td></tr>'; }).join('') + '</tbody></table>'
+      : '<p class="sub" style="margin:0;padding:18px">Noch keine Klicks gezählt. Gezählt wird im Live-Funnel'+(REMOTE ? ' (nach supabase/tracking.sql)' : ' und in der Vorschau')+'.</p>')
+    + '</div></div>';
+  /* Geräte, Quellen, Tageszeit */
+  var list = function(obj){ var ks = Object.keys(obj).sort(function(a, b){ return obj[b] - obj[a]; }), tot = ks.reduce(function(a, k){ return a + obj[k]; }, 0); return ks.slice(0, 6).map(function(k){ var pc = tot ? Math.round(obj[k] / tot * 100) : 0; return '<div class="mrow"><span>'+esc(k)+'</span><div class="mbar"><i style="width:'+pc+'%"></i></div><b>'+pc+' %</b></div>'; }).join(''); };
+  if(Object.keys(ins.devices).length || Object.keys(ins.sources).length || Object.keys(ins.hours).length){
+    var hmax = 0; for(var hh = 0; hh < 24; hh++) hmax = Math.max(hmax, +ins.hours[hh] || 0);
+    var hrs = ''; for(var hk = 0; hk < 24; hk++){ var hv = +ins.hours[hk] || 0; hrs += '<i title="'+hk+' Uhr: '+hv+' Aufrufe" style="height:'+(hmax ? Math.max(3, Math.round(hv / hmax * 100)) : 3)+'%"></i>'; }
+    h += '<div class="insg"><div class="card"><div class="ch"><h3>Geräte</h3></div><div class="cb">'+(list(ins.devices) || '<p class="sub" style="margin:0">–</p>')+'</div></div>'
+      + '<div class="card"><div class="ch"><h3>Quellen</h3><p>utm_source, Anzeige oder Website</p></div><div class="cb">'+(list(ins.sources) || '<p class="sub" style="margin:0">–</p>')+'</div></div>'
+      + '<div class="card"><div class="ch"><h3>Tageszeit</h3><p>Aufrufe pro Stunde</p></div><div class="cb"><div class="hrs">'+hrs+'</div><div class="hrl"><span>0</span><span>6</span><span>12</span><span>18</span><span>23 Uhr</span></div></div></div></div>';
+  }
+  return h;
 }
 
 /* ---------- views: settings ---------- */
@@ -742,11 +800,12 @@ function fontSelect(scope, k, v, allowEmpty){
   var opt = function(n){ return '<option value="'+esc(n)+'"'+(n===v?' selected':'')+' style="font-family:'+esc(FP.fontStack(n))+'">'+esc(n)+'</option>'; };
   var h = allowEmpty ? '<option value=""'+(!v?' selected':'')+'>Wie im Theme</option>' : '';
   Object.keys(groups).forEach(function(g){ h += '<optgroup label="'+groups[g]+'">' + FP.FONTS.filter(function(n){ return FP.FONT_META[n][0] === g; }).map(opt).join('') + '</optgroup>'; });
-  var ex = F_.google || [], up = (F_.uploaded || []).map(function(x){ return x.name; });
+  var ex = F_.google || [], up = (F_.uploaded || []).filter(function(x){ return !x.css; }).map(function(x){ return x.name; }).filter(function(n, i, a){ return a.indexOf(n) === i && !FP.FONT_ALIAS[n]; });
+  h += '<optgroup label="Lizenz-Schriften (Upload oder Adobe Fonts)">' + Object.keys(FP.FONT_ALIAS).map(opt).join('') + '</optgroup>';
   if(ex.length) h += '<optgroup label="Weitere Google Fonts">' + ex.map(opt).join('') + '</optgroup>';
   if(up.length) h += '<optgroup label="Eigene Schriften">' + up.map(opt).join('') + '</optgroup>';
   h += '<optgroup label="System">' + opt('System') + '</optgroup>';
-  if(v && FP.FONTS.indexOf(v) < 0 && ex.indexOf(v) < 0 && up.indexOf(v) < 0 && v !== 'System') h += opt(v);
+  if(v && FP.FONTS.indexOf(v) < 0 && ex.indexOf(v) < 0 && up.indexOf(v) < 0 && v !== 'System' && !FP.FONT_ALIAS[v]) h += opt(v);
   return '<select class="inp fontsel" data-'+scope+'="'+k+'" style="font-family:'+esc(FP.fontStack(v||'Inter'))+'">'+h+'</select>';
 }
 function toHex(v){ v = String(v||''); if(/^#[0-9a-f]{6}$/i.test(v)) return v; if(/^#[0-9a-f]{3}$/i.test(v)) return '#'+v[1]+v[1]+v[2]+v[2]+v[3]+v[3]; var m = v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if(m) return '#'+[m[1],m[2],m[3]].map(function(x){ return (+x).toString(16).padStart(2,'0'); }).join(''); return '#000000'; }
@@ -762,6 +821,7 @@ var FIELDS = {
     ['edgeTop','select','Oben',FP.EDGE_LIST],['edgeTopH','range','Höhe oben',[8,160,2,'px',40],function(p){ return !!p.edgeTop; }],['edgeTopFlip','toggle','Oben spiegeln',null,function(p){ return !!p.edgeTop && /slant|brush|torn|wave/.test(p.edgeTop); }],
     ['edgeBot','select','Unten',FP.EDGE_LIST],['edgeBotH','range','Höhe unten',[8,160,2,'px',40],function(p){ return !!p.edgeBot; }],['edgeBotFlip','toggle','Unten spiegeln',null,function(p){ return !!p.edgeBot && /slant|brush|torn|wave/.test(p.edgeBot); }],
     ['_eh','note','Am schönsten mit „Volle Breite ohne Seitenrand“ und Ecken auf 0. Der Hintergrund der Seite scheint durch.']],
+  lottie:[['json','lottie','Lottie-Datei (.json)'],['src','text','Oder Link zur .json-Datei','z. B. von LottieFiles: bei der Animation „Lottie JSON“ wählen und den Link kopieren. .lottie-Dateien bitte als JSON herunterladen.',function(p){ return !p.json; }],['size','range','Größe',[24,480,4,'px',160]],['speed','range','Tempo',[0.25,3,0.25,'×',1]],['loop','toggle','Endlos wiederholen'],['alt','text','Beschreibung für Screenreader (optional)']],
   video:[['url','text','YouTube- oder Vimeo-Link','Wird im veröffentlichten Funnel eingebettet.'],['bleed','toggle','Volle Breite ohne Seitenrand'],['radius','range','Ecken',[0,40,1]]],
   list:[['items','strings','Punkte'],['icon','select','Symbol',[['check','Haken'],['number','Zahlen'],['star','Stern'],['heart','Herz'],['shield','Schild'],['bolt','Blitz'],['leaf','Blatt'],['clock','Uhr'],['euro','Euro'],['sparkle','Funkeln'],['thumb','Daumen']]]],
   testimonial:[['quote','textarea','Zitat'],['name','text','Name'],['role','text','Untertitel'],['stars','range','Sterne',[0,5,1]],['img','image','Foto']],
@@ -839,8 +899,8 @@ var STYLE_EXTRA = {
 var STYLE_TYPO = [['ff','font','Schrift'],['fw','seg','Stärke',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']]],['scale','range','Größe',[60,180,5,'%']],['row2','row',[['lh','num','Zeilenhöhe'],['ls','num','Laufweite']]],['tt','seg','Schreibweise',[['','Normal'],['uppercase','GROSS'],['lowercase','klein']]],['it','toggle','Kursiv'],['color','color','Textfarbe']];
 var STYLE_BOX = [['bgc','color','Hintergrund'],['pad','pad4','Innenabstand',{keys:['padT','padR','padB','padL'], ph:function(p){ var v = +p.pad || 0; return [v,v,v,v]; }}],['brad','range','Ecken',[0,40,1]],['row2','row',[['bwid','num','Rahmen (px)'],['bc','color','Rahmenfarbe']]],['shd','seg','Schatten',[['','Kein'],['sm','S'],['md','M'],['lg','L']]]];
 var STYLE_FX = [['anim','select','Einblenden',[['none','Keine'],['fade','Einblenden'],['up','Von unten'],['left','Von rechts'],['zoom','Zoom']]],['delay','range','Verzögerung',[0,1500,50,'ms']],['vis','seg','Sichtbar auf',[['all','Allen'],['mobile','Mobil'],['desktop','Desktop']]]];
-var BNAME = {box:'Box',social:'Social Media',arrow:'Hinweis-Pfeil',loader:'Lade-Animation',recap:'Auswahl-Karte',steps:'Zeitleiste',reviews:'Bewertungs-Abzeichen',avatars:'Kundenstapel',logos:'Logo-Leiste',heading:'Überschrift',text:'Text',badge:'Badge',image:'Bild',compare:'Vorher/Nachher',video:'Video',list:'Liste',testimonial:'Bewertung',trust:'Trust-Badges',faq:'FAQ',countdown:'Countdown',choice:'Auswahl',input:'Eingabefeld',slider:'Schieberegler',rating:'Bewertung',calendar:'Terminwahl',upload:'Datei-Upload',signature:'Unterschrift',checkbox:'Einwilligung',button:'Button',summary:'Preisübersicht',spacer:'Abstand',divider:'Trennlinie',html:'HTML'};
-var BICON = {box:'boxi',social:'share2',arrow:'arrowHint',loader:'refresh',recap:'receipt',steps:'list',reviews:'star',avatars:'users',logos:'layers',heading:'heading',text:'type',badge:'badge',image:'image',compare:'compare',video:'video',list:'list',testimonial:'quote',trust:'shield',faq:'help',countdown:'clock',choice:'choice',input:'cursor',slider:'sliders',rating:'star',calendar:'calendar',upload:'upload',signature:'pen',checkbox:'checkbox',button:'pointer',summary:'receipt',spacer:'space',divider:'minus',html:'code'};
+var BNAME = {lottie:'Animation',box:'Box',social:'Social Media',arrow:'Hinweis-Pfeil',loader:'Lade-Animation',recap:'Auswahl-Karte',steps:'Zeitleiste',reviews:'Bewertungs-Abzeichen',avatars:'Kundenstapel',logos:'Logo-Leiste',heading:'Überschrift',text:'Text',badge:'Badge',image:'Bild',compare:'Vorher/Nachher',video:'Video',list:'Liste',testimonial:'Bewertung',trust:'Trust-Badges',faq:'FAQ',countdown:'Countdown',choice:'Auswahl',input:'Eingabefeld',slider:'Schieberegler',rating:'Bewertung',calendar:'Terminwahl',upload:'Datei-Upload',signature:'Unterschrift',checkbox:'Einwilligung',button:'Button',summary:'Preisübersicht',spacer:'Abstand',divider:'Trennlinie',html:'HTML'};
+var BICON = {lottie:'sparkles',box:'boxi',social:'share2',arrow:'arrowHint',loader:'refresh',recap:'receipt',steps:'list',reviews:'star',avatars:'users',logos:'layers',heading:'heading',text:'type',badge:'badge',image:'image',compare:'compare',video:'video',list:'list',testimonial:'quote',trust:'shield',faq:'help',countdown:'clock',choice:'choice',input:'cursor',slider:'sliders',rating:'star',calendar:'calendar',upload:'upload',signature:'pen',checkbox:'checkbox',button:'pointer',summary:'receipt',spacer:'space',divider:'minus',html:'code'};
 
 /* Vorschau-Geräte: echte Bildschirmbreiten in CSS-Pixeln, damit die Vorschau dem Handy entspricht */
 var DEVICES = [
@@ -854,6 +914,24 @@ var DEVICES = [
 ];
 function curDevice(){ var k = ''; try{ k = localStorage.getItem('tt-phone') || ''; }catch(e){} return DEVICES.filter(function(d){ return d.k === k; })[0] || DEVICES[0]; }
 function phoneAttrs(desk){ if(desk) return 'class="phone desk"'; var d = curDevice(); return 'class="phone n-'+d.notch+'" style="width:'+(d.w+22)+'px;height:'+(d.h+22)+'px;--sbh:'+d.sb+'px"'; }
+/* Seitenleisten im Editor: Breite per Ziehen am Rand, pro Browser gespeichert */
+var PANE = {l:[220, 480], r:[280, 560]};
+function paneW(side){ try{ var v = +localStorage.getItem('tt-pw-' + side); return v ? Math.min(PANE[side][1], Math.max(PANE[side][0], v)) : 0; }catch(e){ return 0; } }
+function paneStyle(){ var l = paneW('l'), r = paneW('r'); return (l ? '--lpw:' + l + 'px;' : '') + (r ? '--rpw:' + r + 'px;' : ''); }
+document.addEventListener('pointerdown', function(e){
+  var hd = e.target.closest && e.target.closest('[data-rsz]'); if(!hd || e.button !== 0) return;
+  var side = hd.getAttribute('data-rsz'), body = hd.parentNode, box = body.getBoundingClientRect(), w = 0;
+  e.preventDefault(); hd.setPointerCapture(e.pointerId); body.classList.add('resizing'); hd.classList.add('on');
+  /* die Mitte behält mindestens 440 px, damit das Handy nicht angeschnitten wird */
+  var other = (body.querySelector(side === 'l' ? '.rp' : '.lp') || {getBoundingClientRect:function(){ return {width:0}; }}).getBoundingClientRect().width, maxW = Math.max(PANE[side][0], Math.min(PANE[side][1], box.width - other - 440));
+  var move = function(ev){ w = Math.round(side === 'l' ? ev.clientX - box.left : box.right - ev.clientX); w = Math.min(maxW, Math.max(PANE[side][0], w)); body.style.setProperty(side === 'l' ? '--lpw' : '--rpw', w + 'px'); };
+  var up = function(){ hd.removeEventListener('pointermove', move); hd.removeEventListener('pointerup', up); hd.removeEventListener('pointercancel', up); body.classList.remove('resizing'); hd.classList.remove('on'); if(w) try{ localStorage.setItem('tt-pw-' + side, w); }catch(x){} };
+  hd.addEventListener('pointermove', move); hd.addEventListener('pointerup', up); hd.addEventListener('pointercancel', up);
+});
+document.addEventListener('dblclick', function(e){
+  var hd = e.target.closest && e.target.closest('[data-rsz]'); if(!hd) return;
+  var side = hd.getAttribute('data-rsz'); try{ localStorage.removeItem('tt-pw-' + side); }catch(x){} hd.parentNode.style.removeProperty(side === 'l' ? '--lpw' : '--rpw');
+});
 function lpOff(){ try{ return localStorage.getItem('tt-lp') === '0'; }catch(e){ return false; } }
 function renderEditor(){
   var f = F(); if(!f){ go('funnels'); return; }
@@ -877,7 +955,9 @@ function renderEditor(){
     + (S.device !== 'desk' ? '<button class="btn ghost sm devpick" data-a="devPick" title="Handy für die Vorschau wählen">'+esc(curDevice().n)+'<span class="dvw">'+curDevice().w+' px</span>'+I('chevDown',12)+'</button>' : '')
     + '<div class="vr"></div><button class="btn ghost sm ic" data-a="undo" title="Rückgängig (⌘Z)"'+(S.hist.length?'':' disabled')+'>'+I('undo')+'</button><button class="btn ghost sm ic" data-a="redo" title="Wiederholen (⌘⇧Z)"'+(S.fut.length?'':' disabled')+'>'+I('redo')+'</button><div class="vr"></div>'
     + '<button class="btn sm" data-a="preview">'+I('play',14)+'Vorschau</button><button class="btn sm pri'+(pubDirty(f)?' dirty':'')+'" data-a="publish">'+I('rocket',14)+'Veröffentlichen</button></header>'
-    + '<div class="ebody"><aside class="lp" id="lp"></aside><section class="canvas" id="canvas"></section><aside class="rp" id="rp"></aside></div></div>';
+    + '<div class="ebody" style="'+paneStyle()+'"><aside class="lp" id="lp"></aside><section class="canvas" id="canvas"></section><aside class="rp" id="rp"></aside>'
+    + '<div class="rsz l" data-rsz="l" role="separator" aria-orientation="vertical" aria-label="Linke Leiste breiter oder schmaler ziehen" title="Ziehen zum Anpassen · Doppelklick: Standard"></div>'
+    + '<div class="rsz r" data-rsz="r" role="separator" aria-orientation="vertical" aria-label="Rechte Leiste breiter oder schmaler ziehen" title="Ziehen zum Anpassen · Doppelklick: Standard"></div></div></div>';
   $('#app').innerHTML = h;
   ensureFonts();
   renderLeft(); renderCanvas(); renderRight();
@@ -896,7 +976,7 @@ function renderLeft(){
     var EE = flowEdges(f), RR = flowReach(f);
     h += '<div class="plist">' + f.pages.map(function(p, i){
       var es = EE[i], sub = !es.length ? '<span class="pe end">Ende</span>' : es.length === 1 && es[0].kind === 'next' && es[0].to === i+1 ? '' : es.map(function(e){ var t = f.pages[e.to]; return '<span class="pe '+e.kind+(t?'':' bad')+'" title="'+esc(e.label)+'">'+I('right',10)+(t?(e.to+1)+' '+esc(t.name):'fehlt')+'</span>'; }).join('');
-      return '<div class="pitem t'+(i===S.pi?' on':'')+(RR[i]?'':' un')+'" draggable="true" data-pidx="'+i+'" data-a="page" data-i="'+i+'"><div class="pth">'+mini(f, i)+'</div><div class="pm"><div class="pt"><span class="n">'+(i+1)+'</span><span class="t">'+esc(p.name)+'</span><button class="ibtn" data-a="pmenu" data-i="'+i+'">'+I('more')+'</button></div><div class="ps">'+(RR[i]?'':'<span class="pe bad">nicht erreichbar</span>')+sub+'</div><span class="c">'+p.blocks.length+' Elemente</span></div></div>'; }).join('') + '</div>'
+      return '<div class="pitem t'+(i===S.pi?' on':'')+(RR[i]||p.hidden?'':' un')+(p.hidden?' hid':'')+'" draggable="true" data-pidx="'+i+'" data-a="page" data-i="'+i+'"><div class="pth">'+mini(f, i)+'</div><div class="pm"><div class="pt"><span class="n">'+(i+1)+'</span><span class="t">'+esc(p.name)+'</span><button class="ibtn peye'+(p.hidden?' off':'')+'" data-a="pHide" data-i="'+i+'" title="'+(p.hidden?'Seite einblenden':'Seite ausblenden')+'" aria-pressed="'+!!p.hidden+'">'+I(p.hidden?'eyeOff':'eye',14)+'</button><button class="ibtn" data-a="pmenu" data-i="'+i+'">'+I('more')+'</button></div><div class="ps">'+(p.hidden?'<span class="pe hid">ausgeblendet</span>':(RR[i]?'':'<span class="pe bad">nicht erreichbar</span>')+sub)+'</div><span class="c">'+p.blocks.length+' Elemente</span></div></div>'; }).join('') + '</div>'
       + '<button class="btn sm" style="width:100%;margin-top:10px;justify-content:center" data-a="addPage">'+I('plus',14)+'Seite hinzufügen</button>'
       + '<p class="hint" style="margin-top:14px">Seiten per Drag &amp; Drop sortieren. Elemente auf eine Seite ziehen, um sie dorthin zu verschieben.</p>';
   }
@@ -908,7 +988,7 @@ function renderCanvas(keepScroll){
   var oldScr = $('#scr'), st = oldScr ? oldScr.scrollTop : 0;
   var n = f.pages.length, E = flowEdges(f)[S.pi] || [], branches = E.filter(function(e){ return e.kind !== 'next'; }).length;
   var nav = '<div class="pnav"><button class="ibtn" data-a="pprev" title="Vorherige Seite"'+(S.pi?'':' disabled')+'>'+I('left',15)+'</button>'
-    + '<button class="pcur" data-a="pjump" title="Seite wählen"><span class="n">'+(S.pi+1)+'</span><span class="t">'+esc(curPage().name)+'</span><span class="of">von '+n+'</span>'+I('chevDown',13)+'</button>'
+    + '<button class="pcur" data-a="pjump" title="Seite wählen"><span class="n">'+(S.pi+1)+'</span><span class="t">'+esc(curPage().name)+'</span><span class="of">von '+n+'</span>'+(curPage().hidden?'<span class="hidtag">'+I('eyeOff',11)+'ausgeblendet</span>':'')+I('chevDown',13)+'</button>'
     + '<button class="ibtn" data-a="pnext" title="Nächste Seite"'+(S.pi<n-1?'':' disabled')+'>'+I('right',15)+'</button><span class="vr"></span>'
     + '<button class="btn ghost sm" data-a="flow" title="Logik: Ablauf und Verzweigungen bearbeiten">'+I('branch',14)+'Logik'+(branches?'<span class="pill nos" style="padding:0 6px;margin-left:2px">'+branches+'</span>':'')+'</button>'
     + '<button class="btn ghost sm ic" data-a="addPage" title="Seite hinzufügen">'+I('plus',15)+'</button></div>';
@@ -930,6 +1010,8 @@ function renderCanvas(keepScroll){
   S._pp = {fid:f.id, pi:S.pi, pct:pgi ? pgi.style.width : null};
   if(window.__ldStop){ window.__ldStop(); window.__ldStop = null; }
   if(scr.querySelector('[data-ld]')) window.__ldStop = FP.playLoaders(scr, f);
+  if(window.__aiStop){ window.__aiStop(); window.__aiStop = null; }
+  if(scr.querySelector('[data-lot],[data-ail]')) window.__aiStop = FP.playAnims(scr, f);
 }
 function placeTool(el){
   var scr = $('#scr'); if(!scr) return;
@@ -1013,10 +1095,59 @@ function varMenu(btn){
   if(!items.length) items = [{k:'none', ic:'info', l:'Noch keine Eingabefelder im Funnel', fn:function(){}}];
   dropdown(btn, items);
 }
-function insertVar(inp, key){
-  var tok = '{{'+key+'}}', st = inp.selectionStart != null ? inp.selectionStart : inp.value.length, en = inp.selectionEnd != null ? inp.selectionEnd : st;
+function insertVar(inp, key){ insertTok(inp, '{{'+key+'}}'); }
+/* Animiertes Icon in ein Textfeld einfügen: kleines Fenster mit Live-Vorschau, wächst aus dem Knopf */
+function animMenu(btn){
+  var fld = btn.closest('.fld'), inp = fld && fld.querySelector('input.inp,textarea.inp'); if(!inp) return;
+  var old = document.getElementById('aipop'); if(old){ var same = old._btn === btn; old._close(); if(same) return; }
+  var f = F(), lib = (f.theme && f.theme.anims) || [], pop = document.createElement('div');
+  pop.id = 'aipop'; pop.className = 'aipop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Animation einfügen'); pop._btn = btn;
+  pop.innerHTML = '<div class="aih">Animierte Icons</div><div class="aig">' + Object.keys(FP.ANIM_ICONS).map(function(k){ return '<button type="button" data-aiins="'+k+'" title="'+esc(FP.ANIM_ICONS[k][0])+'" aria-label="'+esc(FP.ANIM_ICONS[k][0])+'">'+FP.md('{anim:'+k+'}')+'</button>'; }).join('') + '</div>'
+    + '<div class="aih">Eigene Lottie-Animationen</div>' + (lib.length ? '<div class="ail">' + lib.map(function(x){ return '<div class="ailr"><button type="button" class="ailb" data-aiins="@'+esc(x.id)+'"><span class="fp-ai fp-ail" data-ail="'+esc(x.id)+'"></span>'+esc(x.name)+'</button><button type="button" class="ibtn" data-aidel="'+esc(x.id)+'" title="Aus diesem Funnel entfernen" aria-label="Entfernen">'+I('trash',13)+'</button></div>'; }).join('') + '</div>' : '<p class="hint" style="margin:0 0 8px">Noch keine. Lade eine Lottie-Datei hoch – sie erscheint dann so groß wie der Text.</p>')
+    + '<button type="button" class="btn sm" data-aiadd style="width:100%;justify-content:center">'+I('upload',13)+'Lottie hinzufügen</button>'
+    + '<p class="hint" style="margin:8px 0 0">Icons übernehmen Akzentfarbe und Textgröße.</p>';
+  document.body.appendChild(pop);
+  var r = btn.getBoundingClientRect(), w = pop.offsetWidth, left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w));
+  pop.style.left = left + 'px'; pop.style.top = (r.bottom + 6) + 'px'; pop.style.transformOrigin = Math.round(r.left + r.width / 2 - left) + 'px 0';
+  var stop = FP.playAnims(pop, f);
+  var outside = function(e){ if(!pop.contains(e.target) && !btn.contains(e.target)) close(); };
+  var onKey = function(e){ if(e.key === 'Escape'){ close(); btn.focus(); } };
+  var close = function(){ stop(); pop.remove(); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', onKey); };
+  pop._close = close;
+  document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', onKey);
+  pop.addEventListener('click', function(e){
+    var b = e.target.closest('[data-aiins]'); if(b){ close(); insertTok(inp, '{anim:'+b.getAttribute('data-aiins')+'}'); return; }
+    var d = e.target.closest('[data-aidel]'); if(d){ var id = d.getAttribute('data-aidel'); snap(true); f.theme.anims = lib.filter(function(x){ return x.id !== id; }); touch(); close(); renderCanvas(true); toast('Animation entfernt'); return; }
+    if(e.target.closest('[data-aiadd]')){ close(); lottieAddModal(function(item){ insertTok(inp, '{anim:@'+item.id+'}'); }); }
+  });
+  var first = pop.querySelector('button'); if(first) first.focus({preventScroll:true});
+}
+function lottieAddModal(done){
+  var f = F(), data = '';
+  modal({title:'Lottie-Animation hinzufügen', sub:'Für animierte Icons im Text. Die Datei wird im Funnel gespeichert.', size:'sm',
+    body:'<div class="fld"><label>Name</label><input class="inp" id="lotn" placeholder="z. B. Daumen hoch"></div>'
+      + '<div class="fld"><label>Datei (.json)</label><label class="btn sm" style="width:100%;justify-content:center">'+I('upload',13)+'<span id="lotf">Lottie-Datei wählen</span><input type="file" accept=".json,application/json" id="lotup" hidden></label></div>'
+      + '<div class="fld"><label>Oder Link zur .json-Datei</label><input class="inp" id="lotu" placeholder="https://…/animation.json"><div class="hint">Bei LottieFiles „Lottie JSON“ wählen. Für kleine Icons eignen sich einfache Animationen unter 100 KB.</div></div>',
+    foot:'<button class="btn" data-close>Abbrechen</button><button class="btn pri" data-lotok>Hinzufügen</button>',
+    onOpen:function(el, close){
+      el.querySelector('#lotup').addEventListener('change', function(e){
+        var file = e.target.files[0]; if(!file) return; if(file.size > 1.5e6){ toast('Lottie-Datei zu groß (max. 1,5 MB)'); return; }
+        var rd = new FileReader(); rd.onload = function(){ try{ var j = JSON.parse(rd.result); if(!j.layers) throw 0; data = rd.result; el.querySelector('#lotf').textContent = file.name; var n = el.querySelector('#lotn'); if(!n.value) n.value = file.name.replace(/\.json$/i, '').replace(/[-_]+/g, ' '); }catch(x){ toast('Das ist keine gültige Lottie-Datei'); } };
+        rd.readAsText(file);
+      });
+      el.querySelector('[data-lotok]').addEventListener('click', function(){
+        var url = el.querySelector('#lotu').value.trim(), name = el.querySelector('#lotn').value.trim() || 'Animation';
+        if(!data && !/^https?:\/\/\S+$/.test(url)){ toast('Bitte eine Datei wählen oder einen Link einfügen'); return; }
+        var item = {id:uid(), name:name}; if(data) item.json = data; else item.src = url;
+        snap(true); f.theme.anims = ((f.theme && f.theme.anims) || []).concat([item]); touch(); close(); done(item); renderCanvas(true); toast('„'+name+'“ hinzugefügt');
+      });
+    }});
+}
+function insertTok(inp, tok0){
+  var tok = tok0, st = inp.selectionStart != null ? inp.selectionStart : inp.value.length, en = inp.selectionEnd != null ? inp.selectionEnd : st;
   var before = inp.value.slice(0, st), after = inp.value.slice(en);
   if(before && !/[\s(„"]$/.test(before)) tok = ' ' + tok;
+  if(after && !/^[\s,.;:!?)“"]/.test(after)) tok = tok + ' ';
   inp.value = before + tok + after; inp.focus(); var pos = (before + tok).length; inp.setSelectionRange(pos, pos);
   inp.dispatchEvent(new Event('input', {bubbles:true}));
 }
@@ -1027,7 +1158,7 @@ function field(spec, p, scope){
   var v = p[k], a = 'data-'+scope+'="'+k+'"', hint = (typeof extra === 'string') ? '<div class="hint">'+esc(extra)+'</div>' : '';
   var ov = scope === 'p' && k && k.charAt(0) !== '_' && type !== 'pad4' && setVal(v) && (DESIGN_K[k] || STYLE_KEYS.indexOf(k) >= 0), ovb = ov ? '<button type="button" class="ovr" data-a="clearProp" data-scope="p" data-k="'+k+'" title="Für dieses Element geändert – zurück zum Theme" aria-label="Zurücksetzen"></button>' : '';
   var w = function(inner, noLabel){ return '<div class="fld'+(ov?' is-ov':'')+'">'+(noLabel?'':'<label>'+esc(label)+ovb+'</label>')+inner+hint+'</div>'; };
-  var wv = function(inner){ return '<div class="fld"><div class="flh"><label>'+esc(label)+'</label><button class="varbtn" data-a="insVar" title="Eingabe des Besuchers einfügen, z. B. seinen Vornamen">'+I('user',12)+'Variable</button></div>'+inner+hint+'</div>'; };
+  var wv = function(inner){ return '<div class="fld"><div class="flh"><label>'+esc(label)+'</label><span class="flbtns"><button class="varbtn" data-a="insAnim" title="Animiertes Icon einfügen – wie ein Emoji, nur bewegt">'+I('sparkles',12)+'Animation</button><button class="varbtn" data-a="insVar" title="Eingabe des Besuchers einfügen, z. B. seinen Vornamen">'+I('user',12)+'Variable</button></span></div>'+inner+hint+'</div>'; };
   switch(type){
     case 'text': return VARK.indexOf(k) >= 0 && scope === 'p' ? wv('<input class="inp" '+a+' value="'+esc(v)+'">') : w('<input class="inp" '+a+' value="'+esc(v)+'">');
     case 'textarea': return VARK.indexOf(k) >= 0 && scope === 'p' ? wv('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>') : w('<textarea class="inp" '+a+' rows="3">'+esc(v)+'</textarea>');
@@ -1258,7 +1389,8 @@ function panelDesign(){
     + '<div class="row2"><div class="fld"><label>Text</label>'+colorField('t','text',t.text)+'</div><div class="fld"><label>Text sekundär</label>'+colorField('t','muted',t.muted)+'</div></div>'
     + tgl('bgGrad','Hintergrund als Verlauf') + (t.bgGrad ? '<div class="row2"><div class="fld"><label>Verlauf bis</label>'+colorField('t','bg2',t.bg2||'#eef0ff')+'</div>'+rng('bgAngle','Winkel',[0,360,5,'°',180])+'</div>' : '') + '</div>';
   h += '<div class="psec"><h5>Typografie</h5><div class="fld"><label>Überschriften</label>'+fontSelect('t','headingFont',t.headingFont)+'</div><div class="fld"><label>Fließtext</label>'+fontSelect('t','font',t.font)+'</div>'
-    + '<div class="fontbar"><button class="btn sm" data-a="fontAdd">'+I('plus',13)+'Google Font</button><label class="btn sm">'+I('upload',13)+'Schrift hochladen<input type="file" accept=".woff2,.woff,.ttf,.otf" data-fontup></label></div>'
+    + '<div class="fontbar"><button class="btn sm" data-a="fontAdd">'+I('plus',13)+'Google Font</button><label class="btn sm">'+I('upload',13)+'Schrift hochladen<input type="file" accept=".woff2,.woff,.ttf,.otf" multiple data-fontup></label><button class="btn sm" data-a="fontAdobe">'+I('link',13)+'Adobe Fonts</button></div>'
+    + licFontHint(t)
     + rng('scale','Schriftgröße gesamt',[80,125,5,'%',100])
     + seg('headingWeight','Stärke Überschriften',[[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']])
     + '<div class="row2">' + rng('headingLs','Laufweite Überschr.',[-6,10,1,'',-2]) + rng('lineHeight','Zeilenhöhe Text',[1.2,2,0.05,'',1.55]) + '</div><div class="row2">' + rng('headingLh','Zeilenhöhe Überschr.',[0.9,1.8,0.05,'',1.15]) + '<span></span></div>'
@@ -1306,6 +1438,7 @@ function panelDesign(){
     + (t.chat ? '<div class="row2"><div class="fld"><label>Name</label><input class="inp" data-t="chatName" value="'+esc(t.chatName||'')+'" placeholder="z. B. Lisa"></div><div class="fld"><label>Untertitel</label><input class="inp" data-t="chatRole" value="'+esc(t.chatRole||'')+'" placeholder="Antwortet in der Regel sofort"></div></div>' + field(['chatAvatar','image','Foto (sonst Initialen)'], t, 't') : '') + '</div>';
   h += '<div class="psec"><h5>Animation & Hintergrund</h5>'
     + animPicker(t.animation || 'slide', !!t.chat)
+    + (t.animation === 'none' ? '' : field(['animDur','range','Dauer des Übergangs',[0.1,2,0.1,' s',function(){ return ({spring:.5,wipe:.4,tilt:.4,blur:.4,stagger:.4,up:.3,slide:.3,zoom:.3,fade:.3})[t.animation||'slide'] || .3; }]], t, 't'))
     + tgl('morph','Bild-Übergang zwischen Seiten','Das gewählte Antwortbild wächst ins Titelbild der nächsten Seite. Funktioniert in Chrome, Edge und Safari; sonst normaler Übergang.')
     + field(['bgImage','image','Hintergrundbild (alle Seiten)'], t, 't') + (t.bgImage?'<div class="fld"><label>Overlay</label>'+colorField('t','overlay',t.overlay)+'<div class="hint">z. B. rgba(0,0,0,0.4) für bessere Lesbarkeit</div></div>':'')
     + '<div class="fld"><label>Footer-Text</label><input class="inp" data-t="footer" value="'+esc(t.footer||'')+'" placeholder="Impressum · Datenschutz"></div></div>';
@@ -1336,7 +1469,7 @@ function panelSettings(){
     + '<div class="fld"><label>Webhook-Format</label><div class="segf">'+[['taptell','TapTell'],['onepage','Onepage-kompatibel']].map(function(x){ return '<button data-a="seg" data-scope="s" data-k="webhookFormat" data-v="'+x[0]+'" data-t="string" class="'+((s.webhookFormat||'taptell')===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div><div class="hint">Onepage-kompatibel sendet dieselbe Struktur wie ein Onepage-Webhook („lead.created“ mit data.fields und data.fieldsMap). Empfänger, die bisher Onepage auswerten, funktionieren ohne Umbau. Die Feld-Schlüssel müssen den Onepage-Slugs entsprechen.</div></div>'
     + (s.webhookFormat === 'onepage' ? '<div class="fld"><label>Formularname (wie in Onepage)</label><input class="inp" data-s="onepageForm" value="'+esc(s.onepageForm||'')+'" placeholder="'+esc(f.name)+'"><div class="hint">Erscheint in data.leadInfo und data.source.page.title.</div></div>' : '')
     + '<div class="fld"><label>Weiterleitung nach Absenden (optional)</label><input class="inp" data-s="redirect" value="'+esc(s.redirect||'')+'" placeholder="https://deine-seite.de/danke"></div>'
-    + '<div class="fld"><label>Meta Pixel ID (optional)</label><input class="inp" data-s="pixel" value="'+esc(s.pixel||'')+'" placeholder="123456789012345"><div class="hint">Feuert „PageView“ und „Lead“ im exportierten Funnel.</div></div>'
+    + '<div class="fld"><label>Meta Pixel ID (optional)</label><input class="inp" data-s="pixel" value="'+esc(s.pixel||'')+'" placeholder="123456789012345"><div class="hint">Feuert PageView, FunnelStart, FunnelStep (jede Seite), FunnelClick (Links und WhatsApp) und Lead. Mit Cookie-Banner erst nach Einwilligung in Marketing.</div></div>'
     + '<div class="fld"><label>Anrede in Hinweisen</label><div class="segf">'+[['du','Du'],['sie','Sie']].map(function(x){ return '<button data-a="seg" data-scope="s" data-k="address" data-v="'+x[0]+'" data-t="string" class="'+((s.address||'du')===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div><div class="hint">Gilt für Fehlermeldungen wie „Bitte wähle eine Option“.</div></div></div>';
   /* Cookie-Banner (DSGVO): ein-/ausschaltbar, Texte, Farben, Kategorien */
   var ccT = f.theme || {}, ccTg = function(k, label){ return '<label class="tgl"><span>'+label+'</span><input type="checkbox" data-s="'+k+'" data-bool data-inv'+(s[k] !== false ? ' checked' : '')+'><span class="sw"></span></label>'; };
@@ -1503,6 +1636,7 @@ function htmlToMd(root){
     }
     if(n.nodeType !== 1) return '';
     var tag = n.tagName.toLowerCase(), cl = n.classList;
+    if(n.hasAttribute('data-ai')) return '{anim:'+n.getAttribute('data-ai')+'}';
     if(tag === 'svg' || cl.contains('rq') || cl.contains('fp-var-x')) return '';
     if(tag === 'br') return '\n';
     var inner = [].map.call(n.childNodes, walk).join(''), st = n.style || {};
@@ -1740,8 +1874,19 @@ function ensureFonts(){
   FP.FONTS.concat((db.fonts && db.fonts.google) || []).forEach(function(n){ if(fontsLoaded[n]) return; fontsLoaded[n] = 1; var u = FP.fontLink(n); if(!u) return; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; document.head.appendChild(l); });
   injectUploaded();
 }
-function fontFace(x){ return "@font-face{font-family:'"+String(x.name).replace(/'/g,'')+"';src:url("+x.data+");font-display:swap}"; }
-function injectUploaded(){ var st = document.getElementById('fs-uf'); if(!st){ st = document.createElement('style'); st.id = 'fs-uf'; document.head.appendChild(st); } st.textContent = ((db.fonts && db.fonts.uploaded) || []).map(fontFace).join('\n'); }
+function fontFace(x){ return FP.fontFaceCss([x]); }
+/* Hinweis, wenn eine Lizenz-Schrift gewählt ist, aber noch keine Quelle da ist */
+function licFontHint(t){
+  var used = [t.font, t.headingFont].filter(function(n){ return n && FP.FONT_ALIAS[n]; }); if(!used.length) return '';
+  var up = (db.fonts && db.fonts.uploaded) || [], kit = up.some(function(x){ return x.kit; });
+  return used.filter(function(n, i, a){ return a.indexOf(n) === i; }).map(function(n){
+    var faces = up.filter(function(x){ return x.name === n && x.data; }).map(function(x){ return (+x.weight || 400) + (x.style === 'italic' ? 'i' : ''); });
+    return faces.length ? '<div class="hint">'+esc(n)+': eigene Dateien, Schnitte '+faces.join(' · ')+'</div>'
+      : kit ? '<div class="hint">'+esc(n)+' kommt aus deinem Adobe-Fonts-Projekt. Die Schrift muss dort enthalten und deine Domain freigegeben sein.</div>'
+      : '<div class="callout" style="margin:8px 0">'+I('info')+'<div><b>'+esc(n)+'</b> ist lizenzpflichtig. Lade deine Schriftdateien hoch (z. B. Regular und Bold als WOFF2, mehrere auf einmal) oder verbinde Adobe Fonts. Bis dahin erscheint eine Ersatzschrift.</div></div>';
+  }).join('');
+}
+function injectUploaded(){ var st = document.getElementById('fs-uf'); if(!st){ st = document.createElement('style'); st.id = 'fs-uf'; document.head.appendChild(st); } st.textContent = FP.fontFaceCss((db.fonts && db.fonts.uploaded) || []); }
 
 /* ---- preview ---- */
 function trackEvent(f, t, d){
@@ -1750,6 +1895,7 @@ function trackEvent(f, t, d){
   else if(t === 'start') st.starts++;
   else if(t === 'page'){ st.pages[d.pageId] = (st.pages[d.pageId]||0) + 1; }
   else if(t === 'complete'){ st.completes++; st.daily[k].l++; }
+  else if(t === 'click'){ st.clicks = st.clicks || {}; var ck = (d.pageId || '') + '\u0001' + JSON.stringify({l:d.label || '', u:d.url || ''}); st.clicks[ck] = (st.clicks[ck] || 0) + 1; }
   save();
 }
 function openPreview(f, startIdx){
@@ -1780,7 +1926,7 @@ function exportHtml(f){
   var css = $('#player-css').textContent, js = $('#player-js').textContent, s = f.settings || {};
   var up = (db.fonts && db.fonts.uploaded) || [], used = FP.usedFonts(f);
   var fontLinks = used.filter(function(n){ return !up.some(function(x){ return x.name === n; }); }).map(function(n){ var u = FP.fontLink(n); return u ? '<link rel="stylesheet" href="'+u+'">' : ''; }).join('\n');
-  css = up.filter(function(x){ return used.indexOf(x.name) >= 0; }).map(fontFace).join('\n') + '\n' + css;
+  css = FP.fontFaceCss(up.filter(function(x){ return x.css || used.indexOf(x.name) >= 0; })) + '\n' + css;
   /* Meta-Pixel: mit aktivem Cookie-Banner erst nach Einwilligung in Marketing */
   var pixel = s.pixel ? '<script>window.__ttPixel=function(){if(window.fbq)return;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init","'+String(s.pixel).replace(/[^0-9]/g,'')+'");fbq("track","PageView");};'+(s.ccOn?'':'window.__ttPixel();')+'<\/script>' : '';
   var init = 'var F=' + data + ';\n'
@@ -2172,7 +2318,8 @@ function publishModal(f){
     var url = publicUrl(f), t = '';
     if(share === 'link'){
       t = '<div class="share"><div class="slugf ro"><span>'+esc(url)+'</span></div><button class="btn sm" data-copyurl>'+I('copy',13)+'Kopieren</button>'+(REMOTE?'<a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener">'+I('ext',13)+'Öffnen</a>':'')+'</div>'
-        + '<p class="hint">Kurzer Link für WhatsApp, E-Mail, Social Ads und QR-Codes. Die Adresse änderst du unter <b>Funnel → Link-Adresse</b>.'+(REMOTE?'':' Im Demo-Modus ist der Link noch nicht erreichbar.')+'</p>';
+        + '<p class="hint">Kurzer Link für WhatsApp, E-Mail, Social Ads und QR-Codes. Die Adresse änderst du unter <b>Funnel → Link-Adresse</b>.'+(REMOTE?'':' Im Demo-Modus ist der Link noch nicht erreichbar.')+'</p>'
+        + '<div class="shareqr"><div id="qrlink" class="qrbox sm" aria-label="QR-Code zum Funnel"></div><div class="sqt"><b>QR-Code zum Funnel</b><span>Für Flyer, Aufsteller, Rechnungen oder Visitenkarten. Führt direkt auf den Link oben.</span><div id="qrlinkdl"></div></div></div>';
     } else if(share === 'domain'){
       t = '<div class="optcards"><div class="optc"><b>'+I('globe',14)+'Eigene Subdomain</b><span>z. B. <code>konfigurator.kunde.de</code> – der Funnel läuft unter der Adresse des Kunden, inklusive SSL. Der Kunde setzt einmal einen DNS-Eintrag (CNAME).</span><button class="btn sm" data-share-domain>'+I('settings',13)+'Domain verbinden</button></div>'
         + '<div class="optc"><b>'+I('link',14)+'Pfad auf der Kunden-Website</b><span>z. B. <code>kunde.de/konfigurator</code> – dafür den Funnel auf dieser Seite <b>einbinden</b> oder die Seite auf den TapTell-Link weiterleiten.</span><button class="btn sm" data-share="embed">'+I('code',13)+'Einbinden</button></div></div>';
@@ -2215,7 +2362,9 @@ function publishModal(f){
   };
   var m = modal({title:'Veröffentlichen', sub:'„'+f.name+'“ prüfen, live schalten und teilen.', size:'mid', body:'<div id="pubb">'+body()+'</div>', foot:'<button class="btn" data-close>Fertig</button>',
     onOpen:function(el, close){
-      var rerender = function(){ el.querySelector('#pubb').innerHTML = body(); if(open && adv === 'qr') drawQR(el.querySelector('#qrurl') && el.querySelector('#qrurl').value); };
+      var linkQR = function(){ if(share === 'link') drawQR(publicUrl(f), '#qrlink', '#qrlinkdl', 132); };
+      var rerender = function(){ el.querySelector('#pubb').innerHTML = body(); linkQR(); if(open && adv === 'qr') drawQR(el.querySelector('#qrurl') && el.querySelector('#qrurl').value); };
+      linkQR();
       el.addEventListener('toggle', function(e){ if(e.target.classList && e.target.classList.contains('advx')){ open = e.target.open; if(open && adv === 'qr') drawQR(el.querySelector('#qrurl').value); } }, true);
       el.addEventListener('input', function(e){ var k = e.target.getAttribute && e.target.getAttribute('data-em'); if(k){ em[k] = e.target.value; var c = el.querySelector('#embcode'); if(c) c.value = embedCode(); } });
       el.addEventListener('click', function(e){
@@ -2224,7 +2373,7 @@ function publishModal(f){
         if(e.target.closest('[data-pvers]')){ close(); versionsModal(f); return; }
         var g = e.target.closest('[data-goto]'); if(g){ close(); if(S.view === 'editor' && S.fid === f.id){ selectPage(+g.getAttribute('data-goto')); } else { go('editor', f.id); S.pi = +g.getAttribute('data-goto'); renderEditor(); } return; }
         var gt = e.target.closest('[data-gotab]'); if(gt){ close(); if(!(S.view === 'editor' && S.fid === f.id)) go('editor', f.id); S.rtab = 'set'; renderRight(); return; }
-        var sh = e.target.closest('[data-share]'); if(sh){ share = sh.getAttribute('data-share'); el.querySelector('#sharewrap').innerHTML = shareBody(); return; }
+        var sh = e.target.closest('[data-share]'); if(sh){ share = sh.getAttribute('data-share'); el.querySelector('#sharewrap').innerHTML = shareBody(); linkQR(); return; }
         var emb = e.target.closest('[data-emode]'); if(emb){ em.mode = emb.getAttribute('data-emode'); el.querySelector('#sharewrap').innerHTML = shareBody(); return; }
         if(e.target.closest('[data-embcopy]')){ copyText(embedCode(), 'Einbinde-Code kopiert'); return; }
         if(e.target.closest('[data-share-domain]')){ close(); autoModal(f, 'domain'); return; }
@@ -2236,15 +2385,16 @@ function publishModal(f){
 }
 
 var qrLoading = null;
-function drawQR(url){
-  var box = $('#qrbox'); if(!box) return;
+function drawQR(url, boxSel, dlSel, size){
+  var box = $(boxSel || '#qrbox'); if(!box) return; size = size || 200;
   if(!url){ box.innerHTML = '<span>Link eingeben</span>'; return; }
   if(!qrLoading) qrLoading = loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
   qrLoading.then(function(){
-    box.innerHTML = ''; new window.QRCode(box, {text:url, width:200, height:200, colorDark:'#1c2e3d', colorLight:'#ffffff', correctLevel:window.QRCode.CorrectLevel.M});
-    var dl = $('#qrdl'); if(!dl) return;
+    if(!box.isConnected) return;
+    box.innerHTML = ''; new window.QRCode(box, {text:url, width:size * 2, height:size * 2, colorDark:'#1c2e3d', colorLight:'#ffffff', correctLevel:window.QRCode.CorrectLevel.M});
+    var dl = $(dlSel || '#qrdl'); if(!dl) return;
     var inFrame = false; try{ inFrame = window.self !== window.top; }catch(e){ inFrame = true; }
-    setTimeout(function(){ var c = box.querySelector('canvas'); if(!c) return; dl.innerHTML = inFrame ? '<p class="hint">Rechtsklick auf den Code → „Bild speichern unter …“</p>' : '<a class="btn sm" download="qr-code.png" href="'+c.toDataURL('image/png')+'">'+I('down',13)+'Als PNG speichern</a>'; }, 60);
+    setTimeout(function(){ var c = box.querySelector('canvas'); if(!c) return; dl.innerHTML = inFrame ? '<p class="hint">Rechtsklick auf den Code → „Bild speichern unter …“</p>' : '<a class="btn sm" download="qr-'+esc(slug(String(url).split('/').pop() || 'funnel'))+'.png" href="'+c.toDataURL('image/png')+'">'+I('down',13)+'Als PNG speichern</a>'; }, 60);
   }, function(){ box.innerHTML = '<span>QR-Bibliothek konnte nicht geladen werden</span>'; });
 }
 function slug(s){ return String(s).toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
@@ -3040,6 +3190,10 @@ var ACT = {
     {k:'p', l:'Ab hier testen', ic:'play', fn:function(){ openPreview(f, i); }},
     '-', {k:'x', l:'Löschen', ic:'trash', danger:true, fn:function(){ delPage(i); }}]); },
   addPage:addPage,
+  pHide:function(el, e){ e.stopPropagation(); var f = F(), i = +el.getAttribute('data-i'), p = f.pages[i]; if(!p) return;
+    if(!p.hidden && f.pages.filter(function(x){ return !x.hidden; }).length < 2){ toast('Mindestens eine Seite muss sichtbar bleiben'); return; }
+    snap(true); p.hidden = !p.hidden; if(!p.hidden) delete p.hidden; touch(); renderLeft(); renderCanvas(true);
+    toast(p.hidden ? '„'+p.name+'“ ausgeblendet – im Funnel übersprungen' : '„'+p.name+'“ wieder sichtbar'); },
   autoOpen:function(){ autoModal(F()); },
   listAdd:function(){ lists().push({id:uid(), name:'Neue Liste', clientId:'', emails:[]}); save(); render(); },
   listDel:function(el){ var i = +el.getAttribute('data-i'); confirmBox('Liste löschen?', '„'+lists()[i].name+'“ wird aus allen Funnels entfernt.', 'Löschen', function(){ var id = lists()[i].id; lists().splice(i,1); db.funnels.forEach(function(f){ var a = f.settings.automation; if(!a) return; if(a.notify && a.notify.lists) a.notify.lists = a.notify.lists.filter(function(x){ return x !== id; }); (a.rules||[]).forEach(function(r){ r.lists = (r.lists||[]).filter(function(x){ return x !== id; }); }); }); save(); render(); }, true); },
@@ -3047,6 +3201,17 @@ var ACT = {
   rrAdd:function(){ var b = selBlock(); if(!b) return; snap(true); var mx = FP.rateMax(b.props), r = b.props.routes || []; b.props.routes = r.concat([r.length ? {min:Math.min(mx, (+r[r.length-1].max||0)+1), max:mx, goto:''} : {min:1, max:Math.max(1, Math.floor(mx*0.6)), goto:''}]); touch(); renderRight(); renderLeft(); renderCanvas(true); },
   rrDel:function(el){ var b = selBlock(); if(!b) return; snap(true); b.props.routes.splice(+el.getAttribute('data-i'),1); touch(); renderRight(); renderLeft(); renderCanvas(true); },
   insVar:function(el){ varMenu(el); },
+  insAnim:function(el){ animMenu(el); },
+  printReport:function(){ window.print(); },
+  fontAdobe:function(){
+    var cur = ((db.fonts.uploaded || []).filter(function(x){ return x.kit; })[0] || {}).kit || '';
+    promptBox('Adobe Fonts verbinden', 'Projekt-ID deines Web-Projekts (fonts.adobe.com → Web-Projekte, z. B. „abc1def“). Leer lassen zum Trennen.', cur, function(v){
+      v = String(v || '').trim().replace(/^https?:\/\/use\.typekit\.net\//, '').replace(/\.css$/, '');
+      if(v && !/^[a-z0-9]{5,12}$/i.test(v)){ toast('Das sieht nicht nach einer Projekt-ID aus'); return; }
+      db.fonts.uploaded = (db.fonts.uploaded || []).filter(function(x){ return !x.kit; }).concat(v ? [{name:'Adobe Fonts', kit:v, css:'https://use.typekit.net/'+v+'.css'}] : []);
+      injectUploaded(); save(); toast(v ? 'Adobe Fonts verbunden' : 'Adobe Fonts getrennt'); if(S.view === 'editor') renderRight();
+    });
+  },
   flow:function(){ flowModal(); },
   pprev:function(){ if(S.pi > 0) selectPage(S.pi - 1); },
   pnext:function(){ if(S.pi < F().pages.length - 1) selectPage(S.pi + 1); },
@@ -3158,7 +3323,7 @@ document.addEventListener('input', function(e){
     if(v === undefined){ var tgt = scope==='p'?selBlock().props:scope==='pp'?curPage():scope==='t'?F().theme:F().settings; delete tgt[k]; touch(); }
     else setScoped(scope, k, v);
     rangeLabel(el);
-    if(el.classList.contains('fontsel')) el.style.fontFamily = FP.fontStack(v || 'Inter');
+    if(el.classList.contains('fontsel')){ el.style.fontFamily = FP.fontStack(v || 'Inter'); if(scope === 't' && (FP.FONT_ALIAS[v] || $('.psec .callout'))) setTimeout(renderRight, 0); } /* Lizenz-Hinweis sofort zeigen */
     renderCanvas(true);
     if(scope === 'pp' && k === 'name'){ renderLeft(); }
     if(scope === 'pp' && (k === 'next')) renderLeft();
@@ -3196,10 +3361,21 @@ document.addEventListener('change', function(e){
     return;
   }
   if(el.hasAttribute && el.hasAttribute('data-fontup') && el.files[0]){
-    var file = el.files[0]; if(file.size > 1.2e6){ toast('Schriftdatei zu groß (max. 1,2 MB) – bitte WOFF2 verwenden'); return; }
-    var rd = new FileReader(); rd.onload = function(){ var name = file.name.replace(/\.(woff2?|ttf|otf)$/i,'').replace(/[-_]+/g,' ').replace(/\b(regular|webfont)\b/ig,'').trim() || 'Eigene Schrift';
-      promptBox('Schrift benennen','Name der Schrift', name, function(n){ db.fonts.uploaded = (db.fonts.uploaded||[]).filter(function(x){ return x.name !== n; }).concat([{name:n, data:rd.result}]); injectUploaded(); save(); toast('„'+n+'“ hochgeladen'); renderRight(); }); };
-    rd.readAsDataURL(file); return;
+    /* Mehrere Schnitte auf einmal (z. B. ProximaNova-Regular.woff2 + ProximaNova-Bold.woff2): Stärke und Kursiv kommen aus dem Dateinamen */
+    var files = [].slice.call(el.files); el.value = '';
+    if(files.some(function(x){ return x.size > 1.2e6; })){ toast('Schriftdatei zu groß (max. 1,2 MB) – bitte WOFF2 verwenden'); return; }
+    var fam = files[0].name.replace(/\.(woff2?|ttf|otf)$/i,'').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[-_]+/g,' ').replace(/\b(regular|normal|book|roman|webfont|italic|oblique|it|thin|hairline|extra ?light|ultra ?light|light|medium|semi ?bold|demi ?bold|extra ?bold|ultra ?bold|bold|black|heavy)\b/ig,'').replace(/\s+/g,' ').trim() || 'Eigene Schrift';
+    if(/^proxima ?nova/i.test(fam)) fam = 'Proxima Nova';
+    var reads = files.map(function(file){ return new Promise(function(res){ var rd = new FileReader(); rd.onload = function(){ res({file:file, data:rd.result}); }; rd.onerror = function(){ res(null); }; rd.readAsDataURL(file); }); });
+    Promise.all(reads).then(function(got){
+      got = got.filter(Boolean);
+      promptBox('Schrift benennen', got.length > 1 ? got.length+' Schnitte – Name der Schriftfamilie' : 'Name der Schrift', fam, function(n){
+        var faces = got.map(function(g){ return {name:n, data:g.data, weight:FP.fontWeightOf(g.file.name), style:/italic|oblique|[-_ ]it\b/i.test(g.file.name) ? 'italic' : 'normal'}; });
+        db.fonts.uploaded = (db.fonts.uploaded||[]).filter(function(x){ return !faces.some(function(y){ return x.name === y.name && (+x.weight || 400) === y.weight && (x.style || 'normal') === y.style; }); }).concat(faces);
+        injectUploaded(); save(); toast('„'+n+'“: '+faces.map(function(y){ return y.weight + (y.style === 'italic' ? ' kursiv' : ''); }).join(', ')+' hochgeladen'); renderRight();
+      });
+    });
+    return;
   }
 
 });

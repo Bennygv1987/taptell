@@ -48,6 +48,7 @@ Die SQL-Dateien liegen bewusst **außerhalb** von `supabase/migrations/`, damit 
 | 5 | `supabase/versionen-2.sql` | Backups als eigene Zeilen in `funnel_versions` statt einer großen Liste (behebt Timeouts). **Nach** `versionen.sql` | 👤 / 🤖 |
 | 6 | `supabase/uebersichtsfarbe.sql` | Farbmarkierungen der Funnelübersicht speichern | 👤 / 🤖 |
 | 7 | `supabase/mediathek.sql` | Admin-Mediathek und Übernahme eingebetteter Uploads (nach `versionen.sql`) | 👤 / 🤖 |
+| 8 | `supabase/tracking.sql` | Detaillierte Auswertung: Klicks, Absprünge pro Besuch, Verweildauer, Geräte, Quellen (`track_event` mit Besuchs-ID, `funnel_insights`). Nach `schema.sql` | 👤 / 🤖 |
 
 `automation.sql` muss **nach** `schema.sql` laufen, weil sie `get_public_funnel` absichert. Sonst wären Empfänger und Webhook-Daten öffentlich lesbar.
 

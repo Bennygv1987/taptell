@@ -4,7 +4,7 @@ var FP = {};
 var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 /* Hervorhebung __Wort__: Schwung (wie Onepage: flacher Bogen, feine Linie) und Kreis als SVG; Marker, Fläche, Rahmen usw. per CSS (Klasse hl-* am Element) */
 var UL = '<svg class="fp-ulsv u" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 0,30 q 50,-35 100,0"/></svg><svg class="fp-ulsv c" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 54,4 C 82,3 99,10 98,21 C 97,33 74,38 48,37 C 20,36 2,30 3,19 C 4,9 22,3 44,4 C 50,4 57,6 62,8"/></svg>';
-function stripInk(text){ return String(text).replace(/\{farbe:#[0-9a-f]{6}\}|\{\/farbe\}/gi, ''); }
+function stripInk(text){ return String(text).replace(/\{farbe:#[0-9a-f]{6}\}|\{\/farbe\}/gi, '').replace(/\{anim:@?[\w-]{1,40}\}\s?/g, ''); }
 FP.stripInk = stripInk;
 /* Nur Textknoten einfärben. Generierte Linkattribute und SVGs bleiben intakt. */
 function renderInk(html){
@@ -19,8 +19,48 @@ function renderInk(html){
     }).join('');
   }).join('');
 }
-var md = function(s){ return renderInk(esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g,'$1<em>$2</em>').replace(/\+\+(.+?)\+\+/g,'<u>$1</u>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>')); };
+var md = function(s){ return renderInk(esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g,'$1<em>$2</em>').replace(/\+\+(.+?)\+\+/g,'<u>$1</u>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\{anim:(@?[\w-]{1,40})\}/g, animTok).replace(/\n/g,'<br>')); };
 FP.esc = esc; FP.md = md;
+
+/* Animierte Icons im Text, eingefügt wie ein Emoji: {anim:herz}. Eingebaute Icons sind SVG mit CSS-Animation
+   (Akzentfarbe, so groß wie der Text), {anim:@id} spielt eine eigene Lottie-Datei aus theme.anims ab. */
+var AI_SVG = function(body){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + '</svg>'; };
+FP.ANIM_ICONS = {
+  check:['Haken', '<circle cx="12" cy="12" r="9" opacity=".25"/><path class="ai-draw" pathLength="20" d="M7.5 12.5l3 3 6-6.5"/>'],
+  herz:['Herz', '<path fill="currentColor" stroke="none" d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 000-7.8z"/>'],
+  stern:['Stern', '<path fill="currentColor" stroke-width="1.2" d="M12 2.8l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36 6.3 20.36l1.09-6.35-4.62-4.5 6.38-.93z"/>'],
+  funkeln:['Funkeln', '<path class="ai-s1" fill="currentColor" stroke="none" d="M11 2l1.9 5.1L18 9l-5.1 1.9L11 16l-1.9-5.1L4 9l5.1-1.9z"/><path class="ai-s2" fill="currentColor" stroke="none" d="M18.5 13.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/>'],
+  glocke:['Glocke', '<g class="ai-bell"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></g>'],
+  pfeil:['Pfeil', '<path class="ai-arr" d="M5 12h14M13 6l6 6-6 6"/>'],
+  daumen:['Daumen hoch', '<g class="ai-thumb"><path d="M7 10v11H3V10h4z"/><path d="M7 10l4-8a3 3 0 013 3v4h5.5a2 2 0 012 2.3l-1.4 8a2 2 0 01-2 1.7H7"/></g>'],
+  feuer:['Feuer', '<path class="ai-flame" fill="currentColor" fill-opacity=".18" d="M12 22c4 0 7-2.7 7-7 0-4-3-6.5-4-9.5-1 2.5-2.5 3.5-4 4 0-2.5-1-5-3-7.5C8 6 5 9.5 5 15c0 4.3 3 7 7 7z"/>'],
+  uhr:['Uhr', '<circle cx="12" cy="12" r="9"/><path class="ai-hand" d="M12 12V6.5"/><path d="M12 12l3 2"/>'],
+  geschenk:['Geschenk', '<g class="ai-gift"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 010-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 010 5"/></g>'],
+  blitz:['Blitz', '<path class="ai-bolt" fill="currentColor" fill-opacity=".2" d="M13 2L4 14h7l-1 8 9-12h-7z"/>'],
+  rakete:['Rakete', '<g class="ai-rocket"><path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 00-2.9-.1z"/><path d="M12 15l-3-3a22 22 0 012-4A12.9 12.9 0 0122 2c0 2.7-.8 7.5-6 11a22 22 0 01-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/></g>'],
+  punkt:['Live-Punkt', '<circle class="ai-ring" cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>']
+};
+function animTok(all, name){
+  if(name.charAt(0) === '@') return '<span class="fp-ai fp-ail" data-ai="'+name+'" data-ail="'+esc(name.slice(1))+'" contenteditable="false" aria-hidden="true"></span>';
+  var ic = FP.ANIM_ICONS[name]; if(!ic) return all;
+  return '<span class="fp-ai ai-'+name+'" data-ai="'+name+'" contenteditable="false" role="img" aria-label="'+ic[0]+'">'+AI_SVG(ic[1])+'</span>';
+}
+
+/* Lottie im Block „Animation“ und als Icon im Text abspielen. Gibt eine Aufräumfunktion zurück. */
+FP.playAnims = function(root, f){
+  var anims = [], reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, lib = (f && f.theme && f.theme.anims) || [];
+  var parse = function(raw){ if(!raw) return null; try{ return typeof raw === 'string' ? JSON.parse(raw) : raw; }catch(e){ return null; } };
+  var load = function(el, data, src, loop, speed){
+    if(!data && !src) return;
+    FP.lottieLib(function(L){
+      if(!el.isConnected || el.getAttribute('data-on')) return;
+      try{ var a = L.loadAnimation({container:el, renderer:'svg', loop:loop, autoplay:!reduce, animationData:data || undefined, path:data ? undefined : src}); if(speed && speed !== 1) a.setSpeed(speed); anims.push(a); el.setAttribute('data-on', '1'); }catch(e){}
+    });
+  };
+  root.querySelectorAll('[data-lot]').forEach(function(el){ load(el, parse(el.getAttribute('data-json')), el.getAttribute('data-src'), el.getAttribute('data-loop') !== '0', +el.getAttribute('data-speed') || 1); });
+  root.querySelectorAll('[data-ail]').forEach(function(el){ var it = lib.filter(function(x){ return x.id === el.getAttribute('data-ail'); })[0]; if(it) load(el, parse(it.json), it.src, true, 1); });
+  return function(){ anims.forEach(function(a){ try{ a.destroy(); }catch(e){} }); };
+};
 /* Stile für die Hervorhebung __Wort__ (Design-Tab und pro Überschrift) */
 FP.HL_STYLES = [['swoosh','Schwung'],['line','Linie'],['marker','Marker'],['half','Textmarker'],['marker-tilt','Marker schräg'],['half-tilt','Textmarker schräg'],['brush-ink','Breitpinsel'],['brush-dry','Trockenpinsel'],['pill','Fläche'],['stroke','Rahmen'],['circle','Kreis'],['color','Farbe']];
 
@@ -177,9 +217,18 @@ FP.FONT_META = {
 };
 FP.FONTS = Object.keys(FP.FONT_META);
 FP.SYSTEM_FONTS = {'System':"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"};
-FP.fontLink = function(f){ if(!f || FP.SYSTEM_FONTS[f]) return ''; var m = FP.FONT_META[f]; return 'https://fonts.googleapis.com/css2?family=' + f.replace(/ /g,'+') + (m && m[1] ? ':wght@' + m[1] : '') + '&display=swap'; };
+/* Lizenzpflichtige Schriften: kommen aus eigenen Dateien (Upload) oder einem Adobe-Fonts-Projekt.
+   Der zweite Name ist der Familienname, unter dem Adobe Fonts die Schrift bereitstellt. */
+FP.FONT_ALIAS = {'Proxima Nova':'proxima-nova'};
+FP.fontWeightOf = function(n){ n = String(n).toLowerCase().replace(/[-_]+/g, ' '); return /thin|hairline/.test(n) ? 100 : /(extra|ultra) ?light/.test(n) ? 200 : /light/.test(n) ? 300 : /medium/.test(n) ? 500 : /(semi|demi) ?bold/.test(n) ? 600 : /(extra|ultra) ?bold/.test(n) ? 800 : /black|heavy/.test(n) ? 900 : /bold/.test(n) ? 700 : 400; };
+FP.fontFaceCss = function(list){
+  list = list || [];
+  return list.filter(function(x){ return x.css; }).map(function(x){ return '@import url("' + String(x.css).replace(/"/g, '') + '");'; })
+    .concat(list.filter(function(x){ return !x.css && x.data; }).map(function(x){ return "@font-face{font-family:'" + String(x.name).replace(/'/g, '') + "';src:url(" + x.data + ");font-weight:" + (+x.weight || 400) + ";font-style:" + (x.style === 'italic' ? 'italic' : 'normal') + ";font-display:swap}"; })).join('\n');
+};
+FP.fontLink = function(f){ if(!f || FP.SYSTEM_FONTS[f] || FP.FONT_ALIAS[f]) return ''; var m = FP.FONT_META[f]; return 'https://fonts.googleapis.com/css2?family=' + f.replace(/ /g,'+') + (m && m[1] ? ':wght@' + m[1] : '') + '&display=swap'; };
 FP.fontsUrl = function(list){ return FP.fontLink((list||[]).filter(Boolean)[0]); };
-FP.fontStack = function(f){ return FP.SYSTEM_FONTS[f] || ("'"+f+"',system-ui,sans-serif"); };
+FP.fontStack = function(f){ return FP.SYSTEM_FONTS[f] || ("'"+f+"'"+(FP.FONT_ALIAS[f] ? ",'"+FP.FONT_ALIAS[f]+"'" : '')+",system-ui,sans-serif"); };
 FP.usedFonts = function(f){ var t = f.theme || {}, out = [t.font, t.headingFont]; FP.allBlocks(f).forEach(function(b){ if(b.props && b.props.ff) out.push(b.props.ff); if(b.type === 'arrow' && b.props && b.props.hand !== false && b.props.textSide !== 'none') out.push('Caveat'); }); return out.filter(function(x, i, a){ return x && a.indexOf(x) === i; }); };
 
 FP.themeVars = function(t){
@@ -188,7 +237,9 @@ FP.themeVars = function(t){
     +'--sc:'+((+t.scale||100)/100)+';--hw:'+(t.headingWeight||700)+';--hls:'+((t.headingLs!=null&&t.headingLs!==''?+t.headingLs:-2)/100)+'em;--htt:'+(t.headingUpper?'uppercase':'none')+';--lh:'+(t.lineHeight||1.55)+';'+(t.headingLh?'--hlh:'+t.headingLh+';':'')+'--bpy:'+(t.btnPad!=null&&t.btnPad!==''?t.btnPad:16)+'px;--bpx:'+(t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22)+'px;--bw:'+(t.btnWeight||600)+';--btt:'+(t.btnUpper?'uppercase':'none')+';--bls:'+(t.btnUpper?'.05em':'normal')+';--pad:'+(t.pad!=null&&t.pad!==''?t.pad:20)+'px;'
     + [['spTop','tpt'],['spHead','hg'],['spContent','cg'],['spBlock','bk'],['spBottom','bpb']].map(function(x){ var v = t[x[0]]; return v != null && v !== '' ? '--'+x[1]+':'+(+v)+'px;' : ''; }).join('')
     /* kleineres Logo → flacherer Kopf (Mindesthöhe sonst 30px für den Zurück-Button) */
-    + (t.logoImg && +t.logoH ? '--hmh:'+Math.min(30, +t.logoH)+'px;' : '');
+    + (t.logoImg && +t.logoH ? '--hmh:'+Math.min(30, +t.logoH)+'px;' : '')
+    /* Dauer des Seitenübergangs (0,1–2 s), sonst der Standard der jeweiligen Animation */
+    + (+t.animDur ? '--pgd:'+Math.min(2, Math.max(.1, +t.animDur))+'s;' : '');
 };
 
 /* Logik-Regeln: Bedingungen auf beliebige frühere Antworten (und/oder) */
@@ -636,6 +687,12 @@ FP.renderBlock = function(b, ctx){
       var atx = aside === 'none' || !p.text ? '' : '<span class="at'+(p.hand !== false ? ' hand' : '')+'">'+T(p.text)+'</span>';
       var asvg = '<span class="ar" style="transform:rotate('+(+p.rotate||0)+'deg)'+(p.flip ? ' scaleX(-1)' : '')+'"><svg viewBox="0 0 120 120" width="'+asz+'" height="'+asz+'" aria-hidden="true"><path class="ap" pathLength="1" d="'+aw.d+'"/><path class="ah" pathLength="1" d="'+FP.arrowHead(aw.d)+'"/></svg></span>';
       h = '<div class="fp-arw a-'+esc(p.anim || 'bounce')+'" role="note" style="--ax:'+(+p.x||0)+'px;--ay:'+(+p.y||0)+'px;--asz:'+asz+'px'+(p.acolor ? ';--ac:'+esc(p.acolor) : '')+'">'+(aside === 'end' ? asvg + atx : atx + asvg)+'</div>';
+      break;
+    case 'lottie':
+      /* Block „Animation“: eigene Lottie-Datei (Upload) oder Link zu einer .json-Datei */
+      var lsz2 = Math.max(24, Math.min(480, +p.size || 160)), lsrc = /^https?:\/\//.test(p.src || '') ? p.src : '';
+      h = p.json || lsrc ? '<div class="fp-lot" data-lot="'+b.id+'"'+(p.json ? ' data-json="'+esc(p.json)+'"' : ' data-src="'+esc(lsrc)+'"')+' data-loop="'+(p.loop === false ? 0 : 1)+'" data-speed="'+(+p.speed || 1)+'"'+(p.alt ? ' role="img" aria-label="'+esc(p.alt)+'"' : ' aria-hidden="true"')+' style="width:'+lsz2+'px;height:'+lsz2+'px"></div>'
+        : (ctx.edit ? '<div class="fp-lot empty" style="width:'+lsz2+'px;height:'+lsz2+'px"><span>Lottie-Datei hochladen<br>oder Link einfügen</span></div>' : '');
       break;
     case 'loader':
       /* Ladeseite: Animation, wechselnde Hinweise, Balken über die eingestellte Zeit; danach geht es automatisch weiter */
@@ -1085,6 +1142,13 @@ FP.showConsent = function(f, opts, done){
 FP.mount = function(root, f, opts){
   opts = opts || {};
   var st = {i:0, hist:[], answers:{}, errors:{}, dir:'fwd', started:false, done:false, startedAt:Date.now()};
+  /* Ausgeblendete Seiten (Auge in der Seitenleiste) gibt es im laufenden Funnel nicht.
+     Sprünge auf eine ausgeblendete Seite landen auf der nächsten sichtbaren danach. */
+  var HIDDEN = {};
+  if(f.pages.some(function(p){ return p.hidden; }) && f.pages.some(function(p){ return !p.hidden; })){
+    f.pages.forEach(function(p, i){ if(!p.hidden) return; var n = null; for(var j = i + 1; j < f.pages.length; j++) if(!f.pages[j].hidden){ n = f.pages[j].id; break; } HIDDEN[p.id] = n; });
+    f = Object.assign({}, f, {pages:f.pages.filter(function(p){ return !p.hidden; })});
+  }
   var pages = f.pages;
   var hasSubmit = FP.allBlocks(f).some(function(b){ return b.type==='button' && b.props.action==='submit'; });
   var emit = function(t, d){ if(opts.onEvent) try{ opts.onEvent(t, d||{}); }catch(e){} };
@@ -1095,7 +1159,7 @@ FP.mount = function(root, f, opts){
   function scroller(){ return opts.scrollEl || root.closest && root.closest('[data-fp-scroll]') || document.scrollingElement; }
 
   /* stay = gleiche Seite neu zeichnen (ohne Einblend-Animation, Scrollposition bleibt) */
-  var ldStop = null, ldTimer = null;
+  var ldStop = null, ldTimer = null, aiStop = null;
   function render(stay, quiet){
     var page = pages[st.i];
     /* Zurück auf eine Ladeseite: überspringen, sonst ginge es sofort wieder vorwärts */
@@ -1111,6 +1175,8 @@ FP.mount = function(root, f, opts){
     /* Fortschritt läuft weich vom alten zum neuen Stand */
     var pi = root.querySelector('.fp-prog i');
     if(pi){ var to = +pi.getAttribute('data-pct'); if(st.lastPct != null && st.lastPct !== to && !opts.still && !stay){ pi.style.transition = 'none'; pi.style.width = st.lastPct + '%'; void pi.offsetWidth; pi.style.transition = ''; requestAnimationFrame(function(){ pi.style.width = to + '%'; }); } st.lastPct = to; }
+    if(aiStop){ aiStop(); aiStop = null; }
+    if(root.querySelector('[data-lot],[data-ail]')) aiStop = FP.playAnims(root, f);
     if(ldStop){ ldStop(); ldStop = null; } clearTimeout(ldTimer);
     if(root.querySelector('[data-ld]')){
       ldStop = FP.playLoaders(root, f);
@@ -1202,7 +1268,8 @@ FP.mount = function(root, f, opts){
     if(!skipValidate && !validate()){ render(true); var e = root.querySelector('.fp-err'); if(e && e.scrollIntoView) e.scrollIntoView({block:'center',behavior:'smooth'}); return false; }
     st.errors = {};
     if(!st.started){ st.started = true; emit('start'); }
-    var tid = resolveTarget(target), ni = tid ? pages.map(function(p){return p.id;}).indexOf(tid) : st.i + 1;
+    var tid = resolveTarget(target); if(tid && HIDDEN.hasOwnProperty(tid)) tid = HIDDEN[tid] || '__end';
+    var ni = tid ? pages.map(function(p){return p.id;}).indexOf(tid) : st.i + 1;
     if(ni < 0 || ni >= pages.length){ if(!st.done && !hasSubmit) submit(); return true; }
     st.hist.push(st.i); st.i = ni; st.dir = 'fwd'; st.resume = null;
     pushHist(); saveResume();
@@ -1330,6 +1397,7 @@ FP.mount = function(root, f, opts){
     else if(act === 'fresh'){ st.resume = null; try{ localStorage.removeItem(resumeKey); }catch(x){} render(true); }
     else if(act === 'btn'){
       var p = b.props, a = p.action || 'next';
+      if(a === 'url' || a === 'wa') emit('click', {pageId:(pages[st.i] || {}).id, label:FP.stripInk(p.label || '').replace(/\*\*|==|__/g, '').slice(0, 80), url:a === 'wa' ? 'WhatsApp' : String(p.url || '').slice(0, 300)});
       if(a === 'url'){ if(opts.onUrl) opts.onUrl(p.url); else window.location.href = p.url; }
       else if(a === 'wa'){ var wu = FP.waUrl(p.waNumber, FP.interp(p.waText || '', f, st.answers || {})); if(wu) window.open(wu, '_blank', 'noopener'); }
       else if(a === 'submit'){ if(st.busy) return; if(!validate()){ render(true); var e2 = root.querySelector('.fp-err'); if(e2 && e2.scrollIntoView) e2.scrollIntoView({block:'center',behavior:'smooth'}); return; }
@@ -1388,6 +1456,12 @@ FP.mount = function(root, f, opts){
     draw(); (root.querySelector('.fp') || root).appendChild(lb); /* innerhalb von .fp, damit Farben und Schriften des Funnels gelten */ var bx = lb.querySelector('.lbs'); if(bx) bx.focus({preventScroll:true});
   }
   root.addEventListener('keydown', function(e){ var t2 = e.target; if((e.key === 'Enter' || e.key === ' ') && t2.getAttribute && (t2.getAttribute('data-act') === 'cb' || t2.getAttribute('data-act') === 'zoom')){ e.preventDefault(); t2.click(); } });
+  /* Klicks auf Links im Funnel (Text-Links, Social-Icons, Kontakt-Knopf) für die Auswertung */
+  root.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[href]'); if(!a || !root.contains(a)) return;
+    var href = a.getAttribute('href') || ''; if(href.charAt(0) === '#') return;
+    emit('click', {pageId:(pages[st.i] || {}).id, label:(a.getAttribute('aria-label') || a.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80), url:/wa\.me|whatsapp/.test(href) ? 'WhatsApp' : href.slice(0, 300)});
+  });
   root.addEventListener('click', function(e){ var o = root.querySelector('[data-fab].open'); if(o && !o.contains(e.target)){ o.classList.remove('open'); var ob = o.querySelector('[data-act="fab"]'); if(ob) ob.setAttribute('aria-expanded', 'false'); } }, true);
   root.addEventListener('change', function(e){
     var el = e.target; if(!el || el.type !== 'range') return;

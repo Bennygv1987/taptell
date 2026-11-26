@@ -38,7 +38,7 @@
   var fontsDone = {};
   function fonts(F){
     FP.usedFonts(F).forEach(function(n){ if(fontsDone[n] || (F.fonts||[]).some(function(x){ return x.name === n; })) return; fontsDone[n] = 1; var u = FP.fontLink(n); if(!u) return; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; document.head.appendChild(l); });
-    if((F.fonts||[]).length){ var st = document.createElement('style'); st.textContent = F.fonts.map(function(x){ return "@font-face{font-family:'" + String(x.name).replace(/'/g,'') + "';src:url(" + x.data + ");font-display:swap}"; }).join('\n'); document.head.appendChild(st); }
+    if((F.fonts||[]).length){ var st = document.createElement('style'); st.textContent = FP.fontFaceCss(F.fonts); document.head.appendChild(st); }
   }
   /* Funnel in einen abgeschirmten Bereich (Shadow DOM) setzen */
   function mountInto(target, F, slug, C, extra){
@@ -47,8 +47,27 @@
     root.innerHTML = '<style>:host{all:initial;display:block}' + CSS + '.tt-wrap{background:' + bg + ';border-radius:' + (extra.radius || 0) + 'px;overflow:hidden}</style><div class="tt-wrap"><div class="tt-fp"></div></div>';
     var el = root.querySelector('.tt-fp');
     var S = F.settings || {};
+    /* Auswertung wie im Live-Funnel: Besuchs-ID nur für diesen Aufruf, Klicks, Gerät und Quelle */
+    var SID = Math.random().toString(36).slice(2, 12), V2 = true;
+    var dev = /iPad|Tablet/i.test(navigator.userAgent) ? 'Tablet' : /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'Handy' : 'Desktop';
+    var src = (function(){ try{ var q = new URLSearchParams(location.search); return q.get('utm_source') || (q.get('fbclid') ? 'facebook' : q.get('gclid') ? 'google' : '') || location.hostname.replace(/^www\./, ''); }catch(e){ return 'website'; } })();
+    var track = function(type, d){
+      var old = function(){ if(type === 'view' || type === 'start' || type === 'page') rpc(C, 'track_event', {p_slug:slug, p_type:type, p_page:d.pageId || null}); };
+      if(!V2 || !C.supabaseUrl) return old();
+      var meta = type === 'click' ? JSON.stringify({l:d.label || '', u:d.url || ''}) : type === 'view' ? dev + '|' + String(src).slice(0, 60) : null;
+      var h = {'Content-Type':'application/json', apikey:C.supabaseAnonKey}; if(/^eyJ/.test(C.supabaseAnonKey || '')) h.Authorization = 'Bearer ' + C.supabaseAnonKey;
+      fetch(C.supabaseUrl.replace(/\/$/, '') + '/rest/v1/rpc/track_event', {method:'POST', headers:h, body:JSON.stringify({p_slug:slug, p_type:type, p_page:d.pageId || null, p_meta:meta, p_sid:SID})})
+        .then(function(r){ if(!r.ok){ V2 = false; old(); } }).catch(function(){});
+    };
     FP.mount(el, F, {live:true, inline:!extra.scrollEl, scrollEl:extra.scrollEl, scrollOffset:extra.offset,
-      onEvent:function(type, d){ if(type === 'complete') return; rpc(C, 'track_event', {p_slug:slug, p_type:type, p_page:(d && d.pageId) || null}); },
+      onEvent:function(type, d){
+        d = d || {};
+        if(window.fbq && FP.allowed(F, 'mkt')){ var pg = (F.pages || []).filter(function(p){ return p.id === d.pageId; })[0];
+          if(type === 'start') window.fbq('trackCustom', 'FunnelStart', {funnel:F.name});
+          else if(type === 'page' && d.index > 0) window.fbq('trackCustom', 'FunnelStep', {funnel:F.name, step:d.index + 1, page:pg ? pg.name : ''});
+          else if(type === 'click') window.fbq('trackCustom', 'FunnelClick', {funnel:F.name, label:d.label || '', url:d.url || ''}); }
+        track(type === 'complete' ? 'lead' : type, d);
+      },
       onSubmit:function(lead){
         lead.utm = Q; lead.page = location.href; lead.embed = true; lead.userAgent = navigator.userAgent.slice(0, 160);
         rpc(C, 'submit_lead', {p_slug:slug, p_lead:lead});
