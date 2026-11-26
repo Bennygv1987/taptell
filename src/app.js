@@ -156,7 +156,7 @@ function findBlock(f, id){ var r = null; f.pages.forEach(function(p, pi){ p.bloc
 /* ================= Entwurf, Live-Stand und Versionen =================
    Autospeichern sichert den Entwurf. Online geht nur, was mit „Veröffentlichen“ als Live-Stand (f.published) übernommen wird.
    Dazu je Funnel wenige Backups (f.versions): bei jedem Veröffentlichen und automatisch alle 10 Minuten beim Bearbeiten. */
-var HAS_PUB = !REMOTE_CFG(), OPENED = {}, VSNAP = {}; /* im Demo-Modus immer; mit Supabase erst nach versionen.sql */
+var HAS_PUB = !REMOTE_CFG(), HAS_VT = false, OPENED = {}, VSNAP = {}, VSAVED = {}; /* im Demo-Modus immer; mit Supabase erst nach versionen.sql */
 function REMOTE_CFG(){ var c = window.FS_CONFIG || {}; return !!(c.supabaseUrl && c.supabaseAnonKey); }
 function fState(f){ return {name:f.name, theme:clone(f.theme), settings:clone(f.settings), pages:clone(f.pages)}; }
 function fSig(x){ return JSON.stringify([x.theme, x.settings, x.pages]); }
@@ -189,11 +189,13 @@ function versionsModal(f){
     if(f.published) h += '<div class="vrow live"><span class="vi">'+I('rocket',14)+'</span><div class="vt"><b>Aktueller Live-Stand</b><span>Veröffentlicht '+ago(f.published.at)+' · '+fmtTs(f.published.at)+'</span></div>'+(pubDirty(f) ? '<button class="btn sm" data-vlive>Änderungen verwerfen</button>' : '<span class="pill live">Online</span>')+'</div>';
     if(!vs.length) h += '<div class="hint" style="margin:8px 0 0">Noch keine Backups. Sie entstehen beim Veröffentlichen und automatisch alle 10 Minuten, während du arbeitest.</div>';
     h += vs.map(function(v, i){ return '<div class="vrow"><span class="vi '+v.kind+'">'+I(v.kind === 'publish' ? 'rocket' : 'history', 14)+'</span><div class="vt"><b>'+esc(v.label || (v.kind === 'publish' ? 'Veröffentlicht' : 'Automatisch gesichert'))+'</b><span>'+ago(v.at)+' · '+fmtTs(v.at)+' · '+v.pages.length+' Seiten</span></div><button class="btn sm" data-vres="'+i+'">'+I('undo',13)+'Wiederherstellen</button></div>'; }).join('');
+    if(REMOTE_CFG() && HAS_PUB && !HAS_VT) h += '<div class="callout" style="margin-top:12px">'+I('info')+'<div>Backups liegen gerade nur in diesem Browser. Einmal <b>supabase/versionen-2.sql</b> in Supabase ausführen, dann werden sie auf dem Server gespeichert – ohne Zeitüberschreitung.</div></div>';
     if(REMOTE_CFG() && !HAS_PUB) h += '<div class="callout" style="margin-top:12px">'+I('info')+'<div>Damit Backups auch auf dem Server liegen und Änderungen erst nach „Veröffentlichen“ online gehen, einmal <b>supabase/versionen.sql</b> in Supabase ausführen. Bis dahin sind Backups nur in diesem Browser.</div></div>';
     return h;
   };
-  modal({title:'Versionen', sub:'Backups von „'+f.name+'“. Wiederherstellen ändert nur den Entwurf – online geht es erst mit „Veröffentlichen“.', size:'mid', body:'<div id="vlist">'+body()+'</div>',
+  modal({title:'Versionen', sub:'Backups von „'+f.name+'“. Wiederherstellen ändert nur den Entwurf – online geht es erst mit „Veröffentlichen“.', size:'mid', body:'<div id="vlist">'+(HAS_VT ? '<div class="hint">Backups werden geladen …</div>' : body())+'</div>',
     onOpen:function(el, close){
+      if(HAS_VT) loadVersions(f).then(function(){ var vl = el.querySelector('#vlist'); if(vl) vl.innerHTML = body(); }).catch(function(e){ var vl = el.querySelector('#vlist'); if(vl) vl.innerHTML = '<div class="hint">Backups konnten nicht geladen werden: '+esc(e.message || e)+'</div>'; });
       el.addEventListener('click', function(e){
         var r = e.target.closest('[data-vres]'); if(r){ var v = (f.versions || [])[+r.getAttribute('data-vres')]; if(!v) return; confirmBox('Version wiederherstellen?', 'Der Entwurf wird auf den Stand von '+fmtTs(v.at)+' zurückgesetzt. Der jetzige Stand wird vorher gesichert.', 'Wiederherstellen', function(){ restoreVersion(f, v); close(); }); return; }
         if(e.target.closest('[data-vlive]')){ confirmBox('Änderungen verwerfen?', 'Der Entwurf wird auf den Live-Stand zurückgesetzt. Der jetzige Stand wird vorher gesichert.', 'Verwerfen', function(){ restoreVersion(f, f.published, 'Zurück auf dem Live-Stand'); close(); }, true); }
@@ -751,8 +753,8 @@ var FIELDS = {
     ['chipArr','seg','Anordnung',[['center','Mittig, versetzt'],['left','Links'],['scroll','Wischbar']],function(p){ return p.layout==='chips'; }],
     ['chipIcon','toggle','Icons zeigen',null,function(p){ return p.layout==='chips'; },true],
     ['chipGrad','toggle','Leichter Verlauf',null,function(p){ return p.layout==='chips'; }],
-    ['row2','row',[['chipRad','num','Rundung (px)'],['chipSize','num','Schriftgröße (px)']],null,function(p){ return p.layout==='chips'; }],
-    ['_cn','note','Farben pro Chip: bei der Antwort auf das Zahnrad klicken. Icons ebenfalls dort.',function(p){ return p.layout==='chips'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
+    ['chipSize','range','Größe',[11,24,1,'px',15],function(p){ return p.layout==='chips'; }],['chipRad','range','Rundung',[0,30,1,'px',30],function(p){ return p.layout==='chips'; }],
+    ['_cn','note','Farben pro Chip: bei der Antwort auf das Zahnrad klicken. Icons ebenfalls dort.',null,function(p){ return p.layout==='chips'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return ['scale','chips','cover'].indexOf(p.layout) < 0; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return ['scale','chips','cover'].indexOf(p.layout) < 0; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return ['scale','chips','cover'].indexOf(p.layout) < 0 && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
   input:[['label','text','Label'],['placeholder','text','Platzhalter'],['emoji','text','Emoji im Feld (optional)','z. B. ✉️ oder 📞 – ersetzt das Standard-Icon.'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['faces','Smileys flach mit Text'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='faces'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.style==='faces'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.style==='faces'; }],['faceLabels','strings','Texte unter den Smileys','Leer lassen für: Sehr schlecht, Schlecht, Okay, Gut, Super.',function(p){ return p.style==='faces' && !p.faceNoText; }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.style==='faces' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.style!=='faces' || (p.faceNoText && p.faceEnds); }],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
@@ -946,7 +948,8 @@ function field(spec, p, scope){
   if(show && !show(p)) return '';
   if(type === 'row') return '<div class="'+(label.length===3?'row3':'row2')+'">' + label.map(function(s){ return field(s, p, scope); }).join('') + '</div>';
   var v = p[k], a = 'data-'+scope+'="'+k+'"', hint = (typeof extra === 'string') ? '<div class="hint">'+esc(extra)+'</div>' : '';
-  var w = function(inner, noLabel){ return '<div class="fld">'+(noLabel?'':'<label>'+esc(label)+'</label>')+inner+hint+'</div>'; };
+  var ov = scope === 'p' && k && k.charAt(0) !== '_' && type !== 'pad4' && setVal(v) && (DESIGN_K[k] || STYLE_KEYS.indexOf(k) >= 0), ovb = ov ? '<button type="button" class="ovr" data-a="clearProp" data-scope="p" data-k="'+k+'" title="Für dieses Element geändert – zurück zum Theme" aria-label="Zurücksetzen"></button>' : '';
+  var w = function(inner, noLabel){ return '<div class="fld'+(ov?' is-ov':'')+'">'+(noLabel?'':'<label>'+esc(label)+ovb+'</label>')+inner+hint+'</div>'; };
   var wv = function(inner){ return '<div class="fld"><div class="flh"><label>'+esc(label)+'</label><button class="varbtn" data-a="insVar" title="Eingabe des Besuchers einfügen, z. B. seinen Vornamen">'+I('user',12)+'Variable</button></div>'+inner+hint+'</div>'; };
   switch(type){
     case 'text': return VARK.indexOf(k) >= 0 && scope === 'p' ? wv('<input class="inp" '+a+' value="'+esc(v)+'">') : w('<input class="inp" '+a+' value="'+esc(v)+'">');
@@ -1001,26 +1004,70 @@ function optionsEditor(p){
       + '</div></div>';
   }).join('') + '<button class="btn sm" data-a="optAdd">'+I('plus',13)+'Antwort hinzufügen</button>';
 }
+/* ================= Element-Panel: Inhalt · Design · Mehr =================
+   Inhalt = was drinsteht. Design = wie es aussieht (aufklappbare Abschnitte, jeder Regler nur einmal).
+   Mehr = Verhalten, Sichtbarkeit, Feld-Schlüssel. Leere Werte kommen aus dem Theme, geänderte zeigen einen Punkt mit Zurücksetzen. */
+var DESIGN_K = {};
+('hl level size lh variant upper bleed ratio height radius fit edgeTop edgeTopH edgeTopFlip edgeBot edgeBotH edgeBotFlip icon iconLeft btnBg btnColor btnBw btnBc bSize icColor full bpad shadow pulse radiusOn '
+ + 'faceStyle faceNoText faceBare faceEnds cols colsD optAlign optFw optSubFw zoom coverFade coverAlign coverFadeS coverTx coverSize coverRad chipStyle chipArr chipIcon chipGrad chipRad chipSize '
+ + 'calStyle calAcc calAccText calShape calDays calDayShadow calSelShadow slotStyle slotCols calCard calBg calText calRadius bxStyle chip labels gray speed acolor hand flip rotate textSide showBar showValue').split(' ').forEach(function(k){ DESIGN_K[k] = 1; });
+var DESIGN_T = {social:{size:1}, arrow:{size:1, style:1, anim:1}, loader:{size:1, anim:1}};
+var ACC = (function(){ try{ return JSON.parse(localStorage.getItem('tt-acc') || '{}'); }catch(e){ return {}; } })();
+function isDesignKey(k, type){ return !!(DESIGN_K[k] || (DESIGN_T[type] && DESIGN_T[type][k]) || STYLE_KEYS.indexOf(k) >= 0 || k === 'align' || k === 'half' || k === 'mt' || k === 'mb'); }
+function specKeys(sp){ if(!sp) return []; if(sp[1] === 'row') return sp[2].map(function(x){ return x[0]; }); if(sp[1] === 'pad4') return (sp[3] && sp[3].keys) || []; return [sp[0]]; }
+function setVal(v){ return v !== undefined && v !== null && v !== ''; }
+function overrides(list, p){ var n = 0; list.forEach(function(sp){ specKeys(sp).forEach(function(k){ if(k.charAt(0) !== '_' && setVal(p[k])) n++; }); }); return n; }
+function splitFields(list, type){
+  var out = {c:[], d:[], a:[]}, last = 'c', kOf = function(sp){ return sp[1] === 'row' ? sp[2][0][0] : sp[0]; };
+  list.forEach(function(sp, i){
+    var g;
+    if(sp[1] === 'sec'){ var nx = list[i + 1]; g = nx && isDesignKey(kOf(nx), type) ? 'd' : 'c'; }
+    else if(sp[1] === 'note') g = last;
+    else { var k = kOf(sp); g = k === 'key' ? 'a' : (DESIGN_K[k] || (DESIGN_T[type] && DESIGN_T[type][k])) ? 'd' : 'c'; }
+    out[g].push(sp); last = g;
+  });
+  return out;
+}
+function accSec(id, title, inner, n, defOpen){
+  if(!inner) return '';
+  var open = ACC[id] != null ? ACC[id] : !!defOpen;
+  return '<section class="acc'+(open ? ' open' : '')+'" data-acc="'+id+'"><button type="button" class="acch" data-a="accT" data-id="'+id+'" aria-expanded="'+open+'"><span class="acct">'+title+'</span>'+(n ? '<span class="accn" title="'+n+' Wert'+(n > 1 ? 'e' : '')+' für dieses Element geändert">'+n+'</span>' : '')+I('chevDown',14)+'</button><div class="accb"><div class="acci">'+inner+'</div></div></section>';
+}
 function panelElement(b){
   if(!b) return '<div class="emptyp"><div class="ic">'+I('pointer',20)+'</div>Wähle ein Element auf dem Handy aus, um es zu bearbeiten.</div>';
-  var p = b.props;
-  var h = '<div class="bhead"><span class="lic">'+I(BICON[b.type]||'grid')+'</span><div><b>'+esc(BNAME[b.type]||b.type)+'</b><small>Seite '+(S.pi+1)+' · '+esc(curPage().name)+'</small></div><span style="flex:1"></span><button class="ibtn" data-a="bdup" title="Duplizieren (⌘D)">'+I('dup')+'</button><button class="ibtn" data-a="bcopy" title="Kopieren, um es auf einer anderen Seite einzufügen (⌘C)">'+I('copy')+'</button><button class="ibtn" data-a="bdel" title="Löschen">'+I('trash')+'</button></div>';
-  h += '<div class="psec"><h5>Inhalt</h5>' + (FIELDS[b.type]||[]).map(function(s){ return field(s, p, 'p'); }).join('') + '</div>';
-  if(b.type === 'choice' || b.type === 'button'){
-    h += '<div class="psec"><h5>'+I('branch',13)+'Logik</h5><p class="hint" style="margin:0">'+(b.type==='choice'?'Pro Antwort kannst du unter '+I('settings',11)+' eine Zielseite festlegen (Verzweigung), Preise für den Konfigurator und Punkte für Quiz-Auswertungen.':'Absenden speichert den Lead, sendet ihn an den Webhook und leitet zur Zielseite weiter.')+'</p></div>';
+  var p = b.props, tab = S.etab || 'c', fs = splitFields(FIELDS[b.type] || [], b.type), F_ = function(list, vals){ return list.map(function(sp){ return field(sp, vals || p, 'p'); }).join(''); };
+  var h = '<div class="bhead"><span class="lic">'+I(BICON[b.type]||'grid')+'</span><div><b>'+esc(BNAME[b.type]||b.type)+'</b><small>Seite '+(S.pi+1)+' · '+esc(curPage().name)+'</small></div><span style="flex:1"></span><button class="ibtn" data-a="bdup" title="Duplizieren (⌘D)">'+I('dup')+'</button><button class="ibtn" data-a="bcopy" title="Kopieren (⌘C)">'+I('copy')+'</button><button class="ibtn" data-a="bdel" title="Löschen">'+I('trash')+'</button></div>';
+  var tabs = [['c','Inhalt'],['d','Design'],['a','Mehr']];
+  h += '<div class="etabs" role="tablist" style="--i:'+tabs.map(function(t){ return t[0]; }).indexOf(tab)+'">'+tabs.map(function(t){ return '<button role="tab" aria-selected="'+(tab===t[0])+'" class="'+(tab===t[0]?'on':'')+'" data-a="etab" data-v="'+t[0]+'">'+t[1]+'</button>'; }).join('')+'<i class="etab-ind" aria-hidden="true"></i></div>';
+  if(tab === 'c'){
+    h += '<div class="epane">' + (fs.c.length ? F_(fs.c) : '<p class="hint">Dieses Element hat keinen eigenen Inhalt. Aussehen und Verhalten findest du unter „Design“ und „Mehr“.</p>');
+    if(b.type === 'choice' || b.type === 'button') h += '<div class="einfo">'+I('branch',13)+'<span>'+(b.type==='choice'?'Verzweigung, Preis und Punkte stellst du pro Antwort über '+I('settings',11)+' ein.':'„Absenden“ speichert die Anfrage und leitet zur Zielseite weiter.')+'</span></div>';
+    return h + '</div>';
   }
-  h += '<div class="psec"><h5>Layout</h5>' + field(['align','seg','Ausrichtung',[['left','Links'],['center','Mitte'],['right','Rechts']]], p, 'p')
-    + field(['half','toggle','Halbe Breite (2 Elemente nebeneinander)'], p, 'p')
-    + '<div class="row2">' + field(['mt','num','Abstand oben'], p, 'p') + field(['mb','num','Abstand unten'], {mb: p.mb != null ? p.mb : 16}, 'p') + '</div></div>';
-  var dv = Object.assign({}, p, {scale: p.scale || 100, delay: p.delay || 0, pad: p.pad || 0, brad: p.brad == null || p.brad === '' ? 0 : p.brad, anim: p.anim || 'none', vis: p.vis || 'all'});
-  var hasStyle = STYLE_KEYS.some(function(k){ return p[k] !== undefined && p[k] !== '' && p[k] !== false && !(k==='anim' && p[k]==='none') && !(k==='vis' && p[k]==='all') && !(k==='scale' && +p[k]===100); });
-  h += '<div class="fmtbar"><button class="btn sm" data-a="fmtCopy">'+I('brush',13)+'Format kopieren</button><button class="btn sm" data-a="fmtPaste"'+(FCLIP ? ' title="Format von „'+esc(BNAME[FCLIP.type]||FCLIP.type)+'“ übertragen"' : ' disabled')+'>'+I('paste',13)+'Format einfügen</button></div>';
-  h += '<div class="psec"><h5>'+I('palette',13)+'Stil'+(hasStyle?'<span style="flex:1"></span><button class="btn sm ghost" data-a="styleReset" style="height:24px;text-transform:none;letter-spacing:0">Zurücksetzen</button>':'')+'</h5>';
-  if(TEXTY[b.type]) h += '<div class="subh">Typografie</div>' + STYLE_TYPO.map(function(sp){ return field(sp, dv, 'p'); }).join('');
-  if(INNER_T[b.type]) h += '<div class="subh">Elemente im Block</div>' + STYLE_INNER.filter(function(sp, i){ return sp && !(sp[0] === 'row2' && sp[2][0][0] === 'iSurf' && !SURF_T[b.type]); }).concat(STYLE_EXTRA[b.type] || []).map(function(sp){ return field(sp, p, 'p'); }).join('') + '<div class="hint" style="margin:-4px 0 12px">Leer = Werte aus dem Design-Tab.</div>';
-  h += '<div class="subh">Box</div>' + STYLE_BOX.map(function(sp){ return field(sp, dv, 'p'); }).join('');
-  h += '<div class="subh">Effekte & Sichtbarkeit</div>' + STYLE_FX.map(function(sp){ return field(sp, dv, 'p'); }).join('') + '</div>';
-  return h;
+  if(tab === 'd'){
+    var txt = b.type === 'heading' || b.type === 'text', chipsOrCover = b.type === 'choice' && (p.layout === 'chips' || p.layout === 'cover');
+    var typo = STYLE_TYPO.filter(function(sp){ return !((txt || b.type === 'button') && sp[0] === 'scale'); }).map(function(sp){ return txt && sp[0] === 'row2' && sp[2][0][0] === 'lh' ? ['ls','num','Laufweite'] : sp; });
+    var inner = STYLE_INNER.filter(function(sp){ return sp && !(sp[0] === 'row2' && sp[2][0][0] === 'iSurf' && !SURF_T[b.type]); }).map(function(sp){ return chipsOrCover && sp[0] === 'row2' && sp[2][0][0] === 'iRad' ? ['iGap','num','Abstand zwischen den Antworten (px)'] : sp; }).concat(STYLE_EXTRA[b.type] || []);
+    var place = [['align','seg','Ausrichtung',[['left','Links'],['center','Mitte'],['right','Rechts']]],['half','toggle','Halbe Breite (2 Elemente nebeneinander)'],['row2','row',[['mt','num','Abstand oben'],['mb','num','Abstand unten']]]];
+    var boxOn = setVal(p.bgc) || +p.bwid > 0 || setVal(p.shd);
+    var boxMain = [STYLE_BOX[0], STYLE_BOX[3], STYLE_BOX[4]], boxDep = [STYLE_BOX[1], STYLE_BOX[2]];
+    var dv = Object.assign({}, p, {scale: p.scale || 100, pad: p.pad || 0, brad: p.brad == null || p.brad === '' ? 0 : p.brad});
+    h += '<div class="epane"><div class="ethm">'+I('palette',13)+'<span>Leer = aus dem Theme. Geänderte Werte haben einen Punkt – ein Klick setzt sie zurück.</span><button class="lnk" data-a="rtab" data-v="design">Theme</button></div>';
+    h += accSec('el-'+b.type, esc(BNAME[b.type]||'Element'), F_(fs.d), overrides(fs.d, p), true);
+    h += accSec('place', 'Anordnung & Abstände', F_(place), overrides(place, p), false);
+    if(TEXTY[b.type]) h += accSec('typo', 'Schrift', F_(typo, dv), overrides(typo, p), false);
+    if(INNER_T[b.type]) h += accSec('inner', b.type === 'choice' ? 'Antworten: Farben & Flächen' : 'Farben & Flächen', F_(inner), overrides(inner, p), false);
+    if(b.type !== 'button' && b.type !== 'box') h += accSec('box', 'Hintergrund & Rahmen', F_(boxMain, dv) + '<div class="dimw'+(boxOn ? '' : ' dim')+'">'+F_(boxDep, dv)+(boxOn ? '' : '<div class="hint" style="margin:-4px 0 4px">Ecken und Innenabstand wirken, sobald Hintergrund, Rahmen oder Schatten gesetzt ist.</div>')+'</div>', overrides(STYLE_BOX, p), false);
+    if(b.type === 'box') h += accSec('box', 'Hintergrund, Rahmen & Schatten', F_(STYLE_BOX, dv), overrides(STYLE_BOX, p), true);
+    return h + '</div>';
+  }
+  var hasStyle = STYLE_KEYS.some(function(k){ return setVal(p[k]) && p[k] !== false && !(k==='anim' && p[k]==='none') && !(k==='vis' && p[k]==='all') && !(k==='scale' && +p[k]===100); });
+  var fx = Object.assign({}, p, {delay: p.delay || 0, anim: p.anim || 'none', vis: p.vis || 'all'});
+  h += '<div class="epane">';
+  h += accSec('fx', 'Einblenden & Sichtbarkeit', STYLE_FX.map(function(sp){ return field(sp, fx, 'p'); }).join(''), 0, true);
+  if(fs.a.length) h += accSec('adv', 'Daten', F_(fs.a), 0, true);
+  h += accSec('fmt', 'Format', '<div class="fmtbar"><button class="btn sm" data-a="fmtCopy">'+I('brush',13)+'Kopieren</button><button class="btn sm" data-a="fmtPaste"'+(FCLIP ? ' title="Format von „'+esc(BNAME[FCLIP.type]||FCLIP.type)+'“ übertragen"' : ' disabled')+'>'+I('paste',13)+'Einfügen</button></div>' + (hasStyle ? '<button class="btn sm ghost" data-a="styleReset" style="width:100%;justify-content:center;margin-top:8px">'+I('undo',13)+'Gesamte Gestaltung zurücksetzen</button>' : ''), 0, true);
+  return h + '</div>';
 }
 /* Kartenstil: Auswahl mit kleiner Vorschau (zwei Kacheln, die rechte ist gewählt) */
 var OPT_STYLES = [['filled','Gefüllt'],['outline','Rahmen'],['shadow','Karte'],['glass','Glas'],['soft','Soft UI']];
@@ -2681,7 +2728,7 @@ var SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/di
 function loadScript(src, sri){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; if(sri){ s.integrity = sri; s.crossOrigin = 'anonymous'; } s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 var SNAP = {funnels:{}, leads:{}, clients:{}, settings:''}, syncing = false, syncAgain = false;
 function funnelToRow(f){ ensureSlug(f); var r = {id:f.id, name:f.name, slug:f.slug, status:f.status, client_id:f.clientId || null, shared:!!f.shared, theme:f.theme, settings:f.settings, pages:f.pages, created_at:new Date(f.createdAt||Date.now()).toISOString(), updated_at:new Date(f.updatedAt||Date.now()).toISOString()}; if(HAS_PUB) r.published = f.published || null; return r; }
-function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, overviewColor:r.overview_color || '', status:r.status, clientId:r.client_id, shared:r.shared, published:r.published || null, versions:r.versions || [], theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
+function rowToFunnel(r, st){ return {id:r.id, name:r.name, slug:r.slug, overviewColor:r.overview_color || '', status:r.status, clientId:r.client_id, shared:r.shared, published:r.published || null, versions:HAS_VT ? [] : (r.versions || []), theme:Object.assign({}, T.THEME_BASE, r.theme||{}), settings:r.settings||{}, pages:r.pages||[], createdAt:Date.parse(r.created_at), updatedAt:Date.parse(r.updated_at), stats:st || {views:0, starts:0, completes:0, pages:{}, daily:{}}}; }
 var LEAD_COLS = ['id','funnelId','funnelName','name','email','phone','total','status','notes','createdAt'];
 function leadToRow(l){ var data = {}; Object.keys(l).forEach(function(k){ if(LEAD_COLS.indexOf(k) < 0) data[k] = l[k]; }); return {id:l.id, funnel_id:l.funnelId || null, funnel_name:l.funnelName || '', name:l.name || null, email:l.email || null, phone:l.phone || null, total:l.total || 0, status:l.status || 'neu', notes:l.notes || '', data:data, created_at:new Date(l.createdAt||Date.now()).toISOString()}; }
 function rowToLead(r){ return Object.assign({}, r.data || {}, {id:r.id, funnelId:r.funnel_id, funnelName:r.funnel_name, name:r.name, email:r.email, phone:r.phone, total:+r.total || 0, status:r.status, notes:r.notes || '', createdAt:Date.parse(r.created_at)}); }
@@ -2705,7 +2752,8 @@ async function loadRemote(){
   var stats = {}; (q[3].data || []).forEach(function(r){ stats[r.funnel_id] = {views:+r.views || 0, starts:+r.starts || 0, completes:+r.completes || 0, pages:r.pages || {}, daily:r.daily || {}}; });
   var set = (q[4].data && q[4].data.data) || {};
   db = emptyDb();
-  var pubProbe = await sb.from('funnels').select('published').limit(0); HAS_PUB = !pubProbe.error; /* Spalten aus versionen.sql vorhanden? */
+  var pubProbe = await sb.from('funnels').select('published').limit(0); HAS_PUB = !pubProbe.error;
+  var vtProbe = await sb.from('funnel_versions').select('id').limit(0); HAS_VT = !vtProbe.error; /* Tabelle aus versionen-2.sql */ /* Spalten aus versionen.sql vorhanden? */
   db.clients = (q[0].data || []).map(rowToClient);
   savedOverviewColors.clear();
   (q[1].data || []).forEach(function(r){ if(r.overview_color) savedOverviewColors.set(r.id, r.overview_color); });
@@ -2750,13 +2798,27 @@ async function syncFunnels(){
   }
 }
 async function syncVersions(){
+  if(!HAS_VT) return; /* ohne Tabelle bleiben Backups lokal – kein großes Schreiben mehr in eine Zelle (Timeout) */
   for(var f of db.funnels){
-    var versions = f.versions || [], ids = JSON.stringify(versions.map(function(v){ return v.id; }));
-    if(VSNAP[f.id] === ids) continue;
-    var result = await sb.from('funnels').update({versions:versions}).eq('id', f.id).select('id').single();
-    if(result.error) throw result.error;
-    VSNAP[f.id] = ids;
+    var fresh = (f.versions || []).filter(function(v){ return !VSAVED[v.id] && !v._remote; });
+    if(!fresh.length) continue;
+    var rows = fresh.map(function(v){ return {id:v.id, funnel_id:f.id, at:new Date(v.at).toISOString(), kind:v.kind === 'publish' ? 'publish' : 'auto', label:v.label || null, data:{name:v.name, theme:v.theme, settings:v.settings, pages:v.pages}}; });
+    for(var i = 0; i < rows.length; i++){ var ins = await sb.from('funnel_versions').upsert(rows[i]); if(ins.error) throw ins.error; VSAVED[rows[i].id] = 1; }
+    /* behalten: 4 Veröffentlichungen + 8 automatische Stände */
+    var list = await sb.from('funnel_versions').select('id,kind').eq('funnel_id', f.id).order('at', {ascending:false});
+    if(list.error) throw list.error;
+    var pub = 0, auto = 0, drop = (list.data || []).filter(function(v){ return v.kind === 'publish' ? ++pub > 4 : ++auto > 8; }).map(function(v){ return v.id; });
+    if(drop.length){ var del = await sb.from('funnel_versions').delete().in('id', drop); if(del.error) throw del.error; }
   }
+}
+async function loadVersions(f){
+  if(!HAS_VT || !sb) return f.versions || [];
+  var r = await sb.from('funnel_versions').select('*').eq('funnel_id', f.id).order('at', {ascending:false}).limit(12);
+  if(r.error) throw r.error;
+  var remote = (r.data || []).map(function(x){ VSAVED[x.id] = 1; return Object.assign({id:x.id, at:Date.parse(x.at), kind:x.kind, label:x.label || '', _remote:true}, x.data || {}); });
+  var local = (f.versions || []).filter(function(v){ return !remote.some(function(x){ return x.id === v.id; }); });
+  f.versions = local.concat(remote).sort(function(a, b){ return b.at - a.at; });
+  return f.versions;
 }
 async function syncTable(table, list, toRow, onlyCols){
   var snap = SNAP[table], seen = {}, ups = [], pend = {};
@@ -2918,6 +2980,8 @@ var ACT = {
   },
   optIc:function(el){ var b = selBlock(), o = b && b.props.options[+el.getAttribute('data-i')], v = el.getAttribute('data-v'); if(!o) return; snap(true); if(v) o.ic = v; else delete o.ic; touch(); renderCanvas(true); renderRight(); },
   spReset:function(){ var t = F().theme; snap(true); SP_KEYS.forEach(function(k){ delete t[k]; }); touch(); renderCanvas(true); renderRight(); },
+  etab:function(el){ S.etab = el.getAttribute('data-v'); renderRight(); },
+  accT:function(el){ var sec = el.closest('.acc'), id = el.getAttribute('data-id'), on = !sec.classList.contains('open'); sec.classList.toggle('open', on); el.setAttribute('aria-expanded', on); ACC[id] = on; try{ localStorage.setItem('tt-acc', JSON.stringify(ACC)); }catch(e){} },
   clearProp:function(el){ snap(true); setScoped(el.getAttribute('data-scope'), el.getAttribute('data-k'), ''); renderCanvas(true); renderRight(); },
   preset:function(el){ var f = F(), th = T.THEMES[el.getAttribute('data-v')]; snap(true); Object.keys(th).forEach(function(k){ if(k !== 'name') f.theme[k] = th[k]; }); if(!th.primaryText) f.theme.primaryText = '#ffffff'; f.theme.progress = th.progress || 'bar'; touch(); renderCanvas(true); renderRight(); },
   arrAdd:function(el){ var b = selBlock(), k = el.getAttribute('data-k'); snap(true); b.props[k] = (b.props[k]||[]).concat([k==='slots'?'18:00':'Neuer Eintrag']); touch(); renderCanvas(true); renderRight(); },

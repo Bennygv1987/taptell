@@ -990,3 +990,36 @@ body.painting #scr .fp-b{cursor:copy}
 button.media-thumb{cursor:pointer}button.media-thumb:active{transform:scale(.97)}
 .media-thumb img{width:100%;height:6rem;object-fit:contain;background:var(--n100)}
 .media-thumb span{padding:var(--r-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-12)}
+
+/* ===== Element-Panel: Reiter, Abschnitte, Theme-Hinweis ===== */
+.etabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);margin:2px 0 14px;padding:3px;border-radius:var(--r-md);background:var(--n100)}
+.etabs button{position:relative;z-index:1;appearance:none;border:0;background:none;padding:6px 0;border-radius:var(--r-sm);font:550 var(--fs-12) var(--ui);color:var(--mut);cursor:pointer;transition:color var(--dur-fast) ease,transform var(--dur-press) var(--ease-out)}
+.etabs button.on{color:var(--ink)}
+.etabs button:active{transform:scale(.97)}
+.etab-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/3);border-radius:var(--r-sm);background:var(--card);box-shadow:var(--sh-md);transform:translateX(calc(var(--i,0)*100%));transition:transform 220ms var(--ease-out)}
+.epane{display:grid;gap:8px;animation:epIn 160ms var(--ease-out)}
+@keyframes epIn{from{opacity:0;transform:translateY(3px)}}
+.ethm{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-md);background:var(--n25);border:1px solid var(--line2);font-size:var(--fs-12);color:var(--mut);line-height:1.35}
+.ethm svg{flex:none}
+.ethm .lnk{margin-left:auto;flex:none;appearance:none;border:0;background:none;color:var(--acc);font:550 var(--fs-12) var(--ui);cursor:pointer;padding:2px 0}
+.einfo{display:flex;gap:8px;align-items:flex-start;padding:10px;border-radius:var(--r-md);background:var(--n25);border:1px solid var(--line2);font-size:var(--fs-12);color:var(--mut);line-height:1.4}
+.acc{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)}
+.acch{appearance:none;border:0;background:none;width:100%;display:flex;align-items:center;gap:8px;padding:11px 12px;font:600 var(--fs-13) var(--ui);color:var(--ink);cursor:pointer;text-align:left;border-radius:var(--r-lg);transition:background-color var(--dur-fast) ease}
+@media (hover:hover) and (pointer:fine){.acch:hover{background:var(--hover)}}
+.acch .acct{flex:1;min-width:0}
+.acch svg{flex:none;color:var(--mut);transition:transform 200ms var(--ease-out)}
+.acc.open .acch svg{transform:rotate(180deg)}
+.accn{flex:none;min-width:18px;height:18px;padding:0 5px;border-radius:var(--r-pill);display:grid;place-items:center;background:var(--accS);color:var(--acc);font:600 var(--fs-11) var(--ui)}
+.accb{display:grid;grid-template-rows:0fr;transition:grid-template-rows 220ms var(--ease-out)}
+.acc.open .accb{grid-template-rows:1fr}
+.acci{min-height:0;overflow:hidden;padding:0 12px;opacity:0;transition:opacity 160ms ease,padding 220ms var(--ease-out)}
+.acc.open .acci{opacity:1;padding:2px 12px 12px;overflow:visible}
+.dimw.dim{opacity:.45}
+.dimw.dim .fld{pointer-events:none}
+/* geänderter Wert: Punkt im Label, Klick setzt auf das Theme zurück */
+.fld>label{display:flex;align-items:center;gap:6px}
+.ovr{appearance:none;border:0;padding:0;width:7px;height:7px;border-radius:50%;background:var(--acc);cursor:pointer;flex:none;position:relative;transition:transform var(--dur-press) var(--ease-out)}
+.ovr::after{content:'';position:absolute;inset:-6px}
+@media (hover:hover) and (pointer:fine){.ovr:hover{transform:scale(1.4)}}
+.ovr:active{transform:scale(.9)}
+@media (prefers-reduced-motion:reduce){.etab-ind,.accb,.acch svg{transition:none}.epane{animation-name:fade}}
