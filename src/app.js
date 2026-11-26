@@ -693,10 +693,10 @@ function swHtml(cur){
 function swRefresh(){ document.querySelectorAll('.swr').forEach(function(r){ var w = r.closest('.colw'), tx = w && w.querySelector('input[type=text]'); r.innerHTML = swHtml(tx ? tx.value : ''); }); }
 function colAlpha(v){ var m = String(v || '').match(/rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/); if(m) return Math.round(Math.max(0, Math.min(1, +m[1])) * 100); var h = String(v || '').match(/^#[0-9a-f]{6}([0-9a-f]{2})$/i); return h ? Math.round(parseInt(h[1], 16) / 2.55) : 100; }
 function colMix(hex, a){ hex = toHex(hex || '#000000'); if(a >= 100) return hex; var n = parseInt(hex.slice(1), 16); return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+(Math.round(a)/100)+')'; }
-function colorField(scope, k, v){ var al = colAlpha(v); return '<div class="colw"><div class="colr"><input type="color" data-'+scope+'="'+k+'" value="'+esc(toHex(v||'#ffffff'))+'"><input type="text" data-'+scope+'="'+k+'" value="'+esc(v)+'"><span class="alw" title="Deckkraft"><input type="range" class="alpha" min="0" max="100" step="1" value="'+al+'" data-alpha style="--c:'+esc(toHex(v||'#ffffff'))+'" aria-label="Deckkraft"><b>'+al+'%</b></span></div><div class="swr">'+swHtml(v)+'</div></div>'; }
+function colorField(scope, k, v){ var al = colAlpha(v); return '<div class="colw"><div class="colr"><input type="color" data-'+scope+'="'+k+'" value="'+esc(toHex(v||'#ffffff'))+'"><input type="text" data-'+scope+'="'+k+'" value="'+esc(v)+'"></div><span class="alw" title="Deckkraft"><input type="range" class="alpha" min="0" max="100" step="1" value="'+al+'" data-alpha style="--c:'+esc(toHex(v||'#ffffff'))+'" aria-label="Deckkraft"><b>'+al+'%</b></span><div class="swr">'+swHtml(v)+'</div></div>'; }
 /* Deckkraft-Regler und Farbwähler arbeiten zusammen: unter 100 % wird rgba() gespeichert */
 document.addEventListener('input', function(e){
-  var el = e.target; if(!el.closest) return; var w = el.closest('.colr'); if(!w) return;
+  var el = e.target; if(!el.closest) return; var w = el.closest('.colw') || el.closest('.colr'); if(!w) return;
   var tx = w.querySelector('input[type=text]'), cp = w.querySelector('input[type=color]'), al = w.querySelector('[data-alpha]'); if(!tx || !al) return;
   if(el === al){ e.stopPropagation(); var a = +al.value; al.nextElementSibling.textContent = a + '%'; tx.value = colMix(cp.value, a); tx.dispatchEvent(new Event('input', {bubbles:true})); return; }
   if(el === cp && +al.value < 100){ e.stopPropagation(); al.style.setProperty('--c', cp.value); tx.value = colMix(cp.value, +al.value); tx.dispatchEvent(new Event('input', {bubbles:true})); return; }
@@ -924,9 +924,52 @@ function renderRight(){
   else h += panelSettings();
   var sc = $('#rps'), st = sc ? sc.scrollTop : 0;
   rp.innerHTML = h + '</div>';
+  enhancePanel(rp, S.rtab);
   $('#rps').scrollTop = st;
   if(S.rtab === 'design') fillLogoColors();
 }
+/* ---- Seite, Design, Funnel: einheitliche, aufklappbare Abschnitte in klaren Gruppen ----
+   Häufiges oben und offen, Seltenes darunter und zu. Der Zustand bleibt pro Abschnitt gespeichert. */
+var PANEL_GROUPS = {
+  page:[['', ['Seite', 'Weiterleitung', 'Hintergrund']]],
+  design:[['Grundlagen', ['Stil-Pakete', 'Themes', 'Farben', 'Schnellfarben', 'Typografie']], ['Elemente', ['Buttons', 'Felder & Antwortkarten']], ['Layout', ['Header & Navigation', 'Abstände', 'Desktop', 'Animation & Hintergrund']], ['Extras', ['Kontakt-Knopf', 'Chat-Modus', 'Eigenes CSS']]],
+  set:[['Funnel', ['Allgemein', 'Kunde & Freigabe', 'Personalisierung']], ['Anfragen', ['Preisberechnung', 'Automationen', 'Integrationen']], ['Rechtliches & Code', ['Cookie-Banner', 'Eigenes CSS']]]
+};
+var PANEL_OPEN = {page:{'Seite':1}, design:{'Stil-Pakete':1, 'Farben':1}, set:{'Allgemein':1}};
+function enhancePanel(rp, tab){
+  if(tab === 'el') return;
+  var body = rp.querySelector('#rps') || rp, secs = [].slice.call(body.querySelectorAll('.psec')).filter(function(x){ return x.querySelector(':scope > h5'); });
+  if(!secs.length) return;
+  var title = function(sec){ var h = sec.querySelector(':scope > h5'); return [].filter.call(h.childNodes, function(n){ return n.nodeType === 3; }).map(function(n){ return n.nodeValue; }).join('').replace(/\s+/g, ' ').trim(); }; /* nur der Text, ohne Pillen oder Knöpfe */
+  secs.forEach(function(sec){
+    var h5 = sec.querySelector(':scope > h5'), t = title(sec), key = 'p:' + tab + ':' + (/^Seite \d/.test(t) ? 'Seite' : t), open = ACC[key] != null ? ACC[key] : !!((PANEL_OPEN[tab] || {})[t] || (PANEL_OPEN[tab] || {})[t.split(' ')[0]]);
+    var wrap = document.createElement('div'), innerEl = document.createElement('div'); wrap.className = 'paccb'; innerEl.className = 'pacci';
+    while(h5.nextSibling) innerEl.appendChild(h5.nextSibling);
+    wrap.appendChild(innerEl); sec.appendChild(wrap);
+    sec.classList.add('pacc'); sec.classList.toggle('open', open); sec.setAttribute('data-pkey', key);
+    h5.setAttribute('role', 'button'); h5.setAttribute('tabindex', '0'); h5.setAttribute('aria-expanded', open);
+    h5.insertAdjacentHTML('beforeend', '<span class="pchev">'+I('chevDown',14)+'</span>');
+  });
+  /* Gruppen: bekannte Abschnitte in fester Reihenfolge, unbekannte behalten ihren Platz am Ende */
+  var groups = PANEL_GROUPS[tab]; if(!groups) return;
+  var byTitle = {}; secs.forEach(function(sec){ byTitle[title(sec)] = sec; });
+  var anchor = secs[0].parentNode, before = document.createComment('p'), used = {}; anchor.insertBefore(before, secs[0]); /* Marker, damit das Verschieben den Startpunkt nicht mitnimmt */
+  groups.forEach(function(g){
+    var members = g[1].map(function(t){ return byTitle[t] || secs.filter(function(x){ return title(x).indexOf(t + ' ') === 0; })[0]; }).filter(function(m, i, arr){ return m && arr.indexOf(m) === i; }); if(!members.length) return;
+    if(g[0]){ var lab = document.createElement('div'); lab.className = 'pgrp'; lab.textContent = g[0]; anchor.insertBefore(lab, before); }
+    members.forEach(function(m){ anchor.insertBefore(m, before); used[title(m)] = 1; });
+  });
+  var rest = secs.filter(function(sec){ return !used[title(sec)]; });
+  if(rest.length && groups.length > 1){ var lab2 = document.createElement('div'); lab2.className = 'pgrp'; lab2.textContent = 'Weitere'; anchor.insertBefore(lab2, before); rest.forEach(function(m){ anchor.insertBefore(m, before); }); }
+  else rest.forEach(function(m){ anchor.insertBefore(m, before); });
+  before.remove();
+}
+document.addEventListener('click', function(e){
+  var h5 = e.target.closest && e.target.closest('.pacc > h5'); if(!h5 || e.target.closest('button:not(.pchev), a, input, select, label.tgl')) return;
+  var sec = h5.parentNode, on = !sec.classList.contains('open'); sec.classList.toggle('open', on); h5.setAttribute('aria-expanded', on);
+  ACC[sec.getAttribute('data-pkey')] = on; try{ localStorage.setItem('tt-acc', JSON.stringify(ACC)); }catch(x){}
+});
+document.addEventListener('keydown', function(e){ var h5 = e.target.closest && e.target.closest('.pacc > h5'); if(h5 && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); h5.click(); } });
 function pageOptions(sel, emptyLabel){ var f = F(); return '<option value="">'+esc(emptyLabel||'– Standard –')+'</option>' + f.pages.map(function(p, i){ return '<option value="'+p.id+'"'+(p.id===sel?' selected':'')+'>'+(i+1)+'. '+esc(p.name)+'</option>'; }).join(''); }
 var VARK = ['text','label','question','desc','sub','quote','title','note','placeholder'];
 function varMenu(btn){
@@ -3081,7 +3124,7 @@ document.addEventListener('input', function(e){
   if(el.hasAttribute('data-rr')){ var rb = selBlock(), rr = rb && rb.props.routes[+el.getAttribute('data-rr')], rk = el.getAttribute('data-rk'); if(!rr) return; snap(el.tagName === 'SELECT'); rr[rk] = rk === 'goto' ? el.value : +el.value; touch(); renderLeft(); renderCanvas(true); return; }
   if(el.hasAttribute('data-sr')){ var pg = curPage(), r = pg.scoreRoutes[+el.getAttribute('data-sr')], sk = el.getAttribute('data-sk'); snap(el.tagName === 'SELECT'); r[sk] = sk === 'goto' ? el.value : +el.value; touch(); renderLeft(); return; }
 });
-function syncColor(el, scope, k, v){ var w = el.closest('.colr'); if(!w) return; $$('input', w).forEach(function(x){ if(x === el || x.type === 'range') return; if(x.type === 'color') x.value = toHex(v); else x.value = v; }); var al = w.querySelector('[data-alpha]'); if(al){ al.style.setProperty('--c', toHex(v)); if(el.type === 'text'){ var na = colAlpha(v); al.value = na; al.nextElementSibling.textContent = na + '%'; } } }
+function syncColor(el, scope, k, v){ var w = el.closest('.colr'); if(!w) return; $$('input', w).forEach(function(x){ if(x === el || x.type === 'range') return; if(x.type === 'color') x.value = toHex(v); else x.value = v; }); var al = (el.closest('.colw') || w).querySelector('[data-alpha]'); if(al){ al.style.setProperty('--c', toHex(v)); if(el.type === 'text'){ var na = colAlpha(v); al.value = na; al.nextElementSibling.textContent = na + '%'; } } }
 function rangeLabel(el){ if(el.type === 'range'){ var s = el.parentNode.querySelector('span'); if(s) s.textContent = el.value + (el.hasAttribute('data-unit') ? el.getAttribute('data-unit') : 'px'); } }
 
 document.addEventListener('change', function(e){

@@ -958,11 +958,9 @@ body.painting #scr .fp-b{cursor:copy}
 /* Deckkraft im Farbwähler */
 .colr .alw{display:flex;align-items:center;gap:4px;flex:none}
 .colr .alw b{font:500 var(--fs-11) var(--mono);color:var(--mut);width:30px;text-align:right}
-.colr input.alpha{-webkit-appearance:none;appearance:none;width:54px;height:8px;border-radius:99px;background:linear-gradient(90deg,transparent,var(--c)),repeating-conic-gradient(var(--n200) 0 25%,var(--card) 0 50%) 0 0/8px 8px;outline:none;cursor:pointer}
-.colr input.alpha::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--card);box-shadow:0 0 0 1px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.2)}
-.colr input.alpha::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--card);border:0;box-shadow:0 0 0 1px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.2)}
-.row2 .colr .alw b{display:none}
-.row2 .colr input.alpha{width:40px}
+.alw input.alpha{-webkit-appearance:none;appearance:none;width:54px;height:8px;border-radius:99px;background:linear-gradient(90deg,transparent,var(--c)),repeating-conic-gradient(var(--n200) 0 25%,var(--card) 0 50%) 0 0/8px 8px;outline:none;cursor:pointer}
+.alw input.alpha::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--card);box-shadow:0 0 0 1px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.2)}
+.alw input.alpha::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--card);border:0;box-shadow:0 0 0 1px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.2)}
 
 /* Entwurf / Live-Stand / Versionen */
 .pill.warn{background:var(--warnS);color:var(--warnT)}
@@ -1023,3 +1021,27 @@ button.media-thumb{cursor:pointer}button.media-thumb:active{transform:scale(.97)
 @media (hover:hover) and (pointer:fine){.ovr:hover{transform:scale(1.4)}}
 .ovr:active{transform:scale(.9)}
 @media (prefers-reduced-motion:reduce){.etab-ind,.accb,.acch svg{transition:none}.epane{animation-name:fade}}
+
+/* ===== Einheitliche Abschnitte in Seite / Design / Funnel ===== */
+.pgrp{margin:18px 2px 8px;font:600 var(--fs-11) var(--ui);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.pgrp:first-child{margin-top:4px}
+.psec.pacc{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);padding:0;margin:0 0 8px}
+.psec.pacc>h5{margin:0;padding:11px 12px;font:600 var(--fs-13) var(--ui);letter-spacing:0;text-transform:none;color:var(--ink);cursor:pointer;border-radius:var(--r-lg);user-select:none;transition:background-color var(--dur-fast) ease}
+@media (hover:hover) and (pointer:fine){.psec.pacc>h5:hover{background:var(--hover)}}
+.psec.pacc>h5 svg{color:var(--mut)}
+.psec.pacc>h5 .pchev{margin-left:auto;display:grid;place-items:center;transition:transform 200ms var(--ease-out)}
+.psec.pacc.open>h5 .pchev{transform:rotate(180deg)}
+.psec.pacc>h5:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.paccb{display:grid;grid-template-rows:0fr;transition:grid-template-rows 220ms var(--ease-out)}
+.pacc.open>.paccb{grid-template-rows:1fr}
+.pacci{min-height:0;overflow:hidden;padding:0 12px;opacity:0;transition:opacity 160ms ease,padding 220ms var(--ease-out)}
+.pacc.open>.paccb>.pacci{opacity:1;padding:2px 12px 12px;overflow:visible}
+/* Reiter oben ruhiger, mit gleitender Linie wie im Element-Panel */
+.ptabs{gap:0;padding:8px 10px 0}
+.ptabs button{flex:1;justify-content:center;transition:color var(--dur-fast) ease,border-color var(--dur-fast) ease}
+@media (prefers-reduced-motion:reduce){.paccb,.psec.pacc>h5 .pchev{transition:none}}
+
+/* Deckkraft als schlanke Zeile unter dem Farbfeld */
+.colw .alw{display:flex;align-items:center;gap:8px}
+.colw .alw input.alpha{flex:1;width:auto;min-width:0}
+.colw .alw b{width:34px;text-align:right;font:500 var(--fs-11) var(--mono);color:var(--mut)}
