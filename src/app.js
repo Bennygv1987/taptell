@@ -230,7 +230,7 @@ function updUndo(){ var u = $('[data-a="undo"]'), r = $('[data-a="redo"]'); if(u
 function fixSel(){ var f = F(); if(S.pi >= f.pages.length) S.pi = f.pages.length - 1; if(S.sel && !selBlock()) S.sel = null; }
 
 /* ---------- ui helpers ---------- */
-function toast(msg){ var w = $('.toasts'); if(!w){ w = document.createElement('div'); w.className = 'toasts'; document.body.appendChild(w); } var t = document.createElement('div'); t.className = 'toast'; t.innerHTML = I('check',15) + esc(msg); w.appendChild(t); setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function(){ t.remove(); }, 300); }, 2600); }
+function toast(msg){ var w = $('.toasts'); if(!w){ w = document.createElement('div'); w.className = 'toasts'; document.body.appendChild(w); } var t = document.createElement('div'); t.className = 'toast'; t.innerHTML = I('check',15) + esc(msg); w.appendChild(t); setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function(){ t.remove(); }, 300); }, Math.min(9000, Math.max(2600, String(msg).length * 55))); } /* lange Hinweise bleiben länger stehen */
 function closeDD(){ $$('.dd').forEach(function(d){ d.remove(); }); }
 function dropdown(anchor, items){
   closeDD();
@@ -3002,6 +3002,7 @@ async function loadRemote(){
 }
 /* Bestehende Datensätze gezielt aktualisieren: Live-Stand und eingebettete Bilder
    gehören nur in den Request, wenn sich die jeweilige Spalte geändert hat. */
+var BIGWARN = {};
 async function syncFunnels(){
   var snapshots = SNAP.funnels;
   for(var f of db.funnels){
@@ -3013,6 +3014,8 @@ async function syncFunnels(){
       Object.keys(row).forEach(function(key){
         if(JSON.stringify(previous[key]) !== JSON.stringify(row[key])) patch[key] = row[key];
       });
+      var psize = JSON.stringify(patch).length;
+      if(psize > 3e6 && !BIGWARN[id]){ BIGWARN[id] = 1; toast('„'+f.name+'“ ist sehr groß ('+fmtSize(psize)+' pro Speichern) und kann abbrechen. Funnel → Ladezeit → „Bilder verkleinern“.'); }
       result = await sb.from('funnels').update(patch).eq('id', id).select('id').single();
     } else {
       result = await sb.from('funnels').upsert(row);
@@ -3028,13 +3031,24 @@ async function syncFunnels(){
     removed.forEach(function(id){ delete snapshots[id]; delete VSNAP[id]; savedOverviewColors.delete(id); });
   }
 }
+var VSKIP = {}, VWARN = {}, VMAX = 2.5e6; /* ab ca. 2,5 MB pro Stand überschreitet Supabase das Zeitlimit */
 async function syncVersions(){
   if(!HAS_VT) return; /* ohne Tabelle bleiben Backups lokal – kein großes Schreiben mehr in eine Zelle (Timeout) */
   for(var f of db.funnels){
-    var fresh = (f.versions || []).filter(function(v){ return !VSAVED[v.id] && !v._remote; });
+    var fresh = (f.versions || []).filter(function(v){ return !VSAVED[v.id] && !VSKIP[v.id] && !v._remote; });
     if(!fresh.length) continue;
     var rows = fresh.map(function(v){ return {id:v.id, funnel_id:f.id, at:new Date(v.at).toISOString(), kind:v.kind === 'publish' ? 'publish' : 'auto', label:v.label || null, data:{name:v.name, theme:v.theme, settings:v.settings, pages:v.pages}}; });
-    for(var i = 0; i < rows.length; i++){ var ins = await sb.from('funnel_versions').upsert(rows[i]); if(ins.error) throw ins.error; VSAVED[rows[i].id] = 1; }
+    /* Zu große Stände (meist eingebettete PNG-Fotos) nicht hochladen: sie laufen in den Timeout und blockieren sonst jedes Speichern.
+       Sie bleiben im Browser erhalten; nach „Bilder verkleinern“ klappt das Backup wieder. */
+    var tooBig = 0;
+    for(var i = 0; i < rows.length; i++){
+      var size = JSON.stringify(rows[i].data).length;
+      if(size > VMAX){ VSKIP[rows[i].id] = 1; tooBig = Math.max(tooBig, size); continue; }
+      var ins = await sb.from('funnel_versions').upsert(rows[i]);
+      if(ins.error){ if(ins.error.code === '57014' || /statement timeout/i.test(ins.error.message || '')){ VSKIP[rows[i].id] = 1; tooBig = Math.max(tooBig, size); continue; } throw ins.error; }
+      VSAVED[rows[i].id] = 1;
+    }
+    if(tooBig && !VWARN[f.id]){ VWARN[f.id] = 1; toast('Backup für „'+f.name+'“ übersprungen: '+fmtSize(tooBig)+' zu groß. Funnel → Ladezeit → „Bilder verkleinern“, dann klappt es wieder.'); }
     /* behalten: 4 Veröffentlichungen + 8 automatische Stände */
     var list = await sb.from('funnel_versions').select('id,kind').eq('funnel_id', f.id).order('at', {ascending:false});
     if(list.error) throw list.error;
@@ -3073,7 +3087,9 @@ async function syncOverviewColors(){
     if(color) savedOverviewColors.set(f.id, color); else savedOverviewColors.delete(f.id);
   }
 }
-var lastSaveError = '', timeoutRetry = null;
+var lastSaveError = '', timeoutRetry = null, netTries = 0;
+/* Verbindung wieder da: ausstehende Änderungen sofort speichern */
+window.addEventListener('online', function(){ if(sb && S.user && lastSaveError) syncRemote(); });
 async function syncRemote(){
   if(!sb || !S.user) return;
   if(syncing){ syncAgain = true; return; }
@@ -3094,11 +3110,19 @@ async function syncRemote(){
       await syncTable('leads', visibleLeads(), leadToRow, ['status','notes']);
     }
     if(!syncAgain && !saveT) setSaved(true);
-    lastSaveError = ''; clearTimeout(timeoutRetry); timeoutRetry = null;
+    lastSaveError = ''; clearTimeout(timeoutRetry); timeoutRetry = null; netTries = 0;
   }catch(e){
     setSaved(stage === 'Versionsbackup' ? 'backup' : false);
     var message = stage + ': ' + (e.message || e);
-    if(message !== lastSaveError) toast('Speichern fehlgeschlagen – ' + message);
+    /* Verbindungsabbruch („Failed to fetch“): automatisch erneut versuchen – nach 4, 12 und 30 Sekunden */
+    var net = e instanceof TypeError || /failed to fetch|load failed|networkerror|network request failed/i.test(String(e.message || e));
+    if(net && netTries < 3 && timeoutRetry === null){
+      var wait = [4000, 12000, 30000][netTries++], owner0 = S.user, db0 = db;
+      if(netTries === 1) toast('Verbindung unterbrochen – Speichern wird gleich erneut versucht');
+      timeoutRetry = setTimeout(function(){ timeoutRetry = null; if(S.user === owner0 && db === db0) syncRemote(); }, wait);
+      lastSaveError = message; syncing = false; return;
+    }
+    if(message !== lastSaveError) toast('Speichern fehlgeschlagen – ' + (net ? stage + ': Keine Verbindung zum Server. Deine Änderungen bleiben hier offen, bis es klappt.' : message));
     if((e.code === '57014' || /statement timeout/i.test(e.message)) && timeoutRetry === null){
       var owner = S.user, sessionDb = db;
       timeoutRetry = setTimeout(function(){
