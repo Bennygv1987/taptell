@@ -109,6 +109,52 @@ FP.BRANDS = {
   mail:{n:'E-Mail', c:'#6B7280', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#6B7280"/><rect x="5.5" y="7.5" width="13" height="9" rx="1.6" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M6 8.3l6 4.4 6-4.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'}
 };
 FP.SOCIAL_ORDER = ['whatsapp','instagram','facebook','tiktok','linkedin','youtube','x','telegram','mail'];
+/* Moderne Duotone-Icons (gefüllt, Farbe aus currentColor, helle Fläche mit 35 % Deckkraft) */
+var DI = function(d){ return '<svg viewBox="0 0 24 24" class="dt" fill="currentColor" aria-hidden="true">'+d+'</svg>'; };
+Object.assign(FP.ICONS, {
+  'd-coffee':DI('<path d="M4 9h12v4.5A5.5 5.5 0 0110.5 19h-1A5.5 5.5 0 014 13.5z"/><path d="M16 10.5h1.2a2.8 2.8 0 010 5.6h-1.6v-2h1.6a.8.8 0 000-1.6H16z"/><path class="o" d="M3 20.5h14V22H3z"/><path class="o" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3c-.8 1 .8 2 0 3.2M12 3c-.8 1 .8 2 0 3.2"/>'),
+  'd-music':DI('<path class="o" d="M9 5.5L20 3v3.5L9 9z"/><path d="M9 5.5V17a3 3 0 11-2-2.8V5.5zM20 3v11.5a3 3 0 11-2-2.8V3.5z"/>'),
+  'd-bike':DI('<circle class="o" cx="6" cy="16" r="4"/><circle class="o" cx="18" cy="16" r="4"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 16l3.5-7h5l3.5 7M9.5 9L12 16l2.5-7M13 6h3"/><circle cx="6" cy="16" r="1.6"/><circle cx="18" cy="16" r="1.6"/>'),
+  'd-palette':DI('<path class="o" d="M12 3a9 9 0 000 18c1.4 0 2-1 2-2 0-1.5-1.2-1.6-1.2-2.8 0-1 .8-1.7 1.8-1.7H17a4 4 0 004-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.6"/><circle cx="10" cy="7" r="1.6"/><circle cx="14.5" cy="7" r="1.6"/><circle cx="17" cy="10.5" r="1.4"/>'),
+  'd-ball':DI('<circle class="o" cx="12" cy="12" r="9"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.5 9.5c5 .5 10.5 3.5 14 10M8 3.8c4 4 6 9 6.2 16.9M20.6 9.5c-4.5-.8-9.2.5-15.5 7.5"/>'),
+  'd-glove':DI('<path d="M7 4h7a5 5 0 015 5v3a4 4 0 01-4 4H8a3 3 0 01-3-3V6a2 2 0 012-2z"/><path class="o" d="M7 16h8v4a1 1 0 01-1 1H8a1 1 0 01-1-1z"/><path class="o" d="M5 9h-.5A1.5 1.5 0 003 10.5v1A1.5 1.5 0 004.5 13H5z"/>'),
+  'd-design':DI('<path d="M15.5 3.5l5 5-11 11H4.5v-5z"/><path class="o" d="M3 7l4-4 4 4-1.5 1.5L8 7 6.5 8.5 8 10 7 11 5.5 9.5 4 11zM13 17l4-4 4 4-4 4z"/>'),
+  'd-heart':DI('<path d="M12 20.5s-8-4.6-8-10.4A4.6 4.6 0 0112 7.2a4.6 4.6 0 018 2.9c0 5.8-8 10.4-8 10.4z"/><path class="o" d="M7.2 8.2a2.6 2.6 0 00-1.4 2.3h1.6a1 1 0 01.6-.9z"/>'),
+  'd-star':DI('<path d="M12 2.8l2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3-4.6-4.5 6.4-.9z"/>'),
+  'd-home':DI('<path class="o" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M9.5 21v-6a1 1 0 011-1h3a1 1 0 011 1v6z"/>'),
+  'd-sun':DI('<circle cx="12" cy="12" r="4.5"/><path class="o" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>'),
+  'd-leaf':DI('<path class="o" d="M20 4C10 4 4 8.5 4 15a5 5 0 005 5c6.5 0 11-6 11-16z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 20c3-5 7-8 11-10"/>'),
+  'd-drop':DI('<path d="M12 3s-6.5 7-6.5 11.2a6.5 6.5 0 0013 0C18.5 10 12 3 12 3z"/>'),
+  'd-bolt':DI('<path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/>'),
+  'd-flame':DI('<path class="o" d="M12 2.5s6.5 5 6.5 11a6.5 6.5 0 01-13 0c0-3 1.5-5 3-6.5 0 2 1 3.5 2.5 3.5C11 7.5 12 2.5 12 2.5z"/><path d="M12 13s3 2 3 4.3a3 3 0 01-6 0c0-1.5 1-2.6 3-4.3z"/>'),
+  'd-camera':DI('<path class="o" d="M3 8a2 2 0 012-2h2.5l1.5-2h6l1.5 2H19a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><circle cx="12" cy="13" r="4"/>'),
+  'd-gift':DI('<path class="o" d="M4 11h16v9a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M3 7.5h18V11H3zM11 7.5h2V21h-2z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 7.5C10 3.5 6.5 4.5 7.5 6.5S12 7.5 12 7.5zm0 0c2-4 5.5-3 4.5-1S12 7.5 12 7.5z"/>'),
+  'd-car':DI('<path class="o" d="M5 11l1.6-4.2A2 2 0 018.5 5.5h7a2 2 0 011.9 1.3L19 11z"/><path d="M3 12.5A1.5 1.5 0 014.5 11h15a1.5 1.5 0 011.5 1.5V17a1 1 0 01-1 1h-1v1.5a1.5 1.5 0 01-3 0V18H8v1.5a1.5 1.5 0 01-3 0V18H4a1 1 0 01-1-1z"/>'),
+  'd-plane':DI('<path class="o" d="M9 12l2.5 6.5L21 3z"/><path d="M3 10l18-7-12 9z"/>'),
+  'd-cart':DI('<path class="o" d="M6 6h15l-2 8H8z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5 3.5H5l3 11h10"/><circle cx="9.5" cy="19" r="1.8"/><circle cx="17" cy="19" r="1.8"/>'),
+  'd-chat':DI('<path class="o" d="M4 5h12a2 2 0 012 2v7a2 2 0 01-2 2H9l-4 3.5V16H4a2 2 0 01-2-2V7a2 2 0 012-2z"/><path d="M20 8.5a2 2 0 012 2V16a2 2 0 01-2 2h-1v3l-3.5-3H11a2 2 0 01-1.7-1H16a3 3 0 003-3V8.5z"/>'),
+  'd-calendar':DI('<path class="o" d="M3 9h18v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M5 4.5h14a2 2 0 012 2V9H3V6.5a2 2 0 012-2zM7 2.5h2v4H7zM15 2.5h2v4h-2zM7 12.5h3v3H7z"/>'),
+  'd-clock':DI('<circle class="o" cx="12" cy="12" r="9"/><path d="M11 6.5h2V12l3.5 2.2-1 1.7L11 13z"/>'),
+  'd-check':DI('<circle class="o" cx="12" cy="12" r="9"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 12.3l2.7 2.7L16 9.5"/>'),
+  'd-sparkle':DI('<path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/><path class="o" d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>'),
+  'd-rocket':DI('<path class="o" d="M7 14l-3 1 2-4 3-1zM10 17l-1 3 4-2 1-3z"/><path d="M20.5 3.5S15 3 11 7.5L8.5 12l3.5 3.5 4.5-2.5C21 9 20.5 3.5 20.5 3.5z"/>'),
+  'd-crown':DI('<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path class="o" d="M5 19.5h14V21H5z"/>'),
+  'd-diamond':DI('<path class="o" d="M7 4h10l4 5-9 11L3 9z"/><path d="M3 9h18l-9 11z"/>'),
+  'd-paw':DI('<ellipse cx="6.5" cy="10" rx="1.9" ry="2.5"/><ellipse cx="10.2" cy="6.3" rx="1.9" ry="2.5"/><ellipse cx="13.8" cy="6.3" rx="1.9" ry="2.5"/><ellipse cx="17.5" cy="10" rx="1.9" ry="2.5"/><path class="o" d="M12 12c-3 0-5.5 3.5-5.5 5.5 0 2 2 2.5 3 2s1.5-.5 2.5-.5 1.5.5 2.5.5 3 0 3-2C17.5 15.5 15 12 12 12z"/>'),
+  'd-tree':DI('<path class="o" d="M12 2.5l6 8h-3l4 5.5H5l4-5.5H6z"/><path d="M11 15h2v6.5h-2z"/>'),
+  'd-food':DI('<path d="M6 3v6a2 2 0 002 2v10h1.6V11a2 2 0 002-2V3h-1.3v5H9.4V3H8.2v5H7.3V3z"/><path class="o" d="M16 3c2 0 3 2.5 3 6s-1 4-2 4v8h-2V3z"/>'),
+  'd-fitness':DI('<path d="M2.5 10h2v4h-2zM19.5 10h2v4h-2zM5 7.5h2.5v9H5zM16.5 7.5H19v9h-2.5z"/><path class="o" d="M7.5 11h9v2h-9z"/>'),
+  'd-book':DI('<path class="o" d="M4 4.5A1.5 1.5 0 015.5 3H18a1 1 0 011 1v13H6a2 2 0 00-2 2z"/><path d="M6 17h14v3H6a1.5 1.5 0 010-3z"/>'),
+  'd-work':DI('<path class="o" d="M3 9a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 4.5h6a1 1 0 011 1V7h-2v-.5h-4V7H8V5.5a1 1 0 011-1zM3 11.5l9 3 9-3V13l-9 3-9-3z"/>'),
+  'd-tool':DI('<path d="M20.5 7a5 5 0 01-6.6 4.7L6.5 19a2 2 0 01-2.8-2.8l7.3-7.4A5 5 0 0116.9 2.3L14 5.2l.8 3.2 3.2.8z"/>'),
+  'd-roller':DI('<path d="M4 3.5h12a1 1 0 011 1V8a1 1 0 01-1 1H4a1 1 0 01-1-1V4.5a1 1 0 011-1z"/><path class="o" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 6h3v5.5l-8 1.5v2"/><path d="M10.5 15h3v6.5h-3z"/>'),
+  'd-key':DI('<circle class="o" cx="8" cy="15" r="5"/><path d="M11.5 11.8L19 4.3 20.7 6l-1.6 1.6 1.6 1.6-1.6 1.6-1.6-1.6-4.3 4.3z"/>'),
+  'd-shield':DI('<path class="o" d="M12 2.5l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10v-6z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8.5 12l2.5 2.5 4.5-5"/>'),
+  'd-euro':DI('<circle class="o" cx="12" cy="12" r="9"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15.5 8.2A4.5 4.5 0 008.5 12a4.5 4.5 0 007 3.8M7 10.8h6M7 13.2h6"/>'),
+  'd-phone':DI('<path d="M6.6 3h3l1.6 4.5-2.1 1.3a11 11 0 006.1 6.1l1.3-2.1L21 14.4v3A2.6 2.6 0 0118.4 20 15.4 15.4 0 014 5.6 2.6 2.6 0 016.6 3z"/>'),
+  'd-mail':DI('<path class="o" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M3.5 7.2l8.5 6 8.5-6V9l-8.5 6-8.5-6z"/>'),
+  'd-user':DI('<circle cx="12" cy="8" r="4"/><path class="o" d="M4 20a8 8 0 0116 0v1H4z"/>')
+});
 FP.BTN_ICONS = {
   arrow:BI('<path d="M5 12h14M13 6l6 6-6 6"/>'), chevron:BI('<path d="M9 6l6 6-6 6"/>'), send:BI('<path d="M21.5 2.5L10.5 13.5"/><path d="M21.5 2.5l-7 19-4-8-8-4z"/>'),
   check:BI('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), calendar:BI('<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>'),
@@ -647,6 +693,33 @@ FP.renderBlock = function(b, ctx){
       if(lay === 'scale'){
         h += '<div class="fp-scale">' + (p.options||[]).map(function(o){ return '<button class="fp-sopt'+(sel.indexOf(o.id)>=0?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'" title="'+esc(o.label)+'">'+(o.icon?'<span class="si">'+esc(o.icon)+'</span>':'<span class="sl">'+esc(o.label)+'</span>')+'</button>'; }).join('') + '</div>';
         if(p.minLabel || p.maxLabel) h += '<div class="fp-rlab"><span>'+esc(p.minLabel)+'</span><span>'+esc(p.maxLabel)+'</span></div>';
+        break;
+      }
+      if(lay === 'chips'){
+        /* Chips: Pillen mit optionalem Icon, Farbe pro Antwort, versetzte oder wischbare Reihen */
+        h += '<div class="fp-opts fp-chips ca-'+esc(p.chipArr||'center')+' cs-'+esc(p.chipStyle||'tint')+(p.chipGrad?' cg':'')+'" style="'+(hv0(p.chipRad)?'--chr:'+(+p.chipRad)+'px;':'')+(+p.chipSize?'--chs:'+(+p.chipSize)+'px;':'')+'">';
+        (p.options||[]).forEach(function(o){
+          var on = sel.indexOf(o.id) >= 0, cst = (o.col?'--cc:'+esc(o.col)+';':'')+(o.cbg?'--cbg:'+esc(o.cbg)+';':'')+(o.ctx?'--ctx2:'+esc(o.ctx)+';':'');
+          var ci = p.chipIcon === false ? '' : (o.ic && FP.ICONS[o.ic] ? '<span class="ci">'+FP.ICONS[o.ic]+'</span>' : o.icon ? '<span class="ci e">'+esc(o.icon)+'</span>' : '');
+          var pr0 = p.showPrices && (+o.price || +o.unitPrice) ? '<small>'+(+o.price ? '+ '+FP.money(o.price,cur) : FP.money(o.unitPrice,cur))+'</small>' : '';
+          h += '<button class="fp-chip'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-pressed="'+on+'"'+(cst?' style="'+cst+'"':'')+'>'+ci+'<span>'+esc(o.label)+'</span>'+pr0+'</button>';
+        });
+        h += '</div>';
+        break;
+      }
+      if(lay === 'cover'){
+        /* Bildkarten vollflächig: Bild füllt die Karte, Text unten auf einem weißen oder schwarzen Verlauf */
+        var cvr = p.ratio ? String(p.ratio).replace(':','/') : '4/5';
+        h += '<div class="fp-opts fp-cover cc'+(+p.cols||2)+' fd-'+esc(p.coverFade||'white')+' cva-'+esc(p.coverAlign||'bottom')+'" style="--cvr:'+esc(cvr)+';'+(hv0(p.coverRad)?'--cvrad:'+(+p.coverRad)+'px;':'')+(p.coverTx?'--cvt:'+esc(p.coverTx)+';':'')+(+p.coverSize?'--cvs:'+(+p.coverSize)+'px;':'')+(hv0(p.coverFadeS)?'--cvf:'+(+p.coverFadeS)+'%;':'')+'">';
+        (p.options||[]).forEach(function(o){
+          var on = sel.indexOf(o.id) >= 0, clq = o.img ? FP.lqSrc(o.img) : '';
+          var bg = o.img ? 'background-image:url(&quot;'+o.img+'&quot;)'+(clq?',url(&quot;'+clq+'&quot;)':'')+(o.pos?';background-position:'+esc(o.pos):'') : 'background:linear-gradient(135deg,color-mix(in srgb,var(--p) 22%,var(--sf)),var(--sf))';
+          var pr1 = p.showPrices && (+o.price || +o.unitPrice) ? '<span class="pr">'+(+o.price ? '+ '+FP.money(o.price,cur) : FP.money(o.unitPrice,cur)+(o.unitLabel?' / '+esc(o.unitLabel):''))+'</span>' : '';
+          h += '<button class="fp-cv'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-pressed="'+on+'"><span class="cvi" style="'+bg+'"></span><span class="cvo"></span>'
+            + (o.img && p.zoom ? '<span class="zm" role="button" tabindex="0" data-act="zoom" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="Bild vergrößern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5"/></svg></span>' : '')
+            + '<span class="cvl"><b>'+esc(o.label)+'</b>'+(o.sub?'<span>'+esc(o.sub)+'</span>':'')+pr1+'</span><span class="chk'+(p.multi?' sq':'')+'">'+IC.check+'</span></button>';
+        });
+        h += '</div>';
         break;
       }
       var ratio = lay==='image' && p.ratio ? String(p.ratio).replace(':','/') : '';

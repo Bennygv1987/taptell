@@ -931,6 +931,60 @@ textarea.fp-in{min-height:110px;resize:vertical}
 .fp-conf{position:fixed;inset:0;z-index:2147482000;pointer-events:none}
 .fp-conf.in{position:absolute;left:0;top:0}
 
+/* Duotone-Icons */
+svg.dt .o{opacity:.35}
+/* Chips */
+.fp-opts.fp-chips{display:flex;flex-wrap:wrap;gap:10px;grid-template-columns:none}
+.fp-chips.ca-center{justify-content:center}
+.fp-chips.ca-left{justify-content:flex-start}
+.fp-chips.ca-scroll{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);justify-content:start;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1*var(--pad,20px));padding:4px var(--pad,20px) 8px;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.fp-chips.ca-scroll::-webkit-scrollbar{display:none}
+.fp-chips.ca-scroll .fp-chip:nth-child(even){transform:translateX(34px)}
+.fp-chips.ca-scroll .fp-chip:nth-child(even):active{transform:translateX(34px) scale(.96)}
+.fp-chip{--cc:var(--p);appearance:none;border:0;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--chr,999px);font:650 var(--chs,15px)/1.2 var(--ff);white-space:nowrap;cursor:pointer;color:var(--ctx2,var(--cc));background:var(--cbg,color-mix(in srgb,var(--cc) 13%,var(--bg)));-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform 160ms var(--ease-out),background-color 160ms ease,color 160ms ease,box-shadow 200ms ease}
+.fp-chip .ci{display:inline-grid;place-items:center;color:var(--cc)}
+.fp-chip .ci svg{width:1.3em;height:1.3em}
+.fp-chip .ci.e{font-size:1.15em;line-height:1}
+.fp-chip small{font-size:.8em;opacity:.75;font-weight:600}
+.fp-chip:active{transform:scale(.96)}
+.fp-chips.cs-outline .fp-chip{background:var(--cbg,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--cc) 35%,transparent)}
+.fp-chips.cs-white .fp-chip{background:var(--cbg,var(--bg));color:var(--ctx2,var(--tx));box-shadow:0 0 0 1px color-mix(in srgb,var(--tx) 6%,transparent),0 4px 12px -4px rgba(0,0,0,.14)}
+.fp-chips.cs-solid .fp-chip{background:var(--cbg,var(--cc));color:var(--ctx2,#fff)}
+.fp-chips.cs-solid .fp-chip .ci{color:inherit}
+.fp-chips.cg .fp-chip{background-image:linear-gradient(135deg,color-mix(in srgb,var(--cc) 20%,transparent),color-mix(in srgb,var(--cc) 4%,transparent))}
+.fp-chips .fp-chip.sel{background:var(--cc);background-image:none;color:#fff;box-shadow:0 8px 18px -8px color-mix(in srgb,var(--cc) 70%,transparent)}
+.fp-chips .fp-chip.sel .ci{color:#fff}
+.fp-chips.cs-solid .fp-chip.sel{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--cc)}
+@media (hover:hover) and (pointer:fine){.fp-chip:not(.sel):hover{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--cc) 40%,transparent)}}
+/* Bildkarten vollflächig */
+.fp-opts.fp-cover{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fp-cover.cc1{grid-template-columns:1fr}
+.fp-cover.cc3{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fp-cv{position:relative;appearance:none;border:0;padding:0;aspect-ratio:var(--cvr,4/5);border-radius:var(--cvrad,18px);overflow:hidden;cursor:pointer;background:var(--sf);isolation:isolate;-webkit-tap-highlight-color:transparent;transition:transform 160ms var(--ease-out),box-shadow 200ms ease}
+.fp-cv .cvi{position:absolute;inset:0;background:center/cover no-repeat;transition:transform 400ms var(--ease-out)}
+.fp-cv .cvo{position:absolute;left:0;right:0;bottom:0;height:var(--cvf,55%);z-index:1;pointer-events:none}
+.fp-cover.fd-white .cvo{background:linear-gradient(to top,rgba(255,255,255,.97) 8%,rgba(255,255,255,.6) 45%,rgba(255,255,255,0))}
+.fp-cover.fd-black .cvo{background:linear-gradient(to top,rgba(0,0,0,.72) 5%,rgba(0,0,0,.35) 50%,rgba(0,0,0,0))}
+.fp-cover.cva-center .cvo{height:100%;background:rgba(0,0,0,.28)}
+.fp-cover.fd-white.cva-center .cvo{background:rgba(255,255,255,.45)}
+.fp-cover.fd-white{--cvt0:#111}.fp-cover.fd-black,.fp-cover.fd-none{--cvt0:#fff}
+.fp-cv .cvl{position:absolute;left:10px;right:10px;bottom:14px;z-index:2;display:grid;gap:2px;text-align:center;color:var(--cvt,var(--cvt0))}
+.fp-cover.cva-center .cvl{bottom:auto;top:50%;transform:translateY(-50%)}
+.fp-cover.fd-none .cvl{text-shadow:0 1px 10px rgba(0,0,0,.45)}
+.fp-cv .cvl b{font:750 var(--cvs,17px)/1.15 var(--hf);letter-spacing:-.01em}
+.fp-cv .cvl span{font-size:12.5px;opacity:.82}
+.fp-cv .cvl .pr{font-weight:650;opacity:1}
+.fp-cv .chk{position:absolute;top:10px;right:10px;z-index:2;opacity:0;transform:scale(.8);transition:opacity 150ms ease,transform 200ms var(--ease-out)}
+.fp-cv.sel{box-shadow:0 0 0 3px var(--p),0 10px 24px -10px color-mix(in srgb,var(--p) 60%,transparent)}
+.fp-cv.sel .chk{opacity:1;transform:none;background:var(--p);border-color:var(--p)}
+.fp-cv.sel .chk svg{opacity:1}
+.fp-cv .zm{z-index:3;top:10px;left:10px;bottom:auto}
+.fp-cv:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){.fp-cv:hover .cvi{transform:scale(1.04)}}
+.fp-cover.cc3 .cvl b{font-size:var(--cvs,13.5px)}.fp-cover.cc3 .cvl span{display:none}
+.fp.is-edit .fp-cv .cvi{transition:none}
+@media (prefers-reduced-motion:reduce){.fp-cv .cvi{transition:none}}
+
 </style>
 <style>
 :root{
@@ -2043,6 +2097,52 @@ FP.BRANDS = {
   mail:{n:'E-Mail', c:'#6B7280', svg:'<svg class="br" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#6B7280"/><rect x="5.5" y="7.5" width="13" height="9" rx="1.6" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M6 8.3l6 4.4 6-4.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'}
 };
 FP.SOCIAL_ORDER = ['whatsapp','instagram','facebook','tiktok','linkedin','youtube','x','telegram','mail'];
+/* Moderne Duotone-Icons (gefüllt, Farbe aus currentColor, helle Fläche mit 35 % Deckkraft) */
+var DI = function(d){ return '<svg viewBox="0 0 24 24" class="dt" fill="currentColor" aria-hidden="true">'+d+'</svg>'; };
+Object.assign(FP.ICONS, {
+  'd-coffee':DI('<path d="M4 9h12v4.5A5.5 5.5 0 0110.5 19h-1A5.5 5.5 0 014 13.5z"/><path d="M16 10.5h1.2a2.8 2.8 0 010 5.6h-1.6v-2h1.6a.8.8 0 000-1.6H16z"/><path class="o" d="M3 20.5h14V22H3z"/><path class="o" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3c-.8 1 .8 2 0 3.2M12 3c-.8 1 .8 2 0 3.2"/>'),
+  'd-music':DI('<path class="o" d="M9 5.5L20 3v3.5L9 9z"/><path d="M9 5.5V17a3 3 0 11-2-2.8V5.5zM20 3v11.5a3 3 0 11-2-2.8V3.5z"/>'),
+  'd-bike':DI('<circle class="o" cx="6" cy="16" r="4"/><circle class="o" cx="18" cy="16" r="4"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 16l3.5-7h5l3.5 7M9.5 9L12 16l2.5-7M13 6h3"/><circle cx="6" cy="16" r="1.6"/><circle cx="18" cy="16" r="1.6"/>'),
+  'd-palette':DI('<path class="o" d="M12 3a9 9 0 000 18c1.4 0 2-1 2-2 0-1.5-1.2-1.6-1.2-2.8 0-1 .8-1.7 1.8-1.7H17a4 4 0 004-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.6"/><circle cx="10" cy="7" r="1.6"/><circle cx="14.5" cy="7" r="1.6"/><circle cx="17" cy="10.5" r="1.4"/>'),
+  'd-ball':DI('<circle class="o" cx="12" cy="12" r="9"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.5 9.5c5 .5 10.5 3.5 14 10M8 3.8c4 4 6 9 6.2 16.9M20.6 9.5c-4.5-.8-9.2.5-15.5 7.5"/>'),
+  'd-glove':DI('<path d="M7 4h7a5 5 0 015 5v3a4 4 0 01-4 4H8a3 3 0 01-3-3V6a2 2 0 012-2z"/><path class="o" d="M7 16h8v4a1 1 0 01-1 1H8a1 1 0 01-1-1z"/><path class="o" d="M5 9h-.5A1.5 1.5 0 003 10.5v1A1.5 1.5 0 004.5 13H5z"/>'),
+  'd-design':DI('<path d="M15.5 3.5l5 5-11 11H4.5v-5z"/><path class="o" d="M3 7l4-4 4 4-1.5 1.5L8 7 6.5 8.5 8 10 7 11 5.5 9.5 4 11zM13 17l4-4 4 4-4 4z"/>'),
+  'd-heart':DI('<path d="M12 20.5s-8-4.6-8-10.4A4.6 4.6 0 0112 7.2a4.6 4.6 0 018 2.9c0 5.8-8 10.4-8 10.4z"/><path class="o" d="M7.2 8.2a2.6 2.6 0 00-1.4 2.3h1.6a1 1 0 01.6-.9z"/>'),
+  'd-star':DI('<path d="M12 2.8l2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3-4.6-4.5 6.4-.9z"/>'),
+  'd-home':DI('<path class="o" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M9.5 21v-6a1 1 0 011-1h3a1 1 0 011 1v6z"/>'),
+  'd-sun':DI('<circle cx="12" cy="12" r="4.5"/><path class="o" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>'),
+  'd-leaf':DI('<path class="o" d="M20 4C10 4 4 8.5 4 15a5 5 0 005 5c6.5 0 11-6 11-16z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 20c3-5 7-8 11-10"/>'),
+  'd-drop':DI('<path d="M12 3s-6.5 7-6.5 11.2a6.5 6.5 0 0013 0C18.5 10 12 3 12 3z"/>'),
+  'd-bolt':DI('<path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/>'),
+  'd-flame':DI('<path class="o" d="M12 2.5s6.5 5 6.5 11a6.5 6.5 0 01-13 0c0-3 1.5-5 3-6.5 0 2 1 3.5 2.5 3.5C11 7.5 12 2.5 12 2.5z"/><path d="M12 13s3 2 3 4.3a3 3 0 01-6 0c0-1.5 1-2.6 3-4.3z"/>'),
+  'd-camera':DI('<path class="o" d="M3 8a2 2 0 012-2h2.5l1.5-2h6l1.5 2H19a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><circle cx="12" cy="13" r="4"/>'),
+  'd-gift':DI('<path class="o" d="M4 11h16v9a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M3 7.5h18V11H3zM11 7.5h2V21h-2z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 7.5C10 3.5 6.5 4.5 7.5 6.5S12 7.5 12 7.5zm0 0c2-4 5.5-3 4.5-1S12 7.5 12 7.5z"/>'),
+  'd-car':DI('<path class="o" d="M5 11l1.6-4.2A2 2 0 018.5 5.5h7a2 2 0 011.9 1.3L19 11z"/><path d="M3 12.5A1.5 1.5 0 014.5 11h15a1.5 1.5 0 011.5 1.5V17a1 1 0 01-1 1h-1v1.5a1.5 1.5 0 01-3 0V18H8v1.5a1.5 1.5 0 01-3 0V18H4a1 1 0 01-1-1z"/>'),
+  'd-plane':DI('<path class="o" d="M9 12l2.5 6.5L21 3z"/><path d="M3 10l18-7-12 9z"/>'),
+  'd-cart':DI('<path class="o" d="M6 6h15l-2 8H8z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5 3.5H5l3 11h10"/><circle cx="9.5" cy="19" r="1.8"/><circle cx="17" cy="19" r="1.8"/>'),
+  'd-chat':DI('<path class="o" d="M4 5h12a2 2 0 012 2v7a2 2 0 01-2 2H9l-4 3.5V16H4a2 2 0 01-2-2V7a2 2 0 012-2z"/><path d="M20 8.5a2 2 0 012 2V16a2 2 0 01-2 2h-1v3l-3.5-3H11a2 2 0 01-1.7-1H16a3 3 0 003-3V8.5z"/>'),
+  'd-calendar':DI('<path class="o" d="M3 9h18v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M5 4.5h14a2 2 0 012 2V9H3V6.5a2 2 0 012-2zM7 2.5h2v4H7zM15 2.5h2v4h-2zM7 12.5h3v3H7z"/>'),
+  'd-clock':DI('<circle class="o" cx="12" cy="12" r="9"/><path d="M11 6.5h2V12l3.5 2.2-1 1.7L11 13z"/>'),
+  'd-check':DI('<circle class="o" cx="12" cy="12" r="9"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 12.3l2.7 2.7L16 9.5"/>'),
+  'd-sparkle':DI('<path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/><path class="o" d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>'),
+  'd-rocket':DI('<path class="o" d="M7 14l-3 1 2-4 3-1zM10 17l-1 3 4-2 1-3z"/><path d="M20.5 3.5S15 3 11 7.5L8.5 12l3.5 3.5 4.5-2.5C21 9 20.5 3.5 20.5 3.5z"/>'),
+  'd-crown':DI('<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path class="o" d="M5 19.5h14V21H5z"/>'),
+  'd-diamond':DI('<path class="o" d="M7 4h10l4 5-9 11L3 9z"/><path d="M3 9h18l-9 11z"/>'),
+  'd-paw':DI('<ellipse cx="6.5" cy="10" rx="1.9" ry="2.5"/><ellipse cx="10.2" cy="6.3" rx="1.9" ry="2.5"/><ellipse cx="13.8" cy="6.3" rx="1.9" ry="2.5"/><ellipse cx="17.5" cy="10" rx="1.9" ry="2.5"/><path class="o" d="M12 12c-3 0-5.5 3.5-5.5 5.5 0 2 2 2.5 3 2s1.5-.5 2.5-.5 1.5.5 2.5.5 3 0 3-2C17.5 15.5 15 12 12 12z"/>'),
+  'd-tree':DI('<path class="o" d="M12 2.5l6 8h-3l4 5.5H5l4-5.5H6z"/><path d="M11 15h2v6.5h-2z"/>'),
+  'd-food':DI('<path d="M6 3v6a2 2 0 002 2v10h1.6V11a2 2 0 002-2V3h-1.3v5H9.4V3H8.2v5H7.3V3z"/><path class="o" d="M16 3c2 0 3 2.5 3 6s-1 4-2 4v8h-2V3z"/>'),
+  'd-fitness':DI('<path d="M2.5 10h2v4h-2zM19.5 10h2v4h-2zM5 7.5h2.5v9H5zM16.5 7.5H19v9h-2.5z"/><path class="o" d="M7.5 11h9v2h-9z"/>'),
+  'd-book':DI('<path class="o" d="M4 4.5A1.5 1.5 0 015.5 3H18a1 1 0 011 1v13H6a2 2 0 00-2 2z"/><path d="M6 17h14v3H6a1.5 1.5 0 010-3z"/>'),
+  'd-work':DI('<path class="o" d="M3 9a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 4.5h6a1 1 0 011 1V7h-2v-.5h-4V7H8V5.5a1 1 0 011-1zM3 11.5l9 3 9-3V13l-9 3-9-3z"/>'),
+  'd-tool':DI('<path d="M20.5 7a5 5 0 01-6.6 4.7L6.5 19a2 2 0 01-2.8-2.8l7.3-7.4A5 5 0 0116.9 2.3L14 5.2l.8 3.2 3.2.8z"/>'),
+  'd-roller':DI('<path d="M4 3.5h12a1 1 0 011 1V8a1 1 0 01-1 1H4a1 1 0 01-1-1V4.5a1 1 0 011-1z"/><path class="o" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 6h3v5.5l-8 1.5v2"/><path d="M10.5 15h3v6.5h-3z"/>'),
+  'd-key':DI('<circle class="o" cx="8" cy="15" r="5"/><path d="M11.5 11.8L19 4.3 20.7 6l-1.6 1.6 1.6 1.6-1.6 1.6-1.6-1.6-4.3 4.3z"/>'),
+  'd-shield':DI('<path class="o" d="M12 2.5l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10v-6z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8.5 12l2.5 2.5 4.5-5"/>'),
+  'd-euro':DI('<circle class="o" cx="12" cy="12" r="9"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15.5 8.2A4.5 4.5 0 008.5 12a4.5 4.5 0 007 3.8M7 10.8h6M7 13.2h6"/>'),
+  'd-phone':DI('<path d="M6.6 3h3l1.6 4.5-2.1 1.3a11 11 0 006.1 6.1l1.3-2.1L21 14.4v3A2.6 2.6 0 0118.4 20 15.4 15.4 0 014 5.6 2.6 2.6 0 016.6 3z"/>'),
+  'd-mail':DI('<path class="o" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M3.5 7.2l8.5 6 8.5-6V9l-8.5 6-8.5-6z"/>'),
+  'd-user':DI('<circle cx="12" cy="8" r="4"/><path class="o" d="M4 20a8 8 0 0116 0v1H4z"/>')
+});
 FP.BTN_ICONS = {
   arrow:BI('<path d="M5 12h14M13 6l6 6-6 6"/>'), chevron:BI('<path d="M9 6l6 6-6 6"/>'), send:BI('<path d="M21.5 2.5L10.5 13.5"/><path d="M21.5 2.5l-7 19-4-8-8-4z"/>'),
   check:BI('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), calendar:BI('<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>'),
@@ -2581,6 +2681,33 @@ FP.renderBlock = function(b, ctx){
       if(lay === 'scale'){
         h += '<div class="fp-scale">' + (p.options||[]).map(function(o){ return '<button class="fp-sopt'+(sel.indexOf(o.id)>=0?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'" title="'+esc(o.label)+'">'+(o.icon?'<span class="si">'+esc(o.icon)+'</span>':'<span class="sl">'+esc(o.label)+'</span>')+'</button>'; }).join('') + '</div>';
         if(p.minLabel || p.maxLabel) h += '<div class="fp-rlab"><span>'+esc(p.minLabel)+'</span><span>'+esc(p.maxLabel)+'</span></div>';
+        break;
+      }
+      if(lay === 'chips'){
+        /* Chips: Pillen mit optionalem Icon, Farbe pro Antwort, versetzte oder wischbare Reihen */
+        h += '<div class="fp-opts fp-chips ca-'+esc(p.chipArr||'center')+' cs-'+esc(p.chipStyle||'tint')+(p.chipGrad?' cg':'')+'" style="'+(hv0(p.chipRad)?'--chr:'+(+p.chipRad)+'px;':'')+(+p.chipSize?'--chs:'+(+p.chipSize)+'px;':'')+'">';
+        (p.options||[]).forEach(function(o){
+          var on = sel.indexOf(o.id) >= 0, cst = (o.col?'--cc:'+esc(o.col)+';':'')+(o.cbg?'--cbg:'+esc(o.cbg)+';':'')+(o.ctx?'--ctx2:'+esc(o.ctx)+';':'');
+          var ci = p.chipIcon === false ? '' : (o.ic && FP.ICONS[o.ic] ? '<span class="ci">'+FP.ICONS[o.ic]+'</span>' : o.icon ? '<span class="ci e">'+esc(o.icon)+'</span>' : '');
+          var pr0 = p.showPrices && (+o.price || +o.unitPrice) ? '<small>'+(+o.price ? '+ '+FP.money(o.price,cur) : FP.money(o.unitPrice,cur))+'</small>' : '';
+          h += '<button class="fp-chip'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-pressed="'+on+'"'+(cst?' style="'+cst+'"':'')+'>'+ci+'<span>'+esc(o.label)+'</span>'+pr0+'</button>';
+        });
+        h += '</div>';
+        break;
+      }
+      if(lay === 'cover'){
+        /* Bildkarten vollflächig: Bild füllt die Karte, Text unten auf einem weißen oder schwarzen Verlauf */
+        var cvr = p.ratio ? String(p.ratio).replace(':','/') : '4/5';
+        h += '<div class="fp-opts fp-cover cc'+(+p.cols||2)+' fd-'+esc(p.coverFade||'white')+' cva-'+esc(p.coverAlign||'bottom')+'" style="--cvr:'+esc(cvr)+';'+(hv0(p.coverRad)?'--cvrad:'+(+p.coverRad)+'px;':'')+(p.coverTx?'--cvt:'+esc(p.coverTx)+';':'')+(+p.coverSize?'--cvs:'+(+p.coverSize)+'px;':'')+(hv0(p.coverFadeS)?'--cvf:'+(+p.coverFadeS)+'%;':'')+'">';
+        (p.options||[]).forEach(function(o){
+          var on = sel.indexOf(o.id) >= 0, clq = o.img ? FP.lqSrc(o.img) : '';
+          var bg = o.img ? 'background-image:url(&quot;'+o.img+'&quot;)'+(clq?',url(&quot;'+clq+'&quot;)':'')+(o.pos?';background-position:'+esc(o.pos):'') : 'background:linear-gradient(135deg,color-mix(in srgb,var(--p) 22%,var(--sf)),var(--sf))';
+          var pr1 = p.showPrices && (+o.price || +o.unitPrice) ? '<span class="pr">'+(+o.price ? '+ '+FP.money(o.price,cur) : FP.money(o.unitPrice,cur)+(o.unitLabel?' / '+esc(o.unitLabel):''))+'</span>' : '';
+          h += '<button class="fp-cv'+(on?' sel':'')+'" data-act="opt" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-pressed="'+on+'"><span class="cvi" style="'+bg+'"></span><span class="cvo"></span>'
+            + (o.img && p.zoom ? '<span class="zm" role="button" tabindex="0" data-act="zoom" data-bid="'+b.id+'" data-oid="'+o.id+'" aria-label="Bild vergrößern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5"/></svg></span>' : '')
+            + '<span class="cvl"><b>'+esc(o.label)+'</b>'+(o.sub?'<span>'+esc(o.sub)+'</span>':'')+pr1+'</span><span class="chk'+(p.multi?' sq':'')+'">'+IC.check+'</span></button>';
+        });
+        h += '</div>';
         break;
       }
       var ratio = lay==='image' && p.ratio ? String(p.ratio).replace(':','/') : '';
@@ -5303,7 +5430,20 @@ var FIELDS = {
   loader:[['anim','select','Animation',FP.LOADERS],['src','text','Lottie-Adresse (.json, z. B. von LottieFiles)',null,function(p){ return p.anim === 'custom'; }],['json','lottie','Oder Datei hochladen',null,function(p){ return p.anim === 'custom'; }],['duration','range','Dauer',[1,10,0.5,' s']],['size','range','Größe',[60,240,4]],['texts','strings','Wechselnde Hinweise','Wechseln gleichmäßig über die Dauer.'],['showBar','toggle','Ladebalken anzeigen'],['_n','note','Nach Ablauf geht es automatisch zur nächsten Seite. Wer zurückgeht, überspringt die Ladeseite.']],
   faq:[['items','faq','Fragen & Antworten']],
   countdown:[['label','text','Text darüber'],['minutes','num','Dauer in Minuten']],
-  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[3,'3'],[4,'4'],[1,'1']],function(p){ return p.layout==='image'; }],['zoom','toggle','Lupe zum Vergrößern','Zeigt eine Lupe auf jedem Bild. Sie öffnet das Bild groß, mit Wischen zwischen den Antworten und direktem Auswählen.',function(p){ return p.layout==='image'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
+  choice:[['question','textarea','Frage'],['desc','text','Beschreibung (optional)'],['layout','select','Layout',[['list','Liste mit Icons'],['checklist','Checkbox-Liste (kompakt)'],['grid','Kacheln'],['image','Bildkarten'],['cover','Bildkarten vollflächig'],['chips','Chips'],['scale','Skala (z. B. Emojis in einer Reihe)']]],['faceStyle','select','Smileys',[['','Emojis'],['flat','Flache Smileys mit Text']],function(p){ return p.layout==='scale'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat'; }],['cols','seg','Bilder pro Reihe',[[2,'2'],[3,'3'],[4,'4'],[1,'1']],function(p){ return p.layout==='image'; }],['zoom','toggle','Lupe zum Vergrößern','Zeigt eine Lupe auf jedem Bild. Sie öffnet das Bild groß, mit Wischen zwischen den Antworten und direktem Auswählen.',function(p){ return p.layout==='image' || p.layout==='cover'; }],
+    ['cols','seg','Karten pro Reihe',[[2,'2'],[3,'3'],[1,'1']],function(p){ return p.layout==='cover'; }],
+    ['ratio','select','Kartenformat',[['','4:5 (Standard)'],['1:1','1:1 Quadrat'],['3:4','3:4 Hochformat'],['4:3','4:3 Quer'],['16:9','16:9 Breit']],function(p){ return p.layout==='cover'; }],
+    ['coverFade','seg','Verlauf',[['white','Weiß'],['black','Schwarz'],['none','Ohne']],function(p){ return p.layout==='cover'; }],
+    ['coverAlign','seg','Text',[['bottom','Unten'],['center','Mittig']],function(p){ return p.layout==='cover'; }],
+    ['coverFadeS','range','Höhe des Verlaufs',[20,100,5,'%',55],function(p){ return p.layout==='cover' && p.coverFade !== 'none'; }],
+    ['row2','row',[['coverTx','color','Textfarbe'],['coverSize','num','Schriftgröße (px)']],null,function(p){ return p.layout==='cover'; }],
+    ['coverRad','range','Rundung',[0,40,1,'px',18],function(p){ return p.layout==='cover'; }],
+    ['chipStyle','seg','Chip-Stil',[['tint','Getönt'],['outline','Rahmen'],['white','Weiß'],['solid','Gefüllt']],function(p){ return p.layout==='chips'; }],
+    ['chipArr','seg','Anordnung',[['center','Mittig, versetzt'],['left','Links'],['scroll','Wischbar']],function(p){ return p.layout==='chips'; }],
+    ['chipIcon','toggle','Icons zeigen',null,function(p){ return p.layout==='chips'; },true],
+    ['chipGrad','toggle','Leichter Verlauf',null,function(p){ return p.layout==='chips'; }],
+    ['row2','row',[['chipRad','num','Rundung (px)'],['chipSize','num','Schriftgröße (px)']],null,function(p){ return p.layout==='chips'; }],
+    ['_cn','note','Farben pro Chip: bei der Antwort auf das Zahnrad klicken. Icons ebenfalls dort.',function(p){ return p.layout==='chips'; }],['cols','seg','Spalten',[[2,'2'],[3,'3']],function(p){ return p.layout==='grid'; }],['ratio','select','Bildformat',[['','4:3 (Standard)'],['1:1','1:1 Quadrat'],['16:9','16:9 Breit'],['3:4','3:4 Hochformat']],function(p){ return p.layout==='image'; }],['colsD','seg','Pro Reihe auf Desktop',[[0,'Wie mobil'],[3,'3'],[4,'4']],function(p){ return p.layout==='image' || p.layout==='grid'; }],['colsD','seg','Spalten auf Desktop',[[0,'1'],[2,'2']],function(p){ return p.layout==='checklist'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.layout==='scale' && p.faceStyle==='flat' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.layout==='scale' && (p.faceStyle!=='flat' || (p.faceNoText && p.faceEnds)); }],['options','options','Antworten'],['optAlign','seg','Text der Antworten',[['','Standard'],['left','Links'],['center','Mitte']],function(p){ return p.layout!=='scale'; }],['optFw','seg','Titel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700'],[800,'800']],function(p){ return p.layout!=='scale'; }],['optSubFw','seg','Untertitel',[['','Std'],[400,'400'],[500,'500'],[600,'600'],[700,'700']],function(p){ return p.layout!=='scale' && (p.options||[]).some(function(o){ return o.sub; }); }],['multi','toggle','Mehrfachauswahl'],['maxSelect','num','Max. Auswahl (optional)',null,function(p){ return p.multi; }],['autoNext','toggle','Automatisch weiter bei Auswahl',null,function(p){ return !p.multi; }],['required','toggle','Pflichtfeld'],['showPrices','toggle','Preise bei den Antworten zeigen','Aus: Preise zählen trotzdem für Endpreis, Angebot und Anfrage – sie sind nur für den Besucher unsichtbar.'],['key','key','Feld-Schlüssel']],
   input:[['label','text','Label'],['placeholder','text','Platzhalter'],['emoji','text','Emoji im Feld (optional)','z. B. ✉️ oder 📞 – ersetzt das Standard-Icon.'],['inputType','select','Feldtyp',[['text','Text'],['email','E-Mail'],['tel','Telefon'],['number','Zahl'],['date','Datum'],['textarea','Mehrzeilig']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ werden mit diesem Wert multipliziert. Mehrere Mengenfelder werden miteinander multipliziert (z. B. Länge × Breite).',function(p){ return p.inputType==='number'; }],['row3','row',[['qtyFactor','num','Umrechnung ×'],['def','num','Wert, falls leer'],['unit','text','Einheit']],null,function(p){ return p.inputType==='number' && p.isQuantity; }],['rows','num','Zeilen (Höhe)',null,function(p){ return p.inputType==='textarea'; }],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   slider:[['label','text','Label'],['row3','row',[['min','num','Min'],['max','num','Max'],['step','num','Schritt']]],['row2','row',[['def','num','Startwert'],['unit','text','Einheit']]],['isQuantity','toggle','Als Menge für Preisberechnung','Preise „pro Einheit“ (z. B. €/m²) werden mit diesem Wert multipliziert.'],['key','key','Feld-Schlüssel']],
   rating:[['label','text','Frage'],['style','select','Darstellung',[['stars','Sterne'],['faces','Smileys flach mit Text'],['emoji','Emoji-Skala (Kacheln)'],['slider','Slider mit wechselndem Emoji'],['nps','NPS 0–10']]],['max','range','Anzahl Sterne',[3,10,1],function(p){ return !p.style || p.style==='stars'; }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='emoji' && !String(p.emojis||'').trim(); }],['max','range','Stufen',[2,7,1],function(p){ return p.style==='faces'; }],['faceNoText','toggle','Text ausblenden (nur Smileys)',null,function(p){ return p.style==='faces'; }],['faceBare','toggle','Ohne Hintergrund',null,function(p){ return p.style==='faces'; }],['faceLabels','strings','Texte unter den Smileys','Leer lassen für: Sehr schlecht, Schlecht, Okay, Gut, Super.',function(p){ return p.style==='faces' && !p.faceNoText; }],['max','range','Skala bis',[3,10,1],function(p){ return p.style==='slider'; }],['emojis','emojis','Eigene Emojis',null,function(p){ return p.style==='emoji' || p.style==='slider'; }],['showValue','toggle','Zahl anzeigen',null,function(p){ return p.style==='slider'; }],['faceEnds','toggle','Text nur links und rechts zeigen',null,function(p){ return p.style==='faces' && p.faceNoText; }],['row2','row',[['minLabel','text','Label links'],['maxLabel','text','Label rechts']],null,function(p){ return p.style!=='faces' || (p.faceNoText && p.faceEnds); }],['autoNext','toggle','Automatisch weiter'],['routes','routes','Weiterleitung nach Bewertung'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
@@ -5546,8 +5686,9 @@ function optionsEditor(p){
       + '<div class="row2"><div class="fld"><label>Einheit (Anzeige)</label><input class="inp" data-o="unitLabel" data-oi="'+i+'" value="'+esc(o.unitLabel||'')+'" placeholder="m²"></div><div class="fld"><label>Punkte (Quiz)</label><input class="inp" type="number" data-o="score" data-oi="'+i+'" data-num value="'+(o.score||'')+'" placeholder="0"></div></div>'
       + (openSet[o.id] ? '<div class="fld"><label>Icon</label><div class="icgrid">' + [''].concat(Object.keys(FP.ICONS)).map(function(nm){ return '<button class="icb'+((o.ic||'')===nm?' on':'')+'" data-a="optIc" data-i="'+i+'" data-v="'+nm+'" title="'+(nm||'Kein Icon')+'" aria-label="'+(nm||'Kein Icon')+'">'+(nm ? FP.ICONS[nm] : I('x',12))+'</button>'; }).join('') + '</div><div class="hint">Ersetzt das Emoji. Die Farbe kommt aus dem Theme.</div></div>' : '')
       + '<div class="fld"><label>Bei Auswahl springen zu</label><select class="inp" data-o="goto" data-oi="'+i+'">'+pageOptions(o.goto,'Keine Verzweigung')+'</select></div>'
-      + (p.layout==='image'&&o.img?'<div class="fld"><label>Bildausschnitt</label><select class="inp" data-o="pos" data-oi="'+i+'">'+[['','Mitte'],['top','Oben'],['bottom','Unten'],['left','Links'],['right','Rechts']].map(function(x){ return '<option value="'+x[0]+'"'+((o.pos||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></div>':'')
-      + (p.layout==='image'?'<div class="fld"><label>Bild</label><div class="upl"><div class="pv" style="'+(o.img?'background-image:url(&quot;'+esc(o.img)+'&quot;)':'')+'">'+(o.img?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-optimg="'+i+'"></label>'+libraryButton()+(o.img?'<button class="ibtn" data-a="optImgDel" data-i="'+i+'">'+I('trash')+'</button>':'')+'</div></div>':'')
+      + ((p.layout==='image'||p.layout==='cover')&&o.img?'<div class="fld"><label>Bildausschnitt</label><select class="inp" data-o="pos" data-oi="'+i+'">'+[['','Mitte'],['top','Oben'],['bottom','Unten'],['left','Links'],['right','Rechts']].map(function(x){ return '<option value="'+x[0]+'"'+((o.pos||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></div>':'')
+      + (p.layout==='chips'?'<div class="row3">'+[['col','Farbe'],['cbg','Hintergrund'],['ctx','Text']].map(function(x){ return '<div class="fld"><label>'+x[1]+'</label><div class="colr"><input type="color" data-o="'+x[0]+'" data-oi="'+i+'" value="'+esc(toHex(o[x[0]]||'#7c3aed'))+'"><input type="text" data-o="'+x[0]+'" data-oi="'+i+'" value="'+esc(o[x[0]]||'')+'" placeholder="Theme"></div></div>'; }).join('')+'</div><div class="hint" style="margin:-4px 0 10px">„Farbe“ färbt Icon und Text und ergibt einen hellen Hintergrund. Hintergrund und Text überschreiben das einzeln.</div>':'')
+      + ((p.layout==='image'||p.layout==='cover')?'<div class="fld"><label>Bild</label><div class="upl"><div class="pv" style="'+(o.img?'background-image:url(&quot;'+esc(o.img)+'&quot;)':'')+'">'+(o.img?'':I('image'))+'</div><label class="btn sm">'+I('upload',13)+'Hochladen<input type="file" accept="image/*" data-optimg="'+i+'"></label>'+libraryButton()+(o.img?'<button class="ibtn" data-a="optImgDel" data-i="'+i+'">'+I('trash')+'</button>':'')+'</div></div>':'')
       + '</div></div>';
   }).join('') + '<button class="btn sm" data-a="optAdd">'+I('plus',13)+'Antwort hinzufügen</button>';
 }
