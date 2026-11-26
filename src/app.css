@@ -1045,3 +1045,9 @@ button.media-thumb{cursor:pointer}button.media-thumb:active{transform:scale(.97)
 .colw .alw{display:flex;align-items:center;gap:8px}
 .colw .alw input.alpha{flex:1;width:auto;min-width:0}
 .colw .alw b{width:34px;text-align:right;font:500 var(--fs-11) var(--mono);color:var(--mut)}
+
+/* ===== Ladezeit im Funnel-Reiter ===== */
+.ldz{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:var(--r-md);background:var(--okS);color:var(--okT);font-size:var(--fs-13)}
+.ldz b{font-weight:600;font-variant-numeric:tabular-nums}
+.ldz.slow{background:var(--warnS);color:var(--warnT)}
+.ldz+.hint{margin-top:8px}

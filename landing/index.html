@@ -4,785 +4,1003 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TapTell – Instant Data. Made Simple.</title>
-<meta name="description" content="Mobile Funnels für Leadgenerierung, Konfiguratoren, Montageberichte und Feedback – in wenigen Klicks auf dem Handy ausgefüllt, sofort strukturiert bei dir.">
-<meta name="theme-color" content="#fbfbfd">
+<meta name="description" content="Konfiguratoren, Lead-Funnels, Montageberichte und Feedback, die sich auf dem Handy wie eine App anfühlen. Deine Kunden tippen sich durch, du bekommst vollständige Anfragen.">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light">
 <link rel="icon" href="../src/logo-t.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="../src/player.css">
+<script>document.documentElement.classList.add('js');</script>
 <style>
 /* =========================================================
    TapTell Landingpage
-   Bewegung nach den Emil-Kowalski-Skills (apple-design, choreograph):
-   kräftige Ease-out-Kurven, Druck-Feedback, Hover nur mit Maus,
-   sanfte Variante bei „Bewegung reduzieren“.
+   Schrift: Inter Tight (Überschriften) + Inter (Text).
+   Bewegung nach den Emil-Kowalski-Skills: kräftige Ease-out-Kurven,
+   Druck-Feedback auf allem Klickbaren, Hover nur mit Maus,
+   bei „Bewegung reduzieren“ sanfte Einblendung statt Bewegung.
    ========================================================= */
 :root{
-  --bg:#fbfbfd;--bg2:#f5f5f7;--card:#fff;--ink:#1d1d1f;--ink2:#424245;--mut:#6e6e73;--line:#e8e8ed;
-  --a:#1c2e3d;--a2:#13212c;--blue:#2f5bd3;--green:#0f9f6e;
-  --r:22px;--r-sm:14px;
-  --font:'Geist',system-ui,-apple-system,sans-serif;
+  --bg:#fff;--soft:#f7f7f9;--card:#fff;
+  --ink:#0c0c14;--ink2:#3b3b47;--mut:#6c6c78;--faint:#a3a3ad;--line:#ececf1;--line2:#e2e2e9;
+  /* Pastellflächen */
+  --lav:#f5f2ff;--pink:#fdf2f8;--peach:#fff5ee;--mint:#eefaf5;--sun:#fff6b8;
+  /* Verlauf: Violett → Magenta → Koralle → Apricot */
+  --v1:#5b3df5;--v2:#a24bf2;--v3:#ff6f8e;--v4:#ffb35e;
+  --grad:linear-gradient(95deg,var(--v1) 0%,var(--v2) 34%,var(--v3) 70%,var(--v4) 100%);
+  /* Diagramm-Farben aus den Vorlagen */
+  --c-cyan:#86e3f5;--c-coral:#f7a6a2;--c-sun:#ffd23f;--c-green:#34c58a;
+  --head:'Inter Tight','Inter',system-ui,-apple-system,sans-serif;
+  --body:'Inter',system-ui,-apple-system,sans-serif;
   --ease-out:cubic-bezier(.23,1,.32,1);--ease-in-out:cubic-bezier(.77,0,.175,1);--ease-drawer:cubic-bezier(.32,.72,0,1);
-  /* Haarlinie + weicher Schatten: Karten wirken gestochen scharf statt schwammig */
-  --sh:0 0 0 1px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.04),0 12px 32px -16px rgba(0,0,0,.14);
-  --grid:rgba(28,46,61,.07);
-  --max:1120px;--gut:clamp(16px,4vw,32px);
+  --dur-fast:150ms;--dur:220ms;
+  --r-sm:12px;--r:20px;--r-lg:28px;--r-xl:36px;
+  /* Haarlinie + weicher, tiefer Schatten: Karten wirken gestochen scharf */
+  --sh-1:0 0 0 1px rgba(12,12,20,.05),0 1px 2px rgba(12,12,20,.04);
+  --sh-2:0 0 0 1px rgba(12,12,20,.05),0 2px 4px rgba(12,12,20,.03),0 18px 40px -18px rgba(12,12,20,.18);
+  --sh-3:0 0 0 1px rgba(12,12,20,.04),0 4px 8px rgba(12,12,20,.03),0 30px 60px -22px rgba(30,20,80,.28);
+  --max:1180px;--gut:clamp(16px,4vw,32px);
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:76px;-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.55 var(--font);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
-::selection{background:#d5dee7}
+html{scroll-behavior:smooth;scroll-padding-top:84px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;overflow-x:clip}
+::selection{background:#e6defe}
 a{color:inherit}
 img{max-width:100%;display:block}
+button{font:inherit;color:inherit}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gut)}
 section{position:relative}
-.h1,.h2,.h3{text-wrap:balance}
+h1,h2,h3{font-family:var(--head);text-wrap:balance;margin:0}
 p{text-wrap:pretty}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* ---- Typo: Laufweite & Zeilenhöhe je Größe ---- */
-.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--ink2);background:var(--card);border:1px solid var(--line);padding:6px 12px 6px 8px;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(15,159,110,.14)}
-.h1{font-size:clamp(42px,6vw,76px);line-height:1.02;letter-spacing:-.04em;font-weight:650;margin:22px 0 0}
-.h2{font-size:clamp(34px,4.6vw,56px);line-height:1.06;letter-spacing:-.035em;font-weight:650;margin:0}
-.h3{font-size:clamp(20px,2vw,24px);line-height:1.2;letter-spacing:-.02em;font-weight:600;margin:0}
-.lead{font-size:clamp(18px,1.6vw,21px);line-height:1.5;color:var(--mut);margin:20px 0 0;max-width:34em;letter-spacing:-.005em}
-.muted{color:var(--mut)}
-.grad{background:linear-gradient(100deg,#1c2e3d 10%,#2f5bd3 55%,#0f9f6e 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.sec-head{text-align:center;max-width:760px;margin:0 auto}
-.sec-head .lead{margin-left:auto;margin-right:auto}
-.kicker{font-size:15px;font-weight:600;color:var(--blue);margin:0 0 12px;letter-spacing:-.005em}
+.h1{font-size:clamp(44px,7vw,84px);line-height:1;letter-spacing:-.045em;font-weight:600}
+.h2{font-size:clamp(34px,4.6vw,56px);line-height:1.04;letter-spacing:-.04em;font-weight:600}
+.h3{font-size:clamp(26px,3vw,38px);line-height:1.08;letter-spacing:-.035em;font-weight:600}
+.h4{font:600 19px/1.25 var(--head);letter-spacing:-.02em;margin:0}
+.lead{font-size:clamp(17px,1.5vw,19px);line-height:1.55;color:var(--mut);margin:18px 0 0;max-width:36em}
+.center{text-align:center}.center .lead{margin-left:auto;margin-right:auto}
+.pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:999px;background:var(--card);box-shadow:var(--sh-1);font:500 13px/1 var(--body);color:var(--ink2);letter-spacing:-.005em}
+.pill i{width:6px;height:6px;border-radius:50%;background:var(--grad)}
+.sec-head{max-width:760px;margin:0 auto 56px}
+.sec-head .pill{margin-bottom:18px}
 
 /* ---- Buttons: Druck-Feedback ---- */
-.btn{appearance:none;border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 22px;border-radius:999px;font:600 16px/1 var(--font);letter-spacing:-.01em;cursor:pointer;text-decoration:none;transition:transform 160ms var(--ease-out),background-color 150ms ease,box-shadow 150ms ease,color 150ms ease;white-space:nowrap}
+.btn{appearance:none;border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 24px;border-radius:999px;font:600 15.5px/1 var(--body);letter-spacing:-.01em;cursor:pointer;text-decoration:none;white-space:nowrap;touch-action:manipulation;user-select:none;-webkit-user-select:none;
+  transition:transform 160ms var(--ease-out),box-shadow var(--dur-fast) ease,background-color var(--dur-fast) ease,background-position 400ms var(--ease-out),color var(--dur-fast) ease}
 .btn:active{transform:scale(.97)}
-.btn.pri{background:var(--a);color:#fff;box-shadow:0 1px 2px rgba(28,46,61,.3),0 8px 24px -10px rgba(28,46,61,.55)}
-.btn.sec{background:transparent;color:var(--a);box-shadow:inset 0 0 0 1.5px rgba(28,46,61,.18)}
-.btn svg{width:18px;height:18px;transition:transform 200ms var(--ease-out)}
+.btn svg{width:17px;height:17px;flex:none;transition:transform 200ms var(--ease-out)}
+.btn.grad{color:#fff;background:linear-gradient(95deg,var(--v1),var(--v2) 30%,var(--v3) 65%,var(--v4) 100%);background-size:160% 100%;background-position:0 0;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 10px 26px -10px rgba(122,60,240,.7),0 4px 10px -4px rgba(255,111,142,.5)}
+.btn.dark{background:var(--ink);color:#fff;height:44px;padding:0 18px;font-size:14.5px;box-shadow:0 8px 20px -10px rgba(12,12,20,.6)}
+.btn.line{background:var(--card);color:var(--ink);box-shadow:var(--sh-1)}
+.btn.outline{background:transparent;color:var(--ink);height:44px;padding:0 18px;font-size:14.5px;box-shadow:inset 0 0 0 1.5px rgba(162,75,242,.45)}
+.btn.ghost-d{background:rgba(255,255,255,.06);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
 @media (hover:hover) and (pointer:fine){
-  .btn.pri:hover{background:var(--a2)}
-  .btn.sec:hover{box-shadow:inset 0 0 0 1.5px rgba(28,46,61,.4)}
-  .btn:hover svg.mv{transform:translateX(3px)}
-  .btn.down:hover svg.mv{transform:translateY(3px)}
-  .btn.inv:hover{background:#e8edf2}
-  .btn.ghost-d:hover{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5)}
+  .btn.grad:hover{background-position:100% 0}
+  .btn:hover svg.mv{transform:translate(2px,-2px)}
+  .btn.dark:hover{background:#26263a}
+  .btn.line:hover{box-shadow:0 0 0 1px rgba(12,12,20,.12),0 6px 16px -8px rgba(12,12,20,.18)}
+  .btn.outline:hover{box-shadow:inset 0 0 0 1.5px var(--v2)}
+  .btn.ghost-d:hover{background:rgba(255,255,255,.12)}
 }
-.btn.inv{background:#fff;color:var(--a);box-shadow:0 8px 24px -10px rgba(0,0,0,.5)}
-.btn.ghost-d{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.24)}
-.btn:focus-visible,.tab:focus-visible,.faq summary:focus-visible,.nav a:focus-visible,footer a:focus-visible,.price .o:focus-visible,.smiles button:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(47,91,211,.25)}
+:focus-visible{outline:2px solid var(--v1);outline-offset:3px;border-radius:10px}
+.btn:focus-visible{outline-offset:3px;border-radius:999px}
 
 /* ---- Navigation: durchscheinendes Material, Kante erst beim Scrollen ---- */
-.nav{position:fixed;inset:0 0 auto 0;z-index:50;padding-top:env(safe-area-inset-top);background:rgba(251,251,253,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);transition:box-shadow 200ms ease}
-.nav.scrolled{box-shadow:0 1px 0 rgba(0,0,0,.06)}
-.nav .wrap{display:flex;align-items:center;height:60px;gap:28px}
-.nav .logo img{height:22px;width:auto}
-.nav .links{display:flex;gap:26px;margin-left:auto}
-.nav .links a{font-size:14px;color:var(--mut);text-decoration:none;transition:color 150ms ease;border-radius:6px}
-.nav .links a[aria-current="true"]{color:var(--ink)}
-@media (hover:hover) and (pointer:fine){.nav .links a:hover{color:var(--ink)}}
-.nav .btn{height:36px;padding:0 16px;font-size:14px}
-@media (max-width:820px){.nav .links{display:none}.nav .btn{margin-left:auto}}
-@media (prefers-reduced-transparency:reduce){.nav{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}}
+.nav{position:fixed;inset:0 0 auto;z-index:60;padding-top:env(safe-area-inset-top);transition:background-color var(--dur) ease,box-shadow var(--dur) ease}
+.nav.scrolled{background:rgba(255,255,255,.78);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:0 1px 0 rgba(12,12,20,.06)}
+.nav .wrap{display:flex;align-items:center;height:72px;gap:24px}
+.logo{display:inline-flex;align-items:baseline;font:500 21px/1 var(--head);letter-spacing:.01em;color:#1c2e3d;text-decoration:none}
+.logo b{font-weight:800}
+.nav .links{display:flex;gap:4px;margin:0 auto;padding:4px;border-radius:999px}
+.nav .links a{font-size:14.5px;color:var(--ink2);text-decoration:none;padding:8px 14px;border-radius:999px;transition:color var(--dur-fast) ease,background-color var(--dur-fast) ease}
+@media (hover:hover) and (pointer:fine){.nav .links a:hover{color:var(--ink);background:rgba(12,12,20,.04)}}
+@media (max-width:860px){.nav .links{display:none}.nav .btn.dark{margin-left:auto}}
 
 /* ---- Hero ---- */
-/* clip statt hidden: kein Scroll-Container, sonst schiebt scrollIntoView im Demo-Funnel den Hero zur Seite */
-.hero{padding:clamp(100px,11vw,124px) 0 clamp(64px,8vw,104px);overflow:hidden;overflow:clip;isolation:isolate}
-/* feines Raster, das zum Rand hin ausläuft – technische Präzision ohne Lärm */
-.hero:before{content:"";position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;background-position:center -1px;-webkit-mask-image:radial-gradient(ellipse 62% 58% at 72% 42%,#000 10%,transparent 72%);mask-image:radial-gradient(ellipse 62% 58% at 72% 42%,#000 10%,transparent 72%)}
-@media (max-width:900px){.hero:before{-webkit-mask-image:radial-gradient(ellipse 90% 40% at 50% 62%,#000 10%,transparent 72%);mask-image:radial-gradient(ellipse 90% 40% at 50% 62%,#000 10%,transparent 72%)}}
-.hero .wrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(32px,5vw,72px);align-items:center}
-.hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
-.hero .note{margin-top:22px;font-size:14px;color:var(--mut);display:flex;gap:18px;flex-wrap:wrap}
-.hero .note span{display:inline-flex;align-items:center;gap:6px}
-.hero .note svg{width:16px;height:16px;color:var(--green)}
-@media (max-width:900px){.hero .wrap{grid-template-columns:minmax(0,1fr)}.hero .copy{text-align:center}.hero .copy .lead{margin-left:auto;margin-right:auto}.hero .cta,.hero .note{justify-content:center}}
+.hero{padding:calc(124px + env(safe-area-inset-top)) 0 40px;text-align:center;overflow:clip}
+.hero::before{content:"";position:absolute;inset:0 0 auto;height:900px;pointer-events:none;z-index:-1;
+  background:radial-gradient(40% 32% at 50% 72%,rgba(162,75,242,.16),transparent 70%),radial-gradient(30% 26% at 36% 82%,rgba(255,179,94,.16),transparent 70%),radial-gradient(30% 26% at 66% 80%,rgba(91,61,245,.12),transparent 70%)}
+.proof{display:inline-flex;align-items:center;gap:14px;padding:7px 18px 7px 7px;border-radius:999px;background:var(--card);box-shadow:var(--sh-2)}
+.proof .av{display:flex}
+.proof .av img,.proof .av span{width:34px;height:34px;border-radius:50%;border:2px solid #fff;margin-left:-10px;flex:none}
+.proof .av img{object-fit:cover;background:var(--soft)}
+.proof .av img:first-child{margin-left:0}
+.proof .av span{background:linear-gradient(135deg,#ffb35e,#ff6f8e);color:#fff;font:600 11px/30px var(--body);text-align:center;letter-spacing:-.02em}
+.proof .rate{text-align:left;line-height:1.2}
+.proof .stars{display:flex;align-items:center;gap:1px}
+.proof .stars svg{width:14px;height:14px;fill:#ff9f43}
+.proof .stars b{font:600 13px/1 var(--body);color:var(--ink);margin-left:6px}
+.proof small{display:block;font-size:12.5px;color:var(--mut);margin-top:3px}
+@media (max-width:420px){.proof{gap:10px;padding-right:14px}.proof .av img:nth-child(4){display:none}.proof small{font-size:12px}}
+.hero .h1{margin:26px auto 0;font-size:clamp(40px,6vw,78px);letter-spacing:-.045em}
+@media (min-width:760px){.hero .h1{white-space:nowrap}}
+.hero .lead{margin:20px auto 0;max-width:38em;font-size:clamp(15.5px,1.2vw,17px);line-height:1.6}
+.ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
 
-/* Handy mit echter Live-Demo */
-.demo{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px}
-.demo:before{content:"";position:absolute;z-index:-1;left:50%;top:52%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(47,91,211,.16),rgba(15,159,110,.07) 55%,transparent);pointer-events:none}
-.tabs{position:relative;display:inline-flex;padding:4px;background:rgba(0,0,0,.05);border-radius:999px}
-.tabs .ind{position:absolute;top:4px;left:4px;height:calc(100% - 8px);border-radius:999px;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.08),0 2px 8px -2px rgba(0,0,0,.08);transition:transform 320ms var(--ease-out),width 320ms var(--ease-out)}
-.tab{position:relative;z-index:1;appearance:none;border:0;background:none;padding:8px clamp(10px,2.6vw,16px);border-radius:999px;font:500 14px/1.2 var(--font);color:var(--mut);cursor:pointer;transition:color 200ms ease,transform 160ms var(--ease-out)}
-.tab:active{transform:scale(.97)}
-@media (hover:hover) and (pointer:fine){.tab:hover{color:var(--ink2)}}
-.tab[aria-selected="true"]{color:var(--ink)}
-/* Handy passt immer komplett in den ersten Bildschirm */
-.phone{position:relative;width:min(340px,86vw);aspect-ratio:340/700;min-height:0;border-radius:52px;background:#0d0d0f;padding:11px;box-shadow:0 0 0 1px #2a2a2e,inset 0 0 0 2px #3a3a3f,0 50px 100px -40px rgba(28,46,61,.55),0 30px 60px -30px rgba(0,0,0,.35)}
-@media (min-width:901px){.phone{width:min(340px,max(280px,calc((100svh - 250px) * .486)))}}
-.phone .island{position:absolute;top:21px;left:50%;transform:translateX(-50%);width:92px;height:27px;border-radius:20px;background:#0d0d0f;z-index:5}
-.phone .scr{position:relative;width:100%;height:100%;border-radius:42px;overflow:auto;background:#fff;scrollbar-width:none;overscroll-behavior:contain}
-.phone .scr::-webkit-scrollbar{display:none}
-@media (pointer:coarse){.phone .scr{overscroll-behavior:auto}} /* am Ende des Funnels scrollt die Seite weiter, statt festzuhängen */
-.phone .sbar{position:sticky;top:0;z-index:4;height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 28px 0 32px;font-size:14px;font-weight:600;pointer-events:none}
-.phone .sbar i{width:24px;height:11px;border:1.5px solid currentColor;border-radius:4px;position:relative;opacity:.85}
-.phone .sbar i:after{content:"";position:absolute;inset:1.5px 5px 1.5px 1.5px;background:currentColor;border-radius:1px}
-.phone .host{min-height:calc(100% - 46px);display:flex;flex-direction:column;transition:opacity 180ms ease,filter 180ms ease}
-.phone .host.swap{opacity:0;filter:blur(2px)}
-.phone .host>.fp{flex:1}
-.demo .hint{font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px}
-.demo .hint svg{width:15px;height:15px}
-/* Mitteilung wie auf dem iPhone: zeigt, wie die Anfrage bei dir ankommt.
-   Rein: 460 ms Schubladen-Kurve · Raus: schneller, 240 ms */
-.demo-note{position:absolute;left:20px;right:20px;top:54px;z-index:7;display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:20px;background:rgba(242,242,247,.88);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:0 0 0 .5px rgba(0,0,0,.08),0 14px 34px -12px rgba(0,0,0,.4);color:#1d1d1f;pointer-events:none;opacity:0;transform:translateY(-14px) scale(.96);transform-origin:top center;transition:transform 240ms var(--ease-out),opacity 180ms ease}
-.demo-note.on{opacity:1;transform:none;transition:transform 460ms var(--ease-drawer),opacity 160ms ease}
-.demo-note .app{width:32px;height:32px;border-radius:9px;background:var(--a);color:#fff;display:grid;place-items:center;flex:none;font-weight:700;font-size:16px;letter-spacing:-.04em}
-.demo-note div{flex:1;min-width:0;line-height:1.3}
-.demo-note b{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:600}
-.demo-note b small{font-weight:400;font-size:12px;color:#8e8e93}
-.demo-note p{margin:2px 0 0;font-size:13px;color:#1d1d1f}
-.demo-note p+p{color:#6e6e73;font-size:12px}
+/* Bühne mit Handy und schwebenden Karten */
+.stage{position:relative;margin:64px auto 0;max-width:980px;display:flex;flex-direction:column;align-items:center}
+.livechip{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13.5px;color:var(--mut)}
+.livechip i{width:8px;height:8px;border-radius:50%;background:var(--c-green);box-shadow:0 0 0 4px rgba(52,197,138,.16)}
 
-/* ---- Kanäle ---- */
-.channels{padding:0 0 clamp(64px,8vw,104px)}
-.channels .sec-head{max-width:var(--max);border-top:1px solid var(--line);padding-top:36px}
-.channels .lbl{margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
-.chips{display:flex;flex-wrap:wrap;gap:12px clamp(20px,3.4vw,44px);justify-content:center;margin-top:20px}
-.chip{display:inline-flex;align-items:center;gap:9px;font-size:16px;font-weight:500;color:var(--ink2);letter-spacing:-.01em}
-.chip svg{width:20px;height:20px;color:var(--mut)}
+/* ---- Handy: natives Maß 390×844, skaliert über --s ---- */
+.devw{--s:.74;position:relative;width:calc(414px * var(--s));height:calc(868px * var(--s));flex:none}
+.dev{position:absolute;left:0;top:0;width:414px;height:868px;transform:scale(var(--s));transform-origin:0 0;border-radius:70px;padding:3px;
+  background:linear-gradient(150deg,#eceef2 0%,#a6a8ae 18%,#f2f3f5 40%,#8f9198 62%,#d9dbdf 82%,#9a9ca2 100%);
+  box-shadow:0 0 0 1px rgba(0,0,0,.08),0 60px 120px -40px rgba(40,24,110,.45),0 30px 60px -30px rgba(0,0,0,.35)}
+.dev::before,.dev::after{content:"";position:absolute;width:4px;border-radius:2px;background:linear-gradient(90deg,#8d8f95,#c9cbd0)}
+.dev::before{left:-3px;top:180px;height:64px;box-shadow:0 84px 0 #a3a5ab}
+.dev::after{right:-3px;top:250px;height:100px}
+.dev .bz{height:100%;border-radius:67px;background:#09090b;padding:10px}
+.dev .scr{position:relative;height:100%;border-radius:57px;overflow:auto;background:#fff;scrollbar-width:none;overscroll-behavior:contain;isolation:isolate}
+.dev .scr::-webkit-scrollbar{display:none}
+.dev .island{position:absolute;top:21px;left:50%;width:122px;height:36px;margin-left:-61px;border-radius:20px;background:#000;z-index:7}
+.dev .sbar{position:sticky;top:0;z-index:6;height:56px;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 46px;font:600 16px/1 var(--body);letter-spacing:-.01em;pointer-events:none;color:#111}
+.dev .sbar svg{height:13px;width:auto}
+.dev .sbar .ic{display:flex;gap:6px;align-items:center}
+.dev .host{min-height:calc(100% - 56px);display:flex;flex-direction:column}
+.dev .host>.fp{flex:1}
+.dev .home{position:absolute;bottom:9px;left:50%;width:140px;height:5px;margin-left:-70px;border-radius:3px;background:rgba(0,0,0,.85);z-index:7;pointer-events:none}
+@media (pointer:coarse){.dev .scr{overscroll-behavior:auto}}
+/* Mitteilung oben im Handy */
+.note{position:absolute;top:12px;left:12px;right:12px;z-index:8;display:flex;gap:12px;align-items:center;padding:13px 14px;border-radius:24px;background:rgba(250,250,252,.86);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:0 10px 30px -10px rgba(0,0,0,.3);
+  opacity:0;transform:translateY(-120%);transition:transform 420ms var(--ease-drawer),opacity 300ms ease;pointer-events:none}
+.note.on{opacity:1;transform:none}
+.note .ni{width:38px;height:38px;border-radius:10px;background:#1c2e3d;color:#fff;display:grid;place-items:center;font:800 15px/1 var(--head);flex:none}
+.note b{display:block;font:600 14.5px/1.25 var(--body)}
+.note small{display:block;font-size:13px;color:#555;margin-top:2px}
 
-/* ---- So geht's ---- */
-.steps{padding:clamp(70px,9vw,120px) 0;background:var(--bg2)}
-.steps .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:56px}
-.step{background:var(--card);border-radius:var(--r);padding:28px 26px 30px;box-shadow:var(--sh)}
-.step .num{font-size:15px;font-weight:600;color:var(--blue);letter-spacing:-.01em}
-.step .h3{margin-top:10px}
-.step p{margin:10px 0 0;color:var(--mut);font-size:16px}
-.step .vis{height:150px;margin:0 -6px 22px;border-radius:var(--r-sm);background:var(--bg2);display:grid;place-items:center;overflow:hidden;position:relative}
-@media (max-width:860px){.steps .grid{grid-template-columns:minmax(0,1fr)}}
-/* kleine Illustrationen aus CSS */
-.mini-tpl{display:flex;gap:10px}
-.mini-tpl span{width:58px;height:96px;border-radius:12px;background:#fff;box-shadow:var(--sh);position:relative;overflow:hidden}
-.mini-tpl span:before{content:"";position:absolute;left:8px;right:8px;top:12px;height:30px;border-radius:6px;background:var(--c)}
-.mini-tpl span:after{content:"";position:absolute;left:8px;right:16px;top:50px;height:6px;border-radius:3px;background:#e8e8ed;box-shadow:0 12px 0 #e8e8ed,0 24px 0 #e8e8ed}
-.mini-tpl span:nth-child(2){transform:translateY(-8px)}
-.mini-edit{width:180px;padding:14px;border-radius:14px;background:#fff;box-shadow:var(--sh);display:flex;flex-direction:column;gap:10px}
-.mini-edit b{font-size:12px;color:var(--mut);font-weight:500}
-.sw{display:flex;gap:8px}.sw i{width:22px;height:22px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 2px #fff,0 0 0 1px #e8e8ed}
-.sw i.on{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px var(--a)}
-.mini-edit .bar{height:8px;border-radius:4px;background:#e8e8ed;position:relative}
-.mini-edit .bar:after{content:"";position:absolute;inset:0 40% 0 0;border-radius:4px;background:var(--a)}
-.mini-share{display:flex;align-items:center;gap:14px}
-.qr{width:84px;height:84px;padding:8px;border-radius:12px;background:#fff;box-shadow:var(--sh);display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.qr i{border-radius:2px;background:var(--ink)}.qr i.o{background:transparent}
-.mini-share .lnk{font-size:13px;font-weight:500;padding:9px 12px;border-radius:999px;background:#fff;box-shadow:var(--sh);color:var(--ink2);white-space:nowrap}
+/* ---- Schwebende Karten (Stil der Vorlagen) ---- */
+.fl{position:absolute;z-index:3;will-change:transform}
+.fc{background:var(--card);border-radius:22px;box-shadow:var(--sh-3);padding:16px 18px;text-align:left}
+.spark{width:22px;height:22px;color:#d3d3da;display:block}
+.tag{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:7px;font:500 12px/1 var(--body)}
+.tag.hot{background:#fde8ea;color:#d4495c}.tag.low{background:#f1f1f4;color:#8a8a96}.tag.ok{background:#e3f6ec;color:#1f9a63}.tag.new{background:#efeaff;color:#5b3df5}.tag.sun{background:#fff3c4;color:#9a7300}
+.fc-note{width:292px;display:flex;gap:12px;align-items:center}
+.fc-note img{width:44px;height:44px;border-radius:12px;object-fit:cover;flex:none}
+.fc-note b{display:block;font:600 14.5px/1.3 var(--body);letter-spacing:-.01em}
+.fc-note small{display:block;color:var(--mut);font-size:13px;line-height:1.35}
+.fc-note em{font-style:normal;margin-left:auto;align-self:flex-start;font-size:12px;color:var(--faint)}
+.fc-bars{width:250px}
+.fc-bars .top{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--mut)}
+.fc-bars .top b{color:var(--c-green);font-weight:600}
+.fc-bars .big{font:600 30px/1.1 var(--head);letter-spacing:-.03em;margin:4px 0 14px}
+.bars{display:flex;align-items:flex-end;justify-content:space-between;height:92px;gap:8px}
+.bars span{flex:1;display:flex;flex-direction:column-reverse;border-radius:7px;overflow:hidden;height:var(--h)}
+.bars span i{display:block}
+.bars span i:nth-child(1){background:var(--c-sun);flex:var(--a)}
+.bars span i:nth-child(2){background:var(--c-coral);flex:var(--b)}
+.bars span i:nth-child(3){background:var(--c-cyan);flex:var(--c)}
+.days{display:flex;justify-content:space-between;margin-top:8px;font-size:11.5px;color:var(--faint)}
+.days span{flex:1;text-align:center}
+.fc-lead{width:258px}
+.fc-lead .row{display:flex;justify-content:space-between;align-items:center}
+.fc-lead .dots{color:var(--ink);letter-spacing:2px;font-weight:700;line-height:1}
+.fc-lead h4{font:600 17px/1.25 var(--head);letter-spacing:-.02em;margin:10px 0 4px}
+.fc-lead p{margin:0;font-size:13px;color:var(--mut);line-height:1.45}
+.fc-lead .foot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:12.5px;color:var(--mut)}
+.fc-lead .foot b{color:var(--ink);font:600 15px/1 var(--head)}
+.ini{display:flex}
+.ini span{width:26px;height:26px;border-radius:50%;border:2px solid #fff;margin-left:-7px;font:600 10.5px/22px var(--body);text-align:center;color:#3b3b47}
+.ini span:first-child{margin-left:0}
+.fc-pick{width:220px;display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px}
+.fc-pick img{width:52px;height:52px;border-radius:14px;object-fit:cover;flex:none}
+.fc-pick small{display:block;color:var(--mut);font-size:12px}
+.fc-pick b{display:block;font:600 15px/1.25 var(--body)}
+.fc-pick .ck{margin-left:auto;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none}
+.fc-pick .ck svg{width:13px;height:13px}
 
-/* ---- Funktionen (Bento) ---- */
-.features{padding:clamp(80px,10vw,140px) 0}
-.bento{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px;margin-top:56px}
-.card{background:var(--card);border-radius:var(--r);padding:28px;box-shadow:var(--sh);overflow:hidden;position:relative;display:flex;flex-direction:column}
-.card p{margin:10px 0 0;color:var(--mut);font-size:16px}
-.card .vis{margin-top:auto;padding-top:26px}
-.c-4{grid-column:span 4}.c-3{grid-column:span 3}.c-2{grid-column:span 2}
-@media (max-width:980px){.c-4,.c-3,.c-2{grid-column:span 3}}
-@media (max-width:680px){.bento{grid-template-columns:minmax(0,1fr)}.c-4,.c-3,.c-2{grid-column:auto}}
-.tag{display:inline-flex;align-self:flex-start;font-size:12px;font-weight:600;color:var(--a);background:#eef2f6;border-radius:999px;padding:4px 10px;margin-bottom:14px}
+.h-c1{top:9%;right:calc(50% + 138px)}
+.h-c2{top:52%;right:calc(50% + 150px)}
+.h-c3{top:16%;left:calc(50% + 140px)}
+.h-c4{top:63%;left:calc(50% + 132px)}
+.h-c1 .fc{transform:rotate(-2deg)}.h-c3 .fc{transform:rotate(3deg)}.h-c4 .fc{transform:rotate(-1.5deg)}
+@media (max-width:900px){
+  /* auf schmalen Bildschirmen nur eine Karte, die keinen Knopf im Funnel verdeckt */
+  .h-c1,.h-c2,.h-c4{display:none}
+  .h-c3{top:-2%;left:auto;right:calc(50% - 260px)}
+  .h-c3{scale:.78;transform-origin:100% 0}
+  .fl{pointer-events:none}
+}
+@media (max-width:560px){
+  .devw{--s:.7}
+  .h-c3{right:2px;top:-3%}
+  .h-c3{scale:.6}
+}
+/* ---- Kanäle: Laufband ---- */
+.channels{padding:72px 0 88px}
+.channels h2{font:500 15px/1.4 var(--body);color:var(--mut);text-align:center;letter-spacing:-.005em;margin-bottom:28px}
+.marquee{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.track{display:flex;gap:14px;width:max-content;animation:marq 46s linear infinite}
+@media (hover:hover) and (pointer:fine){.marquee:hover .track{animation-play-state:paused}}
+@keyframes marq{to{transform:translateX(calc(-50% - 7px))}}
+.ch{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 20px 0 14px;border-radius:16px;background:var(--soft);font:600 16px/1 var(--head);letter-spacing:-.015em;color:var(--ink2);white-space:nowrap}
+.ch svg{width:24px;height:24px;flex:none}
+
+/* ---- Vorteile ---- */
+.benefits{background:var(--lav);padding:112px 0}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bcard{background:var(--card);border-radius:var(--r-lg);padding:28px;box-shadow:var(--sh-1)}
+.bcard .ico{width:44px;height:44px;border-radius:13px;background:var(--ink);color:#fff;display:grid;place-items:center;margin-bottom:56px}
+.bcard .ico svg{width:21px;height:21px}
+.bcard p{margin:8px 0 0;color:var(--mut);font-size:15.5px;line-height:1.55;max-width:30em}
+.gpanel{grid-column:1/-1;position:relative;border-radius:var(--r-xl);overflow:hidden;min-height:640px;display:flex;justify-content:center;align-items:flex-end;padding-top:64px;
+  background:radial-gradient(55% 60% at 12% 10%,#5b3df5 0%,rgba(91,61,245,0) 70%),radial-gradient(50% 55% at 92% 18%,#9b5cff 0%,rgba(155,92,255,0) 70%),radial-gradient(60% 45% at 85% 100%,#ffa65a 0%,rgba(255,166,90,0) 75%),radial-gradient(55% 45% at 10% 100%,#ffd0b0 0%,rgba(255,208,176,0) 75%),linear-gradient(180deg,#7d62ff 0%,#cdbdff 42%,#fff1e7 72%,#ffd9bd 100%)}
+.gpanel .devw{--s:.66;margin-bottom:-96px}
+.gpanel .g-c1{top:24%;right:calc(50% + 160px)}
+.gpanel .g-c2{top:50%;left:calc(50% + 158px)}
+.gpanel .g-c1 .fc{transform:rotate(-3deg)}.gpanel .g-c2 .fc{transform:rotate(2.5deg)}
+.route{width:240px}
+.route .q{font:600 15px/1.3 var(--head);letter-spacing:-.015em;margin:10px 0 12px}
+.route .smi{display:flex;gap:6px}
+.route .smi span{flex:1;aspect-ratio:1;border-radius:12px;background:var(--soft);display:grid;place-items:center}
+.route .smi span.on{background:#e3f6ec;box-shadow:inset 0 0 0 1.5px #34c58a}
+.route .smi span.bad{background:#fde8ea;box-shadow:inset 0 0 0 1.5px #ef7d8d}
+.route .smi svg{width:22px;height:22px}
+.route .to{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--mut)}
+.route .to b{color:var(--ink);font-weight:600}
+.route .to svg{width:16px;height:16px;flex:none}
+@media (max-width:900px){
+  .bgrid{grid-template-columns:1fr}
+  .gpanel{min-height:560px}
+  .gpanel .devw{--s:.6}
+  .gpanel .g-c1{top:18px;left:16px;right:auto}
+  .gpanel .g-c2{top:auto;bottom:24px;left:auto;right:12px}
+  .gpanel .fl{scale:.8}
+  .gpanel .g-c1{transform-origin:0 0}.gpanel .g-c2{transform-origin:100% 100%}
+}
+@media (max-width:560px){.bcard .ico{margin-bottom:36px}.bcard{padding:24px}}
+
+/* ---- Funktionen: Zeilen auf Pastellflächen ---- */
+.features{padding:120px 0 40px}
+.frow{display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:center;border-radius:var(--r-xl);padding:64px;margin-bottom:20px;overflow:hidden}
+.frow.pink{background:var(--pink)}.frow.peach{background:var(--peach)}.frow.lav{background:var(--lav)}.frow.mint{background:var(--mint)}
+.frow.flip .ftxt{order:2}
+.ftxt .kick{display:inline-block;font:600 14px/1 var(--body);margin-bottom:16px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ftxt p{color:var(--mut);margin:16px 0 28px;font-size:16.5px;max-width:28em}
+.ftxt ul{list-style:none;padding:0;margin:-8px 0 28px;display:grid;gap:10px}
+.ftxt li{display:flex;gap:10px;align-items:center;font-size:15px;color:var(--ink2)}
+.ftxt li svg{width:18px;height:18px;flex:none;color:var(--v2)}
+/* Rahmen mit Verlauf hinter der Karte (wie in der Referenz) */
+.frame{position:relative;padding:0 0 14px 14px}
+.frame::before{content:"";position:absolute;inset:18px 18px 0 0;border-radius:30px;background:var(--grad);opacity:.95}
+.frame.r{padding:0 14px 14px 0}
+.frame.r::before{inset:18px 0 0 18px}
+.mock{position:relative;background:var(--card);border-radius:26px;box-shadow:var(--sh-2);padding:26px}
+.mock .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.mock .mh b{font:600 19px/1.2 var(--head);letter-spacing:-.02em}
+.mock .mh .dots{width:30px;height:30px;border-radius:9px;box-shadow:var(--sh-1);display:grid;place-items:center;letter-spacing:1px;font-weight:700;color:var(--mut);line-height:0}
 /* Preis-Karte */
-.price{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}
-.price .opts{display:flex;flex-direction:column;gap:8px;flex:1;min-width:200px}
-.price .o{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:var(--bg2);font-size:15px;color:var(--ink2);border:1.5px solid transparent}
-.price .o.sel{border-color:var(--a);background:#eef2f6;color:var(--ink)}
-.price .o em{font-style:normal;margin-left:auto;font-size:13px;color:var(--mut)}
-.price .tot{flex:1;min-width:200px;border-radius:16px;background:var(--a);color:#fff;padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between}
-.price .tot small{opacity:.7;font-size:13px}
-.price .tot b{font-size:clamp(26px,3vw,34px);letter-spacing:-.03em;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:6px}
-.price .tot span{font-size:13px;opacity:.75;margin-top:8px}
+.opts{display:grid;gap:10px}
+.opt{display:flex;align-items:center;gap:14px;padding:10px 14px 10px 10px;border-radius:16px;background:var(--soft);border:0;width:100%;text-align:left;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;
+  box-shadow:inset 0 0 0 1.5px transparent;transition:box-shadow var(--dur-fast) ease,background-color var(--dur-fast) ease,transform 160ms var(--ease-out)}
+.opt:active{transform:scale(.98)}
+.opt img{width:48px;height:48px;border-radius:12px;object-fit:cover;flex:none}
+.opt b{font:600 15.5px/1.2 var(--body);letter-spacing:-.01em}
+.opt small{display:block;font-size:13px;color:var(--mut);margin-top:2px}
+.opt .rd{margin-left:auto;width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2);background:#fff;flex:none;display:grid;place-items:center;transition:box-shadow var(--dur-fast) ease,background-color var(--dur-fast) ease}
+.opt .rd svg{width:12px;height:12px;color:#fff;opacity:0;transform:scale(.6);transition:opacity var(--dur-fast) ease,transform 200ms var(--ease-out)}
+.opt[aria-pressed="true"]{background:#fff;box-shadow:inset 0 0 0 1.5px var(--ink),0 6px 18px -10px rgba(12,12,20,.3)}
+.opt[aria-pressed="true"] .rd{background:var(--ink);box-shadow:none}
+.opt[aria-pressed="true"] .rd svg{opacity:1;transform:none}
+@media (hover:hover) and (pointer:fine){.opt:not([aria-pressed="true"]):hover{background:#f0f0f4}}
+.price{display:flex;justify-content:space-between;align-items:flex-end;margin-top:20px;padding-top:18px;border-top:1px dashed var(--line2)}
+.price small{display:block;font-size:13px;color:var(--mut)}
+.price b{display:block;font:600 30px/1.1 var(--head);letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin-top:4px}
+.price .tag{margin-bottom:6px}
 /* Feedback-Karte */
-/* gezeichnete Gesichter statt System-Emojis: gleiche Strichstärke wie alle Icons */
-.smiles{display:flex;gap:6px}
-.smiles button{appearance:none;border:0;flex:1;max-width:48px;aspect-ratio:1;border-radius:14px;background:var(--bg2);color:var(--mut);display:grid;place-items:center;cursor:pointer;padding:0;transition:transform 160ms var(--ease-out),background-color 150ms ease,color 150ms ease}
-.smiles button svg{width:62%;height:62%}
-.smiles button:active{transform:scale(.94)}
-.smiles button.on{background:var(--a);color:#fff}
-@media (hover:hover) and (pointer:fine){.smiles button:not(.on):hover{color:var(--ink2);background:#ececf0}}
-.route{margin-top:14px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink2);min-height:40px}
-.route .pill{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:var(--bg2);font-weight:500;transition:opacity 180ms ease,transform 240ms var(--ease-out),filter 180ms ease}
-.route .pill svg{width:15px;height:15px;color:var(--a)}
-.route .pill.swap{opacity:0;transform:translateY(4px);filter:blur(2px)}
-.route>svg{width:16px;height:16px;flex:none;color:var(--mut)}
-/* Ablauf-Karte: kleiner Verzweigungsbaum, Linien zeichnen sich beim Einblenden */
-.tree{display:flex;flex-direction:column;align-items:center}
-.tree svg{width:100%;height:auto;display:block;color:#c5ccd6;margin:-1px 0}
-.tree .lk{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 700ms var(--ease-in-out) 250ms}
-.in-view .tree .lk{stroke-dashoffset:0}
-.tree .kids{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
-.tree .kids>div{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transform:translateY(6px);transition:opacity 400ms var(--ease-out),transform 500ms var(--ease-out);transition-delay:700ms}
-.tree .kids>div+div{transition-delay:780ms}
-.in-view .tree .kids>div{opacity:1;transform:none}
-.node{padding:8px 12px;border-radius:10px;background:var(--bg2);font-size:13px;font-weight:500;color:var(--ink2);white-space:nowrap}
-.node.n{background:var(--a);color:#fff}
-.edge{font-size:12px;font-weight:500;color:var(--blue);background:#eef3fe;padding:3px 9px;border-radius:999px}
-/* Montagebericht */
-.report{display:flex;flex-direction:column;gap:8px}
-.report .ck{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink2);padding:9px 11px;border-radius:10px;background:var(--bg2)}
-.report .ck svg{width:16px;height:16px;padding:2px;border-radius:5px;background:#dfe3e8;color:transparent;flex:none;transition:background-color 200ms ease,color 200ms ease}
-.report .ck.on svg{background:var(--a);color:#fff}
-.report .sig{margin-top:4px;border-bottom:1.5px dashed #c7c7cc;padding-bottom:4px;position:relative}
-.report .sig svg{width:100%;height:40px;color:var(--a)}
-.report .sig span{position:absolute;right:0;bottom:-20px;font-size:11px;color:var(--mut)}
-.sigp{stroke-dasharray:420;stroke-dashoffset:420;transition:stroke-dashoffset 1400ms var(--ease-out) 300ms}
-.in-view .sigp{stroke-dashoffset:0}
-/* Benachrichtigung */
-.mail{border-radius:14px;background:var(--bg2);padding:14px;display:flex;flex-direction:column;gap:8px}
-.mail .top{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
-.mail .top i{width:30px;height:30px;border-radius:8px;background:var(--a);display:grid;place-items:center;color:#fff}
-.mail .top i svg{width:16px;height:16px}
-.mail .top small{display:block;font-weight:400;color:var(--mut);font-size:12px}
-.mail .ln{height:7px;border-radius:4px;background:#e2e2e7}
-.mail .ln.s{width:60%}
-.hooks{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.hooks span{font-size:12px;font-weight:500;padding:5px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink2)}
-/* Domain */
-.browser{border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--line),0 12px 28px -18px rgba(0,0,0,.25);overflow:hidden}
-.bbar{display:flex;align-items:center;gap:6px;padding:9px 10px;background:var(--bg2);border-bottom:1px solid var(--line)}
-.bbar>i{width:10px;height:10px;border-radius:50%;background:#dcdce1;flex:none}
-.urlbar{flex:1;min-width:0;margin-left:8px;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 10px;border-radius:8px;background:var(--card);font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden}
-.urlbar span{overflow:hidden;text-overflow:ellipsis}
-.urlbar svg{width:13px;height:13px;color:var(--green);flex:none}
-.urlbar b{color:var(--ink);font-weight:600}
-.bbody{display:flex;align-items:center;gap:16px;padding:16px}
-.bbody .bimg{width:72px;aspect-ratio:1;border-radius:10px;background:linear-gradient(150deg,#3f8a66,#2f6b4f);flex:none}
-.bbody .btx{flex:1;display:flex;flex-direction:column;gap:7px}
-.bbody .bl{height:8px;border-radius:4px;background:#e8e8ed}
-.bbody .bl.t{height:11px;width:70%;background:#2f6b4f;opacity:.85}
-.bbody .bl.s{width:55%}
-.bbody .bb{margin-top:3px;height:24px;width:46%;border-radius:999px;background:#2f6b4f}
-/* Statistik */
-.stats .kpis{display:flex;gap:clamp(16px,3vw,28px);margin-bottom:16px}
-.stats .kpis small{display:block;font-size:12px;color:var(--mut)}
-.stats .kpis b{font-size:22px;font-weight:650;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.stats .kpis b em{font-style:normal;font-size:12px;font-weight:600;color:var(--green);margin-left:6px;letter-spacing:0}
-.bars{display:flex;align-items:flex-end;gap:6px;height:104px}
-.bars i{flex:1;border-radius:6px 6px 3px 3px;background:#e2e8f0;height:var(--h);transform-origin:bottom;transform:scaleY(.15);transition:transform 700ms var(--ease-out)}
-.bars i.hi{background:var(--a)}
-.in-view .bars i{transform:none}
-.bars i:nth-child(2){transition-delay:40ms}.bars i:nth-child(3){transition-delay:80ms}.bars i:nth-child(4){transition-delay:110ms}.bars i:nth-child(5){transition-delay:140ms}.bars i:nth-child(6){transition-delay:165ms}.bars i:nth-child(7){transition-delay:185ms}
-.legal{display:flex;flex-direction:column;gap:10px}
-.legal div{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink2)}
-@media (max-width:680px){.legal-wrap{grid-template-columns:minmax(0,1fr)!important}}
-.legal svg{width:18px;height:18px;color:var(--green);flex:none}
+.fb .q{font:600 22px/1.2 var(--head);letter-spacing:-.025em;margin:6px 0 20px}
+.smis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.smis button{aspect-ratio:1;border:0;border-radius:16px;background:var(--soft);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;transition:transform 160ms var(--ease-out),background-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease}
+.smis button:active{transform:scale(.94)}
+.smis svg{width:30px;height:30px;transition:transform 220ms var(--ease-out)}
+.smis button[aria-pressed="true"]{background:#fff;box-shadow:inset 0 0 0 1.5px var(--ink),0 6px 16px -10px rgba(12,12,20,.35)}
+.smis button[aria-pressed="true"] svg{transform:scale(1.1)}
+@media (hover:hover) and (pointer:fine){.smis button:not([aria-pressed="true"]):hover{background:#f0f0f4}}
+.rt{display:flex;align-items:center;gap:12px;margin-top:20px;padding:14px;border-radius:16px;background:var(--soft)}
+.rt .ri{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;transition:background-color var(--dur) ease,color var(--dur) ease}
+.rt .ri svg{width:20px;height:20px}
+.rt small{display:block;font-size:12.5px;color:var(--mut)}
+.rt b{display:block;font:600 15px/1.3 var(--body)}
+.rt .sw{transition:opacity 180ms ease,filter 180ms ease,transform 220ms var(--ease-out)}
+.rt .sw.out{opacity:0;filter:blur(3px);transform:translateY(4px)}
+.rt.good .ri{background:#e3f6ec;color:#1f9a63}.rt.bad .ri{background:#fde8ea;color:#d4495c}
+/* Statistik-Karte (Stil „Sales Performance“) */
+.perf .spark{margin-bottom:22px}
+.perf h4{font:600 26px/1.15 var(--head);letter-spacing:-.03em;margin:0}
+.perf .rng{color:var(--mut);font-size:15px;margin-top:4px}
+.chart{position:relative;margin:26px 0 18px}
+.chart svg{width:100%;height:auto;overflow:visible;display:block}
+.chart .ln{fill:none;stroke:var(--c-coral);stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1}
+.chart .ar{fill:url(#perfArea);opacity:0}
+.chart .pt{fill:#fff;stroke:var(--c-coral);stroke-width:3;opacity:0}
+.tip{position:absolute;left:61%;top:-6px;transform:translate(-50%,-100%) scale(.96);opacity:0;padding:8px 12px;border-radius:12px;background:#fff;box-shadow:var(--sh-2);font-size:13.5px;white-space:nowrap}
+.tip b{color:#ef6a5e;font-weight:600;margin-right:6px}
+.in .chart .ln{stroke-dashoffset:0;transition:stroke-dashoffset 1.4s var(--ease-in-out) 200ms}
+.in .chart .ar{opacity:1;transition:opacity .8s ease 1s}
+.in .chart .pt{opacity:1;transition:opacity .3s ease 1.3s}
+.in .tip{opacity:1;transform:translate(-50%,-100%);transition:opacity .3s ease 1.4s,transform .45s var(--ease-out) 1.4s}
+.perf .sum{display:flex;gap:16px;align-items:center}
+.perf .sum b{font:600 44px/1 var(--head);letter-spacing:-.04em;white-space:nowrap}
+.perf .sum span{color:var(--mut);font-size:14.5px;line-height:1.4}
+.ypill{display:flex;align-items:center;justify-content:center;height:48px;margin-top:22px;border-radius:999px;background:var(--sun);font:600 15px/1 var(--body);color:var(--ink)}
+/* Montage-Karten (Stil „To-do tasks“) */
+.tasks{position:relative;padding:6px 0 26px}
+.tasks .th{display:flex;justify-content:space-between;align-items:center;margin:18px 0 20px}
+.tasks .th b{font:600 26px/1.1 var(--head);letter-spacing:-.03em}
+.tasks .th svg{width:26px;height:26px;color:var(--faint)}
+.task{position:relative;background:#fff;border-radius:22px;box-shadow:var(--sh-2);padding:20px 22px}
+.task h5{font:600 19px/1.2 var(--head);letter-spacing:-.02em;margin:12px 0 6px}
+.task p{margin:0;color:var(--mut);font-size:14px;line-height:1.45}
+.task .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;font-size:13px;color:var(--mut)}
+.task .meta{display:flex;gap:14px}
+.task .meta span{display:inline-flex;align-items:center;gap:5px}
+.task .meta svg{width:15px;height:15px}
+.task .row{display:flex;justify-content:space-between;align-items:center}
+.task .row .dots{font-weight:700;letter-spacing:2px;line-height:1}
+.task.t2{margin:-14px -10px 0 16px;transform:rotate(3deg);z-index:2}
+.task.t2::after{content:"";position:absolute;inset:18px 22px -14px -22px;border:1.5px dashed #cfcfd8;border-radius:24px;z-index:-2;transform:rotate(-3deg)}
+.prog{height:6px;border-radius:3px;background:#f0f0f4;margin-top:14px;overflow:hidden}
+.prog i{display:block;height:100%;width:66%;border-radius:3px;background:var(--grad)}
+@media (max-width:900px){
+  .frow{grid-template-columns:1fr;padding:36px 22px 28px;gap:32px}
+  .frow.flip .ftxt{order:0}
+  .mock{padding:22px}
+}
 
-/* ---- Dunkler Abschnitt: Offline → Online ---- */
-.offline{background:#0b0d12;color:#f5f5f7;padding:clamp(90px,11vw,150px) 0;overflow:hidden;overflow:clip;isolation:isolate}
-.offline:before{content:"";position:absolute;z-index:-1;right:-10%;top:-20%;width:70%;aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(47,91,211,.22),transparent);pointer-events:none}
-.offline .kicker{color:#8fb0ff}
-.offline .lead{color:#a1a1a6}
-.offline .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(32px,6vw,80px);align-items:center}
-.timeline{list-style:none;padding:0;margin:40px 0 0;display:flex;flex-direction:column;gap:6px}
-.timeline li{display:flex;gap:16px;padding:16px 0;border-top:1px solid rgba(255,255,255,.08)}
-.timeline li:first-child{border-top:0}
-.timeline .t{font-size:13px;font-weight:600;color:#8fb0ff;width:56px;flex:none;padding-top:3px;font-variant-numeric:tabular-nums}
-.timeline b{display:block;font-size:18px;font-weight:600;letter-spacing:-.015em}
-.timeline span{color:#a1a1a6;font-size:15px}
-.feed{display:flex;flex-direction:column;gap:12px;justify-self:center;width:min(420px,100%)}
-.feed-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:#a1a1a6;padding:0 4px 4px}
-.feed-head i{position:relative;width:8px;height:8px;border-radius:50%;background:#34d399}
-.feed-head i:before{content:"";position:absolute;inset:0;border-radius:50%;background:#34d399;animation:live 2.4s var(--ease-out) infinite}
-@keyframes live{0%{transform:scale(1);opacity:.6}70%,100%{transform:scale(2.6);opacity:0}}
-.feed-head span{margin-left:auto;font-variant-numeric:tabular-nums}
-.note-card{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:20px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);opacity:0;transform:translateY(16px) scale(.98);transition:opacity 600ms var(--ease-out),transform 700ms var(--ease-out);transition-delay:calc(var(--i)*110ms + 200ms)}
-.feed.in-view .note-card{opacity:1;transform:none}
-.note-card .ic{width:40px;height:40px;border-radius:12px;background:rgba(143,176,255,.14);color:#8fb0ff;display:grid;place-items:center;flex:none}
-.note-card .ic svg{width:20px;height:20px}
-.note-card div{flex:1;min-width:0}
-.note-card b{display:block;font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.note-card span{display:block;font-size:13px;color:#a1a1a6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.note-card small{font-size:12px;color:#86868b;flex:none;align-self:flex-start}
-.note-card:nth-child(n+3){opacity:0}
-.feed.in-view .note-card:nth-child(3){opacity:.75}.feed.in-view .note-card:nth-child(4){opacity:.5}
-@media (max-width:860px){.offline .grid{grid-template-columns:minmax(0,1fr)}.feed{order:-1}}
+/* ---- Dashboard (Stil „App Design“) ---- */
+.dash{padding:100px 0 120px}
+.board{display:grid;grid-template-columns:220px 1fr;background:#fff;border-radius:var(--r-xl);box-shadow:var(--sh-3);overflow:hidden;text-align:left}
+.side{padding:26px 20px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;background:#fcfcfd}
+.side .logo{font-size:17px;margin:0 8px 26px}
+.side a{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:12px;font-size:14px;color:var(--ink2);text-decoration:none}
+.side a svg{width:18px;height:18px;color:var(--mut)}
+.side hr{border:0;border-top:1px solid var(--line);margin:16px 6px}
+.side .cl{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;font-size:14px;color:var(--ink2)}
+.side .cl i{width:7px;height:7px;border-radius:50%}
+.side .cl.on{background:var(--sun);color:var(--ink);font-weight:500}
+.side .tip2{margin-top:auto;padding:16px;border-radius:18px;background:#fff;box-shadow:var(--sh-1);text-align:center;font-size:12.5px;color:var(--mut);line-height:1.45}
+.side .tip2 b{display:block;color:var(--ink);font-size:13.5px;margin:8px 0 4px}
+.side .tip2 .bulb{width:34px;height:34px;margin:0 auto;border-radius:50%;background:#fff3c4;display:grid;place-items:center;color:#e0a800}
+.side .tip2 .bulb svg{width:17px;height:17px}
+.main{padding:26px 28px 30px;min-width:0}
+.mtop{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mtop h3{font:600 34px/1.1 var(--head);letter-spacing:-.035em;color:#141432}
+.mtop .ib{width:30px;height:30px;border-radius:9px;box-shadow:var(--sh-1);display:grid;place-items:center;color:var(--ink2)}
+.mtop .ib svg{width:15px;height:15px}
+.mtop .ini{margin-left:auto}
+.mtop .ini span{width:32px;height:32px;line-height:28px;font-size:11.5px}
+.fil{display:flex;gap:10px;margin:20px 0 22px}
+.fil span{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2);font-size:13.5px;color:var(--ink2)}
+.fil svg{width:15px;height:15px}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.col{background:var(--soft);border-radius:22px;padding:16px}
+.col .ch2{display:flex;align-items:center;gap:8px;font:600 14.5px/1 var(--body);padding:4px 4px 14px;border-bottom:3px solid var(--ul);margin-bottom:14px}
+.col .ch2 i{width:7px;height:7px;border-radius:50%;background:var(--ul)}
+.col .ch2 em{font-style:normal;font-size:11.5px;color:var(--mut);background:#fff;border-radius:999px;padding:3px 8px;box-shadow:var(--sh-1)}
+.kc{background:#fff;border-radius:18px;padding:14px;box-shadow:var(--sh-1);margin-bottom:12px}
+.kc h5{font:600 15.5px/1.25 var(--head);letter-spacing:-.015em;margin:10px 0 4px}
+.kc p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.45}
+.kc img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;margin-top:12px}
+.kc .imgs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kc .imgs img{aspect-ratio:1}
+.kc .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12px;color:var(--mut)}
+.kc .foot b{font:600 14px/1 var(--head);color:var(--ink)}
+.kc .ini span{width:22px;height:22px;line-height:18px;font-size:9.5px}
+.slot{position:relative;height:150px;border:1.5px dashed #d2d2da;border-radius:18px;margin-bottom:12px}
+.kc.drag{position:absolute;left:18px;right:-26px;top:-18px;transform:rotate(-4deg);box-shadow:var(--sh-3);z-index:2}
+@media (max-width:980px){
+  .board{grid-template-columns:1fr}
+  .side{display:none}
+  .main{padding:22px 0 24px}
+  .mtop,.fil{padding:0 20px}
+  .cols{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 20px 14px;scroll-padding:0 20px;scrollbar-width:none;overscroll-behavior-x:contain}
+  .cols::-webkit-scrollbar{display:none}
+  .col{flex:0 0 min(78vw,300px);scroll-snap-align:start}
+  .kc.drag{right:-6px}
+}
 
-/* ---- Anwendungsfälle ---- */
-.cases{padding:clamp(80px,10vw,140px) 0}
-.cases .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:56px}
-.case{background:var(--card);border-radius:var(--r);padding:28px;box-shadow:var(--sh);display:flex;flex-direction:column}
-.case .ic{width:44px;height:44px;border-radius:12px;background:#eef2f6;color:var(--a);display:grid;place-items:center;margin-bottom:18px}
-.case .ic svg{width:22px;height:22px}
-.case p{margin:10px 0 0;color:var(--mut);font-size:16px}
-.case ul{list-style:none;padding:0;margin:18px 0 0;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--ink2)}
-.case li{display:flex;gap:8px;align-items:flex-start}
-.case li svg{width:16px;height:16px;color:var(--green);flex:none;margin-top:4px}
-@media (max-width:900px){.cases .grid{grid-template-columns:minmax(0,1fr)}}
+/* ---- Drei Schritte ---- */
+.steps{padding:40px 0 120px}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.step{background:var(--soft);border-radius:var(--r-lg);padding:24px 24px 28px;display:flex;flex-direction:column}
+.step .ill{height:190px;border-radius:20px;background:#fff;box-shadow:var(--sh-1);margin-bottom:24px;display:grid;place-items:center;overflow:hidden;position:relative}
+.step .num{font:600 13px/1 var(--body);color:var(--mut);margin-bottom:10px}
+.step p{margin:8px 0 0;color:var(--mut);font-size:15px}
+.tpls{position:relative;width:250px;height:130px}
+.tpls span{position:absolute;width:120px;height:96px;border-radius:16px;box-shadow:var(--sh-2);padding:12px;font:600 12px/1.2 var(--head);background:#fff;display:flex;flex-direction:column;justify-content:flex-end}
+.tpls span::before{content:"";position:absolute;inset:10px 10px 36px;border-radius:9px;background:var(--bgc)}
+.tpls span:nth-child(1){left:0;top:26px;transform:rotate(-8deg);--bgc:var(--pink)}
+.tpls span:nth-child(2){left:130px;top:26px;transform:rotate(8deg);--bgc:var(--mint);align-items:flex-end}
+.tpls span:nth-child(3){left:65px;top:2px;--bgc:linear-gradient(135deg,#d9cfff,#ffd9c2);z-index:2}
+.cust{width:210px;display:grid;gap:16px}
+.cust .sws{display:flex;gap:10px}
+.cust .sws i{width:30px;height:30px;border-radius:50%;background:var(--c)}
+.cust .sws i.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
+.cust .sl small{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-bottom:8px}
+.cust .sl div{height:6px;border-radius:3px;background:#f0f0f4;position:relative}
+.cust .sl div i{position:absolute;left:0;top:0;bottom:0;width:62%;border-radius:3px;background:var(--grad)}
+.cust .sl div b{position:absolute;left:62%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.share{display:flex;flex-direction:column;align-items:center;gap:14px}
+.share .url{display:flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;background:var(--soft);font-size:13px;color:var(--ink2)}
+.share .url svg{width:14px;height:14px;color:var(--c-green)}
+.qr{display:grid;grid-template-columns:repeat(7,9px);gap:3px;padding:10px;border-radius:14px;box-shadow:var(--sh-1)}
+.qr i{width:9px;height:9px;border-radius:2px;background:var(--ink)}
+.qr i.o{background:transparent}
+@media (max-width:900px){.sgrid{grid-template-columns:1fr}}
 
-/* ---- FAQ: weiche Höhe über grid-template-rows ---- */
-.faqs{padding:clamp(70px,9vw,120px) 0;background:var(--bg2)}
-.faq-list{max-width:760px;margin:48px auto 0}
-.faq{border-bottom:1px solid var(--line)}
-.faq summary{list-style:none;display:flex;align-items:center;gap:16px;padding:22px 2px;cursor:pointer;font-size:18px;font-weight:600;letter-spacing:-.015em}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary .pm{margin-left:auto;width:28px;height:28px;border-radius:50%;background:var(--card);display:grid;place-items:center;flex:none;box-shadow:0 1px 2px rgba(0,0,0,.06);transition:transform 300ms var(--ease-out)}
-.faq summary .pm svg{width:14px;height:14px}
-.faq[open] summary .pm{transform:rotate(45deg)}
-.faq .ans{display:grid;grid-template-rows:0fr;transition:grid-template-rows 320ms var(--ease-out)}
-.faq[open] .ans{grid-template-rows:1fr}
-.faq .ans>div{overflow:hidden}
-.faq .ans p{margin:0;padding:0 2px 22px;color:var(--mut);font-size:16px;max-width:42em}
+/* ---- Fragen ---- */
+.faq{padding:0 0 120px}
+.qa{max-width:780px;margin:0 auto;display:grid;gap:10px}
+.qi{background:var(--soft);border-radius:20px}
+.qi button{appearance:none;border:0;background:none;width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;text-align:left;font:600 16.5px/1.35 var(--head);letter-spacing:-.015em;cursor:pointer;border-radius:20px;touch-action:manipulation}
+.qi button .pl{width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:var(--sh-1);display:grid;place-items:center;flex:none;transition:transform 240ms var(--ease-out)}
+.qi button .pl svg{width:14px;height:14px}
+.qi.open button .pl{transform:rotate(45deg)}
+.qb{display:grid;grid-template-rows:0fr;transition:grid-template-rows 260ms var(--ease-out)}
+.qi.open .qb{grid-template-rows:1fr}
+.qb>div{overflow:hidden}
+.qb p{margin:0;padding:0 22px 22px;color:var(--mut);font-size:15.5px;opacity:0;transition:opacity 200ms ease}
+.qi.open .qb p{opacity:1}
 
 /* ---- Abschluss ---- */
-.final{padding:clamp(56px,7vw,96px) 0 clamp(64px,8vw,104px);text-align:center}
-.final .panel{position:relative;overflow:hidden;isolation:isolate;border-radius:clamp(24px,3vw,36px);background:linear-gradient(165deg,#1c2e3d,#0d1620 70%);color:#f5f5f7;padding:clamp(64px,9vw,112px) var(--gut)}
-.final .panel:before{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(40% 60% at 22% 0%,rgba(47,91,211,.5),transparent 70%),radial-gradient(36% 55% at 85% 100%,rgba(15,159,110,.32),transparent 70%)}
-.final .panel:after{content:"";position:absolute;z-index:-1;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:48px 48px;background-position:center;-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,#000,transparent 75%);mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,#000,transparent 75%)}
-.final .lead{color:#b4bcc6;margin-left:auto;margin-right:auto}
-.final .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
-.final .fine{margin:22px 0 0;font-size:14px;color:#8d98a5}
-footer{border-top:1px solid var(--line);padding:48px 0 calc(28px + env(safe-area-inset-bottom));font-size:14px;color:var(--mut)}
-footer .fgrid{display:grid;grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr));gap:32px}
-footer .fbrand img{height:20px;width:auto}
-footer .fbrand p{margin:14px 0 0;line-height:1.6}
-footer nav{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
-footer nav b{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
-footer a{text-decoration:none;transition:color 150ms ease;border-radius:4px}
-footer .fbot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-size:13px}
-@media (hover:hover) and (pointer:fine){footer a:hover{color:var(--ink)}}
-@media (max-width:640px){footer .fgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}footer .fbrand{grid-column:1/-1}}
+.cta{padding:0 0 24px}
+.cbox{position:relative;border-radius:var(--r-xl);background:#0a0a10;color:#fff;text-align:center;overflow:hidden;padding:96px 24px 0;
+  background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);background-size:64px 64px;background-position:center top}
+.cbox::before{content:"";position:absolute;left:50%;bottom:-260px;width:900px;height:520px;margin-left:-450px;border-radius:50%;background:radial-gradient(closest-side,rgba(162,75,242,.55),rgba(255,111,142,.25) 55%,transparent);pointer-events:none}
+.cbox .plus{position:absolute;width:22px;height:22px;color:rgba(255,255,255,.55)}
+.cbox .h2{max-width:14ch;margin:0 auto}
+.cbox .lead{color:rgba(255,255,255,.66);margin:18px auto 0}
+.cbox .devw{--s:.6;margin:64px auto -150px}
+.cbox .devw .scr{pointer-events:none}
 
-/* ---- Einblenden beim Scrollen (Choreografie) ---- */
-[data-reveal]{opacity:0;transform:translateY(var(--ry,18px));transition:opacity 700ms var(--ease-out),transform 800ms var(--ease-out);transition-delay:var(--d,0ms)}
-[data-reveal].in-view{opacity:1;transform:none}
-[data-reveal="fade"]{--ry:0px}
-[data-reveal="lift"]{--ry:28px}
-.hero [data-reveal="phone"]{transform:translateY(30px) scale(.96);transition-duration:800ms,1000ms}
-.hero [data-reveal="phone"].in-view{transform:none}
-.no-js [data-reveal]{opacity:1;transform:none}
+/* ---- Fuß ---- */
+footer{padding:56px 0 0;overflow:hidden}
+.ftop{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap;padding-bottom:40px;border-bottom:1px solid var(--line)}
+.ftop p{margin:12px 0 0;color:var(--mut);font-size:14.5px;max-width:24em}
+.mail{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 16px 0 8px;border-radius:999px;box-shadow:var(--sh-1);text-decoration:none;font-size:14.5px;margin-top:20px;transition:box-shadow var(--dur-fast) ease,transform 160ms var(--ease-out)}
+.mail:active{transform:scale(.97)}
+.mail i{width:30px;height:30px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff}
+.mail i svg{width:15px;height:15px}
+@media (hover:hover) and (pointer:fine){.mail:hover{box-shadow:0 0 0 1px rgba(12,12,20,.12),0 6px 16px -8px rgba(12,12,20,.2)}}
+.fcols{display:flex;gap:72px}
+.fcols nav{display:flex;flex-direction:column;gap:12px;font-size:14.5px}
+.fcols nav b{font:600 13px/1 var(--body);color:var(--faint);margin-bottom:6px}
+.fcols a{text-decoration:none;color:var(--ink2);transition:color var(--dur-fast) ease}
+@media (hover:hover) and (pointer:fine){.fcols a:hover{color:var(--ink)}}
+.fbot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 0;font-size:13.5px;color:var(--mut)}
+.giant{font:800 clamp(88px,23vw,330px)/.8 var(--head);letter-spacing:-.06em;text-align:center;margin:10px 0 0;padding-bottom:.04em;white-space:nowrap;user-select:none;
+  background:linear-gradient(180deg,#0c0c14 0%,#0c0c14 30%,rgba(162,75,242,.55) 70%,rgba(255,179,94,0) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.giant b{font-weight:800}.giant span{font-weight:500}
+@media (max-width:640px){.fcols{gap:40px}}
 
+/* ---- Einblenden: Hero-Choreografie + beim Scrollen ---- */
+.js .hi{opacity:0;transform:translateY(14px);filter:blur(6px)}
+.ready .hi{opacity:1;transform:none;filter:none;transition:opacity 800ms var(--ease-out) var(--d,0ms),transform 800ms var(--ease-out) var(--d,0ms),filter 800ms var(--ease-out) var(--d,0ms)}
+.js .hpop{opacity:0;scale:.94;filter:blur(6px)}
+.ready .hpop{opacity:1;scale:1;filter:none;transition:opacity 700ms var(--ease-out) var(--d,0ms),scale 700ms var(--ease-out) var(--d,0ms),filter 700ms var(--ease-out) var(--d,0ms)}
+.js [data-r]{opacity:0;transform:translateY(20px);filter:blur(6px)}
+.js [data-r].in{opacity:1;transform:none;filter:none;transition:opacity 800ms var(--ease-out) var(--d,0ms),transform 800ms var(--ease-out) var(--d,0ms),filter 800ms var(--ease-out) var(--d,0ms)}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  [data-reveal],.hero [data-reveal="phone"]{transform:none!important;transition:opacity 300ms ease!important}
-  .bars i{transform:none;transition:none}
-  .feed-head i:before{animation:none}
-  .note-card{transform:none!important;transition:opacity 300ms ease!important}
-  .sigp,.tree .lk{stroke-dashoffset:0;transition:none}
-  .tree .kids>div{transform:none;transition:opacity 300ms ease}
-  .btn:active,.smiles button:active,.tab:active{transform:none}
-  .route .pill{transition:opacity 200ms ease}
-  .route .pill.swap{transform:none;filter:none}
-  .demo-note,.demo-note.on{transform:none;transition:opacity 200ms ease}
+  .js .hi,.js .hpop,.js [data-r]{transform:none;scale:1;filter:none}
+  .ready .hi,.ready .hpop,.js [data-r].in{transition:opacity 400ms ease}
+  .track{animation:none;flex-wrap:wrap;justify-content:center;width:auto}
+  .marquee{-webkit-mask:none;mask:none}
+  .track .dup{display:none}
+  .in .chart .ln{transition:none}
+  .in .chart .ar,.in .chart .pt,.in .tip{transition:opacity 300ms ease}
+  .in .tip{transform:translate(-50%,-100%)}
+  .note{transition:opacity 250ms ease;transform:none}
+  .qb,.qb p,.qi button .pl{transition:none}
 }
 </style>
 </head>
-<body class="no-js">
+<body>
 
 <header class="nav" id="nav">
   <div class="wrap">
-    <a class="logo" href="#top" aria-label="TapTell – zum Anfang"><img src="../src/logo-t.png" alt="TapTell"></a>
+    <a class="logo" href="#top" aria-label="TapTell Startseite"><b>TAP</b>TELL</a>
     <nav class="links" aria-label="Hauptnavigation">
-      <a href="#demo">Live-Demo</a>
-      <a href="#funktionen">Funktionen</a>
-      <a href="#anwendungen">Anwendungen</a>
-      <a href="#faq">Fragen</a>
+      <a href="#vorteile">Vorteile</a><a href="#funktionen">Funktionen</a><a href="#dashboard">Dashboard</a><a href="#faq">Fragen</a>
     </nav>
-    <a class="btn pri" href="#kontakt" data-contact>Demo anfragen</a>
+    <a class="btn dark" data-contact href="#">Demo anfragen <svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
   </div>
 </header>
 
 <main id="top">
-  <!-- ================= HERO ================= -->
-  <section class="hero">
-    <div class="wrap">
-      <div class="copy">
-        <div data-reveal="fade" style="--d:0ms"><span class="eyebrow"><i></i>Mobile Funnels für Betriebe</span></div>
-        <h1 class="h1" data-reveal style="--d:90ms"><span style="white-space:nowrap">Instant Data.</span> <span class="grad" style="white-space:nowrap">Made Simple.</span></h1>
-        <p class="lead" data-reveal style="--d:200ms">Leads, Konfiguratoren, Montageberichte und Feedback – in wenigen Klicks auf dem Handy erfasst und sofort strukturiert bei dir. Kein Papier, kein Abtippen, keine Rückfragen.</p>
-        <div class="cta" data-reveal style="--d:290ms">
-          <a class="btn pri" href="#kontakt" data-contact>Demo anfragen<svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-          <a class="btn sec down" href="#demo">Live ausprobieren<svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
-        </div>
-        <div class="note" data-reveal="fade" style="--d:380ms">
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Ohne App, auf jedem Handy</span>
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Server in der EU</span>
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>In Minuten erstellt</span>
-        </div>
-      </div>
+<!-- ================= Hero ================= -->
+<section class="hero" id="demo">
+  <div class="wrap">
+    <!-- FIKTIV: Kundenbilder, Anzahl und Bewertung vor dem Go-Live durch echte Werte ersetzen -->
+    <div class="proof hi" style="--d:0ms">
+      <div class="av" aria-hidden="true"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt=""><img src="https://randomuser.me/api/portraits/women/44.jpg" alt=""><img src="https://randomuser.me/api/portraits/men/75.jpg" alt=""><img src="https://randomuser.me/api/portraits/women/68.jpg" alt=""><span>120+</span></div>
+      <div class="rate"><div class="stars" aria-label="4,9 von 5 Sternen"><svg viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z"/></svg><b>4,9</b></div><small>über 120 Betriebe nutzen TapTell</small></div>
+    </div>
+    <h1 class="h1 hi" style="--d:80ms">Instant Data. Made Simple.</h1>
+    <p class="lead hi" style="--d:160ms">Funnels, die sich auf dem Handy wie eine App anfühlen und innerhalb von Sekunden mühelos von deinen Besuchern ausgefüllt werden. Deine Kunden tippen sich durch, du bekommst vollständige Anfragen – ohne Papier, ohne Abtippen, ohne Rückfragen.</p>
+    <div class="ctas hi" style="--d:240ms">
+      <a class="btn grad" data-contact href="#">Demo anfragen <svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      <a class="btn line" href="#funktionen">So funktioniert’s</a>
+    </div>
 
-      <div class="demo" id="demo" data-reveal="phone" style="--d:160ms">
-        <div class="tabs" role="tablist" aria-label="Demo-Funnel wählen">
-          <span class="ind" aria-hidden="true"></span>
-          <button class="tab" role="tab" aria-selected="true" data-tpl="terrasse">Konfigurator</button>
-          <button class="tab" role="tab" aria-selected="false" data-tpl="solar">Leads</button>
-          <button class="tab" role="tab" aria-selected="false" data-tpl="abnahme">Montage</button>
-          <button class="tab" role="tab" aria-selected="false" data-tpl="feedback">Feedback</button>
+    <div class="stage">
+      <div class="devw hi" style="--d:320ms">
+        <div class="dev"><div class="bz"><div class="scr" id="scr1">
+          <div class="island"></div>
+          <div class="sbar" aria-hidden="true"><span>9:41</span><span class="ic"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg><svg viewBox="0 0 16 12"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.2-1.3A10.4 10.4 0 0 0 8 .4C5.1.4 2.5 1.5.6 3.4l1.2 1.3A8.7 8.7 0 0 1 8 2.2Zm0 3.7c1.4 0 2.7.5 3.6 1.4l1.3-1.3A6.9 6.9 0 0 0 8 4c-1.9 0-3.6.7-4.9 2l1.3 1.3A5.1 5.1 0 0 1 8 5.9Zm0 3.6c-.5 0-1 .2-1.3.6L8 11.6l1.3-1.5c-.3-.4-.8-.6-1.3-.6Z" fill="currentColor"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="8" rx="2" fill="currentColor"/><path d="M25 4v4c.8-.3 1.3-1.1 1.3-2S25.8 4.3 25 4Z" fill="currentColor" opacity=".4"/></svg></span></div>
+          <div class="host" id="host1" aria-live="polite"></div>
+        </div></div>
+        <div class="note" id="note1" aria-live="polite"><span class="ni">T</span><div><b id="noteT">Neue Anfrage</b><small id="noteS">Demo – es wurde nichts gesendet</small></div></div>
+        <span class="home" aria-hidden="true"></span></div>
+      </div>
+      <span class="livechip hi" style="--d:420ms"><i></i>Echter Funnel von Holz Gehlen – tipp dich durch</span>
+
+      <!-- schwebende Karten -->
+      <div class="fl h-c1" data-par="-0.06" aria-hidden="true"><div class="fc fc-note hpop" style="--d:520ms"><img src="../assets/gehlen/oelung-smoked.jpg" alt=""><div><b>Neue Anfrage</b><small>Massivholztisch · Eiche Smoked · 8 Personen</small></div><em>jetzt</em></div></div>
+      <div class="fl h-c2" data-par="0.05" aria-hidden="true"><div class="fc fc-bars hpop" style="--d:600ms">
+        <div class="top"><span>Anfragen diese Woche</span><b>+18 %</b></div>
+        <div class="big">47</div>
+        <div class="bars"><span style="--h:46%;--a:2;--b:1;--c:1"><i></i><i></i><i></i></span><span style="--h:90%;--a:3;--b:1;--c:2"><i></i><i></i><i></i></span><span style="--h:76%;--a:1;--b:2;--c:1"><i></i><i></i><i></i></span><span style="--h:94%;--a:2;--b:1;--c:3"><i></i><i></i><i></i></span><span style="--h:66%;--a:2;--b:1;--c:1"><i></i><i></i><i></i></span><span style="--h:56%;--a:1;--b:2;--c:1"><i></i><i></i><i></i></span><span style="--h:50%;--a:1;--b:1;--c:1"><i></i><i></i><i></i></span></div>
+        <div class="days"><span>M</span><span>D</span><span>M</span><span>D</span><span>F</span><span>S</span><span>S</span></div>
+      </div></div>
+      <div class="fl h-c3" data-par="-0.04" aria-hidden="true"><div class="fc fc-lead hpop" style="--d:680ms">
+        <div class="row"><span class="tag hot">Heiß</span><span class="dots">···</span></div>
+        <h4>Familie Berger</h4><p>Zentralgestell Spider, oval, 2,6 × 1,1 m – Angebot bis Freitag</p>
+        <div class="foot"><span class="ini"><span style="background:#ffd9a8">KG</span><span style="background:#c9ecf7">LH</span></span><b>2.490 €</b></div>
+      </div></div>
+      <div class="fl h-c4" data-par="0.07" aria-hidden="true"><div class="fc fc-pick hpop" style="--d:760ms"><img src="../assets/landing/gk-zentral.jpg" alt=""><div><small>Gestell gewählt</small><b>Zentralgestell</b></div><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Kanäle ================= -->
+<section class="channels" aria-labelledby="chT">
+  <h2 id="chT">Ein Funnel. Überall, wo deine Kunden sind.</h2>
+  <div class="marquee"><div class="track" id="track">
+    <span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg>Deine Website</span>
+    <span class="ch"><svg viewBox="0 0 24 24"><path fill="#25d366" d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.8 4.9-1.3A10 10 0 1 0 12 2Z"/><path fill="#fff" d="M16.9 14.2c-.3-.1-1.6-.8-1.8-.9-.3-.1-.4-.1-.6.1l-.8 1c-.2.2-.3.2-.6.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.8-1.4.1-.2 0-.3 0-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.8.8-1 1.8-.6 3 .6 1.6 2 3.3 4.1 4.3 2 .9 2.8 1 3.8.8.6-.1 1.6-.7 1.8-1.3.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.2Z"/></svg>WhatsApp</span>
+    <span class="ch"><svg viewBox="0 0 24 24"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#igg)"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="17.2" cy="6.8" r="1.2" fill="#fff"/></svg>Instagram</span>
+    <span class="ch"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1877f2"/><path fill="#fff" d="M13.4 21.9v-7h2.3l.4-2.8h-2.7v-1.8c0-.8.2-1.3 1.4-1.3h1.4V6.5a19 19 0 0 0-2.1-.1c-2.1 0-3.5 1.3-3.5 3.6v2.1H8.3v2.8h2.3v7Z"/></svg>Facebook</span>
+    <span class="ch"><svg viewBox="0 0 24 24"><path fill="#fbbc04" d="M3.3 16.4 9.4 5.9a3 3 0 0 1 5.2 3l-6.1 10.5a3 3 0 0 1-5.2-3Z"/><path fill="#4285f4" d="M20.7 16.4 14.6 5.9a3 3 0 0 0-5.2 3l6.1 10.5a3 3 0 0 0 5.2-3Z"/><circle cx="5.9" cy="17.9" r="3" fill="#34a853"/></svg>Google Ads</span>
+    <span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="#0c0c14" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>QR-Code</span>
+    <span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="#ff6f8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.3a6 6 0 0 1 0 7.4M9.5 6a9.5 9.5 0 0 1 0 12M13 3.7a13 13 0 0 1 0 16.6"/><circle cx="3.5" cy="12" r="1" fill="#ff6f8e"/></svg>NFC-Aufsteller</span>
+    <span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="#a24bf2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>E-Mail &amp; Newsletter</span>
+    <span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="#ffb35e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Link in Bio</span>
+  </div></div>
+</section>
+
+<!-- ================= Vorteile ================= -->
+<section class="benefits" id="vorteile">
+  <div class="wrap">
+    <div class="sec-head center" data-r>
+      <span class="pill"><i></i>Vorteile</span>
+      <h2 class="h2">Gemacht fürs Handy. Gebaut für deinen Betrieb.</h2>
+      <p class="lead">Kein Formular-Baukasten, sondern Funnels mit dem Gefühl einer App – und Daten, die sofort sauber bei dir ankommen.</p>
+    </div>
+    <div class="bgrid">
+      <article class="bcard" data-r>
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5a6.5 6.5 0 0 1-6.5 6.5h-.6a6 6 0 0 1-4.6-2.2L4.8 15a1.6 1.6 0 0 1 2.4-2.1L9 14.5"/></svg></span>
+        <h3 class="h4">Antippen statt Abtippen</h3>
+        <p>Bildkarten, Schieberegler, Kalender, Fotos und Unterschrift – jede Frage ist für den Daumen gemacht.</p>
+      </article>
+      <article class="bcard" data-r style="--d:80ms">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg></span>
+        <h3 class="h4">Keine App nötig</h3>
+        <p>Der Funnel öffnet sich direkt im Browser – per Link, auf deiner Website, in einer Anzeige oder per QR-Code.</p>
+      </article>
+      <div class="gpanel" data-r>
+        <div class="devw">
+          <div class="dev"><div class="bz"><div class="scr" id="scr2">
+            <div class="island"></div>
+            <div class="sbar" aria-hidden="true"><span>9:41</span><span class="ic"><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="8" rx="2" fill="currentColor"/></svg></span></div>
+            <div class="host" id="host2"></div>
+          </div></div><span class="home" aria-hidden="true"></span></div>
         </div>
-        <div class="phone">
-          <div class="island" aria-hidden="true"></div>
-          <div class="scr" data-fp-scroll>
-            <div class="sbar" aria-hidden="true"><span>9:41</span><i></i></div>
-            <div class="host" id="host" aria-live="polite"></div>
-          </div>
-          <div class="demo-note" id="dnote" role="status"><span class="app" aria-hidden="true">T</span><div><b>TapTell<small>jetzt</small></b><p id="dnoteT">Neue Anfrage</p><p id="dnoteS">Demo – es wurde nichts gesendet</p></div></div>
+        <div class="fl g-c1" data-par="-0.05" aria-hidden="true"><div class="fc route">
+          <svg class="spark" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0c.6 6.3 5.7 11.4 12 12-6.3.6-11.4 5.7-12 12-.6-6.3-5.7-11.4-12-12C6.3 11.4 11.4 6.3 12 0Z"/></svg>
+          <div class="q">Wie zufrieden bist du?</div>
+          <div class="smi"><span><svg viewBox="0 0 24 24" fill="none" stroke="#c6c6ce" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 16c2-1.6 5-1.6 7 0M9 10h.01M15 10h.01"/></svg></span><span><svg viewBox="0 0 24 24" fill="none" stroke="#c6c6ce" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 15.5h6M9 10h.01M15 10h.01"/></svg></span><span class="on"><svg viewBox="0 0 24 24" fill="none" stroke="#1f9a63" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 13.5c2.2 3 5.8 3 8 0M9 10h.01M15 10h.01"/></svg></span></div>
+          <div class="to"><svg viewBox="0 0 24 24" fill="none" stroke="#1f9a63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>weiter zur <b>Google-Bewertung</b></span></div>
+        </div></div>
+        <div class="fl g-c2" data-par="0.05" aria-hidden="true"><div class="fc fc-note" style="width:262px"><span class="ni" style="width:44px;height:44px;border-radius:12px;background:#fde8ea;color:#d4495c;display:grid;place-items:center;flex:none"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01"/></svg></span><div><b>Kritik zuerst an dich</b><small>Sofort-Alarm per E-Mail, bevor es öffentlich wird</small></div></div></div>
+      </div>
+      <article class="bcard" data-r>
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span>
+        <h3 class="h4">Sofort bei dir</h3>
+        <p>Jede Anfrage landet in deinem Dashboard, per E-Mail bei deinem Team und auf Wunsch in Make, Zapier, n8n oder deinem CRM.</p>
+      </article>
+      <article class="bcard" data-r style="--d:80ms">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 3.5-4 3.5h-2.2a1.8 1.8 0 0 0-1.3 3.1c.6.6.5 1.6-.2 2.2-.6.6-1.5 1.2-2.3 1.2Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7" r="1"/><circle cx="15.5" cy="7.5" r="1"/></svg></span>
+        <h3 class="h4">In deinem Design</h3>
+        <p>Logo, Farben, Schriften und deine eigene Domain mit SSL – deine Kunden sehen nur deine Marke.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Funktionen ================= -->
+<section class="features" id="funktionen">
+  <div class="wrap">
+    <div class="sec-head center" data-r>
+      <span class="pill"><i></i>Funktionen</span>
+      <h2 class="h2">Alles, was nach dem Tippen passiert.</h2>
+      <p class="lead">Preise, Logik, Auswertung und Berichte – TapTell kümmert sich auch um den Teil, den deine Kunden nicht sehen.</p>
+    </div>
+
+    <div class="frow pink">
+      <div class="ftxt" data-r>
+        <span class="kick">Konfigurator</span>
+        <h3 class="h3">Live-Preis, der verkauft.</h3>
+        <p>Preise pro Antwort, Mengen aus Länge mal Breite, sichtbar oder nur intern. Zeig einen exakten Preis, eine Spanne oder einen Ab-Preis.</p>
+        <a class="btn outline" data-contact href="#">Konfigurator zeigen lassen <svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      </div>
+      <div class="frame" data-r style="--d:100ms"><div class="mock">
+        <div class="mh"><b>Welche Ölung darf es sein?</b><span class="dots" aria-hidden="true">···</span></div>
+        <div class="opts" id="opts" role="group" aria-label="Ölung wählen">
+          <button class="opt" type="button" data-p="850" aria-pressed="false"><img src="../assets/gehlen/oelung-light-oak.jpg" alt=""><span><b>Light Oak</b><small>850 € pro m²</small></span><span class="rd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span></button>
+          <button class="opt" type="button" data-p="950" aria-pressed="true"><img src="../assets/gehlen/oelung-smoked.jpg" alt=""><span><b>Eiche Smoked</b><small>950 € pro m²</small></span><span class="rd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span></button>
+          <button class="opt" type="button" data-p="1090" aria-pressed="false"><img src="../assets/gehlen/oelung-wenge.jpg" alt=""><span><b>Wenge</b><small>1.090 € pro m²</small></span><span class="rd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span></button>
         </div>
-        <div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 014 0v5"/><path d="M13 10.5V9a2 2 0 014 0v4.5a6 6 0 01-6 6h-.5a6 6 0 01-5-2.7L4 14a1.8 1.8 0 012.8-2.2L9 14"/></svg>Echter Funnel – tipp dich durch</div>
+        <div class="price"><div><small>Dein Wunschtisch · 2,2 m²</small><b id="priceVal" aria-live="polite">1.900 € – 2.300 €</b></div><span class="tag new">unverbindlich</span></div>
+      </div></div>
+    </div>
+
+    <div class="frow peach flip">
+      <div class="ftxt" data-r>
+        <span class="kick">Feedback</span>
+        <h3 class="h3">Mehr gute Bewertungen.</h3>
+        <p>Zufriedene Kunden landen bei Google, Kritik zuerst bei dir – bevor sie öffentlich wird. Probier es aus und tipp ein Gesicht an.</p>
+        <a class="btn outline" data-contact href="#">Feedback-Funnel anfragen <svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      </div>
+      <div class="frame r" data-r style="--d:100ms"><div class="mock fb">
+        <svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 0c.6 6.3 5.7 11.4 12 12-6.3.6-11.4 5.7-12 12-.6-6.3-5.7-11.4-12-12C6.3 11.4 11.4 6.3 12 0Z"/></svg>
+        <div class="q">Wie zufrieden warst du mit der Montage?</div>
+        <div class="smis" id="smis" role="group" aria-label="Bewertung wählen">
+          <button type="button" data-v="1" aria-label="Sehr unzufrieden" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="#ef7d8d" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 16.5c2-1.8 5-1.8 7 0M8.5 9.5l1.5 1M15.5 9.5l-1.5 1"/></svg></button>
+          <button type="button" data-v="2" aria-label="Unzufrieden" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="#f3a56a" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 16c2-1.4 5-1.4 7 0M9 10h.01M15 10h.01"/></svg></button>
+          <button type="button" data-v="3" aria-label="Neutral" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="#e7b93c" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 15.5h6M9 10h.01M15 10h.01"/></svg></button>
+          <button type="button" data-v="4" aria-label="Zufrieden" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="#7cc36a" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14c2 2 5 2 7 0M9 10h.01M15 10h.01"/></svg></button>
+          <button type="button" data-v="5" aria-label="Sehr zufrieden" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="#34c58a" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M7.5 13c2.2 3.6 6.8 3.6 9 0Z" fill="#34c58a" fill-opacity=".18"/><path d="M9 9.5h.01M15 9.5h.01"/></svg></button>
+        </div>
+        <div class="rt good" id="rt" aria-live="polite"><span class="ri" id="rtI"></span><div class="sw" id="rtT"><small>Weiter zu</small><b>Google-Bewertung</b></div></div>
+      </div></div>
+    </div>
+
+    <div class="frow lav">
+      <div class="ftxt" data-r>
+        <span class="kick">Statistik</span>
+        <h3 class="h3">Wissen, was funktioniert.</h3>
+        <p>Aufrufe, Abschlussrate und Ausstieg pro Seite. So siehst du, welche Frage Kunden verliert – und welche verkauft.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>Ausstieg pro Seite auf einen Blick</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>Eigenes Login für deine Kunden</li>
+        </ul>
+        <a class="btn outline" data-contact href="#">Dashboard ansehen <svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      </div>
+      <div class="frame" data-r style="--d:100ms"><div class="mock perf" role="img" aria-label="Beispiel-Auswertung: 68 Prozent Abschlussrate im November">
+        <svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 0c.6 6.3 5.7 11.4 12 12-6.3.6-11.4 5.7-12 12-.6-6.3-5.7-11.4-12-12C6.3 11.4 11.4 6.3 12 0Z"/></svg>
+        <h4>Abschlussrate</h4>
+        <div class="rng">1. – 30. November</div>
+        <div class="chart">
+          <svg viewBox="0 0 460 190" aria-hidden="true"><defs><linearGradient id="perfArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7a6a2" stop-opacity=".28"/><stop offset="1" stop-color="#f7a6a2" stop-opacity="0"/></linearGradient></defs>
+            <path class="ar" d="M4 178 C14 40 56 22 78 104 C92 150 112 96 132 104 C154 114 170 160 196 158 C222 156 226 70 250 74 C272 78 270 100 288 84 C304 70 312 40 330 42 C350 44 352 114 372 116 C394 118 404 102 424 130 C436 148 446 160 456 164 L456 190 L4 190Z"/>
+            <path class="ln" pathLength="1" d="M4 178 C14 40 56 22 78 104 C92 150 112 96 132 104 C154 114 170 160 196 158 C222 156 226 70 250 74 C272 78 270 100 288 84 C304 70 312 40 330 42 C350 44 352 114 372 116 C394 118 404 102 424 130 C436 148 446 160 456 164"/>
+            <circle class="pt" cx="330" cy="42" r="7"/>
+          </svg>
+          <div class="tip" style="left:71.7%;top:12%"><b>74 %</b>Bester Tag</div>
+        </div>
+        <div class="sum"><b>68 %</b><span>deiner Besucher schicken die Anfrage ab – 12 % mehr als im Vormonat</span></div>
+        <span class="ypill">Auswertung ansehen</span>
+      </div></div>
+    </div>
+
+    <div class="frow mint flip">
+      <div class="ftxt" data-r>
+        <span class="kick">Montage &amp; Service</span>
+        <h3 class="h3">Berichte ohne Papier.</h3>
+        <p>Checklisten, Fotos und Unterschrift direkt beim Kunden – als vollständiges Protokoll sofort im Büro. Kein Zettel, der im Transporter verschwindet.</p>
+        <a class="btn outline" data-contact href="#">Montagebericht anfragen <svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      </div>
+      <div class="tasks" data-r style="--d:100ms" aria-hidden="true">
+        <svg class="spark" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0c.6 6.3 5.7 11.4 12 12-6.3.6-11.4 5.7-12 12-.6-6.3-5.7-11.4-12-12C6.3 11.4 11.4 6.3 12 0Z"/></svg>
+        <div class="th"><b>Heute vor Ort</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></div>
+        <div class="task">
+          <div class="row"><span class="tag ok">Erledigt</span><span class="dots">···</span></div>
+          <h5>Montage Esstisch</h5>
+          <p>Familie Berger · Tisch aufgebaut, Einweisung erfolgt, vom Kunden unterschrieben.</p>
+          <div class="foot"><span class="ini"><span style="background:#ffd9a8">KG</span><span style="background:#dcd3ff">TM</span><span style="background:#c9ecf7">LH</span></span><span class="meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.5"/><path d="M9 6l1.5-2h3L15 6"/></svg>3 Fotos</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-1 4-7 6-7s1 6 3 6 2-3 4-3 2 2 5 2"/></svg>signiert</span></span></div>
+        </div>
+        <div class="task t2">
+          <div class="row"><span class="tag hot">Offen</span><span class="dots">···</span></div>
+          <h5>Abnahme Terrasse</h5>
+          <p>Checkliste 4 von 6 – Fotos der Unterkonstruktion fehlen noch.</p>
+          <div class="prog"><i></i></div>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- ================= KANÄLE ================= -->
-  <section class="channels">
-    <div class="wrap sec-head" data-reveal>
-      <p class="lbl">Ein Funnel – überall, wo deine Kunden sind</p>
-      <div class="chips">
-        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 8h18M8 21h8"/></svg>Deine Website</span>
-        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.66 0l3-3a4 4 0 00-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 00-5.66 0l-3 3a4 4 0 005.66 5.66l1-1"/></svg>Link &amp; WhatsApp</span>
-        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11v2a1 1 0 001 1h2l5 4V6L7 10H5a1 1 0 00-1 1z"/><path d="M16 9a4 4 0 010 6"/></svg>Social Ads</span>
-        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>Vor Ort beim Kunden</span>
-        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 18v3"/></svg>QR-Code &amp; NFC</span>
-      </div>
+<!-- ================= Dashboard ================= -->
+<section class="dash" id="dashboard">
+  <div class="wrap">
+    <div class="sec-head center" data-r>
+      <span class="pill"><i></i>Dashboard</span>
+      <h2 class="h2">Alle Anfragen an einem Ort.</h2>
+      <p class="lead">Jede Eingabe landet sofort bei dir – mit Auswahl, Maßen, Fotos und Preis. Status setzen, Team informieren, nichts geht verloren.</p>
     </div>
-  </section>
-
-  <!-- ================= SO GEHT'S ================= -->
-  <section class="steps">
-    <div class="wrap">
-      <div class="sec-head" data-reveal>
-        <p class="kicker">So einfach geht's</p>
-        <h2 class="h2">In drei Schritten live.</h2>
-        <p class="lead">Kein Entwickler, keine Agentur. Vorlage wählen, anpassen, teilen – und die Daten kommen strukturiert bei dir an.</p>
-      </div>
-      <div class="grid">
-        <article class="step" data-reveal style="--d:0ms">
-          <div class="vis"><div class="mini-tpl"><span style="--c:#2f6b4f"></span><span style="--c:#1c2e3d"></span><span style="--c:#e0338a"></span></div></div>
-          <div class="num">01</div>
-          <h3 class="h3">Vorlage wählen</h3>
-          <p>Konfigurator, Lead-Funnel, Montagebericht oder Feedback – mit durchklickbarer Vorschau, bevor du startest.</p>
-        </article>
-        <article class="step" data-reveal style="--d:110ms">
-          <div class="vis"><div class="mini-edit"><b>Markenfarbe</b><div class="sw"><i class="on" style="--c:#1c2e3d"></i><i style="--c:#aac520"></i><i style="--c:#0d5b43"></i><i style="--c:#e0338a"></i></div><b>Rundung</b><div class="bar"></div></div></div>
-          <div class="num">02</div>
-          <h3 class="h3">Anpassen</h3>
-          <p>Logo, Farben, Fragen, Bilder und Preise – im Editor mit Live-Ansicht auf dem Handy.</p>
-        </article>
-        <article class="step" data-reveal style="--d:200ms">
-          <div class="vis"><div class="mini-share"><div class="qr" data-qr></div><span class="lnk">firma.de/konfigurator</span></div></div>
-          <div class="num">03</div>
-          <h3 class="h3">Teilen</h3>
-          <p>Als Link, auf deiner Website, in Anzeigen oder per QR-Code. Jede Eingabe landet sofort bei dir.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= FUNKTIONEN ================= -->
-  <section class="features" id="funktionen">
-    <div class="wrap">
-      <div class="sec-head" data-reveal>
-        <p class="kicker">Funktionen</p>
-        <h2 class="h2">Weniger tippen.<br>Bessere Daten.</h2>
-        <p class="lead">Nicht noch ein Formular-Baukasten. Antippen statt Abtippen – und TapTell kümmert sich auch um alles, was nach dem Absenden passiert.</p>
-      </div>
-
-      <div class="bento">
-        <article class="card c-4" data-reveal style="--d:0ms">
-          <span class="tag">Konfigurator</span>
-          <h3 class="h3">Live-Preis, der verkauft.</h3>
-          <p>Preise pro Antwort, Mengen aus Länge × Breite, sichtbar oder nur intern. Zeig einen exakten Preis, eine Spanne oder einen ab-Preis.</p>
-          <div class="vis price" id="priceDemo">
-            <div class="opts">
-              <div class="o" data-p="850">Eiche geölt<em>850 €/m²</em></div>
-              <div class="o sel" data-p="950">Eiche Smoked<em>950 €/m²</em></div>
-              <div class="o" data-p="1090">Nussbaum<em>1.090 €/m²</em></div>
+    <div class="board" data-r aria-hidden="true">
+      <aside class="side">
+        <span class="logo"><b>TAP</b>TELL</span>
+        <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Übersicht</a>
+        <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/></svg>Anfragen</a>
+        <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg>Funnels</a>
+        <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg>Kunden</a>
+        <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.8 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7.3 19.6l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3.2 14H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.4 7.3l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.8-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.8 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 20.9 10H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Einstellungen</a>
+        <hr>
+        <span class="cl on"><i style="background:#e0a800"></i>Holz Gehlen</span>
+        <span class="cl"><i style="background:#ff8a4c"></i>Terrassenbau Nord</span>
+        <span class="cl"><i style="background:#a24bf2"></i>Solar Rhein</span>
+        <span class="cl"><i style="background:#ff6f8e"></i>Freibad am See</span>
+        <div class="tip2"><span class="bulb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2h5c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3Z"/></svg></span><b>Tipp</b>Kritische Bewertungen lösen sofort eine E-Mail an dich aus.</div>
+      </aside>
+      <div class="main">
+        <div class="mtop"><h3>Tischkonfigurator</h3><span class="ib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><span class="ib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></span>
+          <span class="ini"><span style="background:#ffd9a8">KG</span><span style="background:#c9ecf7">LH</span><span style="background:#dcd3ff">TM</span><span style="background:#ffe1ea">+2</span></span></div>
+        <div class="fil"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg>Filter</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Diese Woche</span></div>
+        <div class="cols">
+          <div class="col" style="--ul:#c9c9d2">
+            <div class="ch2"><i></i>Neu <em>4</em></div>
+            <div class="kc"><span class="tag new">Neu</span><h5>Lena Hoffmann</h5><p>Aussengestell Octo · rund · 6 Personen</p><div class="foot"><span class="ini"><span style="background:#ffd9a8">KG</span></span><b>1.980 €</b></div></div>
+            <div style="position:relative"><div class="slot"></div>
+              <div class="kc drag"><span class="tag hot">Heiß</span><h5>Familie Berger</h5><p>Spider · Eiche Smoked · 8 Personen</p><img src="../assets/gehlen/oelung-smoked.jpg" alt=""><div class="foot"><span class="ini"><span style="background:#ffd9a8">KG</span><span style="background:#c9ecf7">LH</span></span><b>2.490 €</b></div></div>
             </div>
-            <div class="tot"><small>Dein Wunschtisch · 2,2 m²</small><b id="priceVal">2.250 € – 2.750 €</b><span>unverbindliche Preisspanne</span></div>
           </div>
-        </article>
-
-        <article class="card c-2" data-reveal style="--d:90ms">
-          <span class="tag">Feedback</span>
-          <h3 class="h3">Mehr gute Bewertungen.</h3>
-          <p>Zufriedene landen bei Google, Unzufriedene bei dir – bevor es öffentlich wird.</p>
-          <div class="vis">
-            <div class="smiles" id="smiles" role="group" aria-label="Bewertung ausprobieren">
-              <button aria-label="1 von 5" data-m="M8.5 16.6c1.9-2.1 5.1-2.1 7 0"></button><button aria-label="2 von 5" data-m="M9 16.2c1.7-1.1 4.3-1.1 6 0"></button><button aria-label="3 von 5" data-m="M9 15.5h6"></button><button aria-label="4 von 5" data-m="M9 14.6c1.7 1.2 4.3 1.2 6 0"></button><button aria-label="5 von 5" class="on" data-m="M8.4 14c1.9 2.6 5.3 2.6 7.2 0"></button>
-            </div>
-            <div class="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="pill" id="routePill"></span></div>
+          <div class="col" style="--ul:#ffb35e">
+            <div class="ch2"><i></i>Kontaktiert <em>3</em></div>
+            <div class="kc"><span class="tag low">Rückruf</span><h5>Jonas Becker</h5><p>Form oval · Naturbaumkante</p><img src="../assets/gehlen/form-oval.jpg" alt=""><div class="foot"><span class="ini"><span style="background:#dcd3ff">TM</span></span><b>3.150 €</b></div></div>
+            <div class="kc"><span class="tag sun">Termin</span><h5>Sophie Wagner</h5><p>Ausstellung am Samstag, 11 Uhr</p><div class="imgs"><img src="../assets/gehlen/form-organisch.jpg" alt=""><img src="../assets/gehlen/zentralgestell-mikado.jpg" alt=""></div><div class="foot"><span class="ini"><span style="background:#c9ecf7">LH</span></span><b>2.720 €</b></div></div>
           </div>
-        </article>
-
-        <article class="card c-2" data-reveal style="--d:0ms">
-          <span class="tag">Logik</span>
-          <h3 class="h3">Jedem seinen Weg.</h3>
-          <p>Verzweigungen nach Antwort oder Bewertung – mit Ablauf-Übersicht im Editor.</p>
-          <div class="vis tree" aria-label="Beispiel: Frage verzweigt in zwei Wege">
-            <span class="node n">Gestellart?</span>
-            <svg viewBox="0 0 200 44" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true"><path class="lk" pathLength="1" d="M100 0C100 26 50 18 50 44"/><path class="lk" pathLength="1" d="M100 0C100 26 150 18 150 44"/></svg>
-            <div class="kids">
-              <div><span class="edge">Zentral</span><span class="node">Spider · Mikado</span></div>
-              <div><span class="edge">Außen</span><span class="node">Octo · X · U</span></div>
-            </div>
+          <div class="col" style="--ul:#34c58a">
+            <div class="ch2"><i></i>Gewonnen <em>2</em></div>
+            <div class="kc"><span class="tag ok">Gewonnen</span><h5>Felix Schulz</h5><p>Thor · Wenge · 10+ Personen</p><img src="../assets/gehlen/bild-start.jpg" alt=""><div class="foot"><span class="ini"><span style="background:#ffd9a8">KG</span></span><b>4.380 €</b></div></div>
+            <div class="kc"><span class="tag ok">Gewonnen</span><h5>Marie Koch</h5><p>V-Design · Light Oak · 4 Personen</p><div class="foot"><span class="ini"><span style="background:#dcd3ff">TM</span></span><b>1.640 €</b></div></div>
           </div>
-        </article>
-
-        <article class="card c-2" data-reveal style="--d:90ms">
-          <span class="tag">Montage &amp; Service</span>
-          <h3 class="h3">Berichte ohne Papier.</h3>
-          <p>Checklisten, Fotos und Unterschrift direkt beim Kunden – sofort als vollständiges Protokoll im Büro.</p>
-          <div class="vis report">
-            <div class="ck on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Montage vollständig</div>
-            <div class="ck on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Baustelle sauber</div>
-            <div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Einweisung erfolgt</div>
-            <div class="sig"><svg viewBox="0 0 160 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="sigp" d="M6 28c10-14 18-20 22-14s-6 18 2 16 14-22 20-18-4 16 4 15 10-12 16-11 2 9 9 8 12-7 18-7 8 4 14 3 12-3 20-4"/></svg><span>Unterschrift Kunde</span></div>
-          </div>
-        </article>
-
-        <article class="card c-2" data-reveal style="--d:170ms">
-          <span class="tag">Automationen</span>
-          <h3 class="h3">Sofort benachrichtigt.</h3>
-          <p>E-Mail an dein Team, persönliche Bestätigung an den Kunden („Danke, {{vorname}}!“), Sofort-Alarm per Regel.</p>
-          <div class="vis">
-            <div class="mail"><div class="top"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg></i><div>Neue Anfrage: Tischkonfigurator<small>gerade eben · 2.490 €</small></div></div><div class="ln"></div><div class="ln s"></div></div>
-            <div class="hooks"><span>Make</span><span>Zapier</span><span>n8n</span><span>Webhooks</span></div>
-          </div>
-        </article>
-
-        <article class="card c-3" data-reveal style="--d:0ms">
-          <span class="tag">Deine Marke</span>
-          <h3 class="h3">Unter deiner Adresse.</h3>
-          <p>Eigene Domain mit automatischem SSL-Zertifikat – oder direkt eingebettet in deine Website. Dein Design, deine Schriften, deine Farben.</p>
-          <div class="vis" aria-hidden="true"><div class="browser">
-            <div class="bbar"><i></i><i></i><i></i><div class="urlbar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span><b>konfigurator.deine-firma.de</b></span></div></div>
-            <div class="bbody"><span class="bimg"></span><div class="btx"><span class="bl t"></span><span class="bl"></span><span class="bl s"></span><span class="bb"></span></div></div>
-          </div></div>
-        </article>
-
-        <article class="card c-3" data-reveal style="--d:90ms">
-          <span class="tag">Statistik &amp; Kundenportal</span>
-          <h3 class="h3">Wissen, was funktioniert.</h3>
-          <p>Aufrufe, Abschlussrate und Ausstieg pro Seite. Deine Kunden sehen ihre Anfragen im eigenen Login.</p>
-          <div class="vis stats" aria-hidden="true">
-            <div class="kpis"><div><small>Aufrufe</small><b>1.284</b></div><div><small>Abschlussrate</small><b>68 %<em>+12 %</em></b></div><div><small>Ø Dauer</small><b>0:52</b></div></div>
-            <div class="bars"><i style="--h:42%"></i><i style="--h:58%"></i><i style="--h:50%"></i><i style="--h:72%"></i><i style="--h:64%"></i><i style="--h:86%" class="hi"></i><i style="--h:78%"></i></div>
-          </div>
-        </article>
-
-        <article class="card c-6" data-reveal style="grid-column:1/-1">
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center" class="legal-wrap">
-            <div><span class="tag">Datenschutz</span><h3 class="h3">Gebaut für Europa.</h3><p>Deine Daten und die deiner Kunden bleiben in der EU. Einwilligungen werden mitgespeichert, Zugriffe sind pro Kunde getrennt.</p></div>
-            <div class="legal">
-              <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Server in der EU</div>
-              <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Einwilligung pro Anfrage gespeichert</div>
-              <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Kein Cookie-Tracking in Funnels</div>
-              <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Rechte pro Kunde getrennt</div>
-            </div>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= OFFLINE → ONLINE ================= -->
-  <section class="offline">
-    <div class="wrap grid">
-      <div>
-        <p class="kicker" data-reveal>Instant Data</p>
-        <h2 class="h2" data-reveal style="--d:80ms">Ein paar Klicks.<br>Alle Daten da.</h2>
-        <p class="lead" data-reveal style="--d:160ms">Ob Interessent, Monteur oder Kunde: Wer einen TapTell-Funnel ausfüllt, tippt kaum – und du bekommst vollständige, saubere Daten. Keine Rückfragen, kein Abtippen, kein Zettelchaos.</p>
-        <ol class="timeline">
-          <li data-reveal style="--d:220ms"><span class="t">0:00</span><div><b>Öffnen</b><span>Über deine Website, einen Link, eine Anzeige oder vor Ort per QR-Code.</span></div></li>
-          <li data-reveal style="--d:300ms"><span class="t">0:45</span><div><b>Antippen statt Abtippen</b><span>Bildkarten, Schieberegler, Fotos und Unterschrift – gemacht fürs Handy.</span></div></li>
-          <li data-reveal style="--d:370ms"><span class="t">0:46</span><div><b>Daten sind da</b><span>Strukturiert im Dashboard, per E-Mail an dein Team oder direkt in deinem CRM.</span></div></li>
-        </ol>
-      </div>
-      <div class="feed" data-reveal="lift" style="--d:120ms" aria-hidden="true">
-        <div class="feed-head"><i></i>Live · Eingänge im Dashboard<span>heute 12</span></div>
-        <div class="note-card" style="--i:0"><i class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M5 10v9M19 10v9M8 6h8l2 4H6z"/></svg></i><div><b>Neue Anfrage · Tischkonfigurator</b><span>Eiche Smoked · 2,2 m² · 2.490 €</span></div><small>jetzt</small></div>
-        <div class="note-card" style="--i:1"><i class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg></i><div><b>Montagebericht unterschrieben</b><span>Auftrag 2026-0418 · 3 Fotos</span></div><small>vor 2 Min.</small></div>
-        <div class="note-card" style="--i:2"><i class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6L3.3 9.2l6.1-.6z"/></svg></i><div><b>Feedback · 5 von 5</b><span>Weitergeleitet zu Google</span></div><small>vor 9 Min.</small></div>
-        <div class="note-card" style="--i:3"><i class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.5L4 17.5z"/></svg></i><div><b>Neuer Lead · Solar-Angebot</b><span>Einfamilienhaus · 4.800 kWh</span></div><small>vor 14 Min.</small></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= ANWENDUNGEN ================= -->
-  <section class="cases" id="anwendungen">
-    <div class="wrap">
-      <div class="sec-head" data-reveal>
-        <p class="kicker">Anwendungen</p>
-        <h2 class="h2">Für alles, was du heute<br>noch auf Papier erfasst.</h2>
-      </div>
-      <div class="grid">
-        <article class="case" data-reveal style="--d:0ms">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M5 10v9M19 10v9M8 6h8l2 4H6z"/></svg></div>
-          <h3 class="h3">Leads &amp; Konfiguratoren</h3>
-          <p>Interessenten stellen ihr Wunschprodukt in wenigen Klicks zusammen – du bekommst vorqualifizierte Anfragen mit Maßen, Auswahl und Preisrahmen.</p>
-          <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Konfigurator mit Live-Preis</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Lead-Funnels für Anzeigen &amp; Website</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Sofort-Mail an den Vertrieb</li></ul>
-        </article>
-        <article class="case" data-reveal style="--d:110ms">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg></div>
-          <h3 class="h3">Montage &amp; Service</h3>
-          <p>Montageberichte, Abnahmen und Aufmaße direkt auf dem Handy – vollständig, mit Fotos und Unterschrift, ohne Papier.</p>
-          <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Checklisten &amp; Pflichtfelder</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Fotos und digitale Unterschrift</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Bericht sofort im Büro</li></ul>
-        </article>
-        <article class="case" data-reveal style="--d:200ms">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4 4 0 007 0M9 9.5h.01M15 9.5h.01"/></svg></div>
-          <h3 class="h3">Feedback &amp; Bewertungen</h3>
-          <p>Zufriedene Kunden landen bei Google, Kritik zuerst bei dir – nach dem Auftrag, im Laden oder vor Ort.</p>
-          <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Smiley-Skala mit Weiterleitung</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Sofort-Alarm bei Kritik</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Auswertung im Dashboard</li></ul>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= FAQ ================= -->
-  <section class="faqs" id="faq">
-    <div class="wrap">
-      <div class="sec-head" data-reveal>
-        <p class="kicker">Fragen &amp; Antworten</p>
-        <h2 class="h2">Gut zu wissen.</h2>
-      </div>
-      <div class="faq-list" data-reveal style="--d:100ms">
-        <details class="faq"><summary>Brauchen meine Kunden oder Mitarbeiter eine App?<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="ans"><div><p>Nein. Ein TapTell-Funnel öffnet sich direkt im Browser – über einen Link, deine Website, eine Anzeige oder einen QR-Code, auf jedem Smartphone.</p></div></div></details>
-        <details class="faq"><summary>Kann ich meine eigene Domain verwenden?<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="ans"><div><p>Ja. Du verbindest z. B. konfigurator.deine-firma.de mit einem DNS-Eintrag, das SSL-Zertifikat wird automatisch ausgestellt. Alternativ bindest du den Funnel direkt in deine bestehende Website ein.</p></div></div></details>
-        <details class="faq"><summary>Wohin gehen die Anfragen?<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="ans"><div><p>In dein Dashboard, auf Wunsch per E-Mail an dein Team und per Webhook in Tools wie Make, Zapier, n8n oder dein CRM. Mit Regeln, z. B. ein Sofort-Alarm bei schlechter Bewertung.</p></div></div></details>
-        <details class="faq"><summary>Ist TapTell DSGVO-konform?<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="ans"><div><p>TapTell ist für den europäischen Markt gebaut: Daten liegen auf Servern in der EU, Einwilligungen werden pro Anfrage gespeichert und die Funnels setzen kein Cookie-Tracking ein.</p></div></div></details>
-        <details class="faq"><summary>Kann ich meine bestehenden Funnels übernehmen?<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="ans"><div><p>Ja. Wir bauen bestehende Funnels originalgetreu nach – inklusive Logik, Bildern und deiner bisherigen Links, damit gedruckte QR-Codes weiter funktionieren.</p></div></div></details>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= ABSCHLUSS ================= -->
-  <section class="final" id="kontakt">
-    <div class="wrap">
-      <div class="panel" data-reveal="lift">
-        <h2 class="h2" data-reveal style="--d:120ms">Bereit für Instant Data?</h2>
-        <p class="lead" data-reveal style="--d:200ms">Wir zeigen dir in 15 Minuten, wie dein erster Funnel aussieht – mit deinem Logo, deinen Fragen und deinen Daten.</p>
-        <div class="cta" data-reveal style="--d:280ms">
-          <a class="btn inv" href="#" data-contact>Demo anfragen<svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-          <a class="btn ghost-d" href="#demo">Noch mal ausprobieren</a>
         </div>
-        <p class="fine" data-reveal="fade" style="--d:360ms">Unverbindlich – am Beispiel deines eigenen Funnels</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
+
+<!-- ================= Drei Schritte ================= -->
+<section class="steps" id="schritte">
+  <div class="wrap">
+    <div class="sec-head center" data-r>
+      <span class="pill"><i></i>So einfach geht’s</span>
+      <h2 class="h2">In drei Schritten live.</h2>
+      <p class="lead">Kein Entwickler, keine Agentur. Vorlage wählen, anpassen, teilen.</p>
+    </div>
+    <div class="sgrid">
+      <article class="step" data-r>
+        <div class="ill" aria-hidden="true"><div class="tpls"><span>Feedback</span><span>Leads</span><span>Konfigurator</span></div></div>
+        <span class="num">01</span><h3 class="h4">Vorlage wählen</h3>
+        <p>Konfigurator, Lead-Funnel, Montagebericht oder Feedback – mit Vorschau, bevor du startest.</p>
+      </article>
+      <article class="step" data-r style="--d:80ms">
+        <div class="ill" aria-hidden="true"><div class="cust"><div class="sws"><i class="on" style="--c:#5b3df5"></i><i style="--c:#1c2e3d"></i><i style="--c:#aac520"></i><i style="--c:#ff6f8e"></i><i style="--c:#ffb35e"></i></div><div class="sl"><small><span>Rundung</span><span>16 px</span></small><div><i></i><b></b></div></div></div></div>
+        <span class="num">02</span><h3 class="h4">Anpassen</h3>
+        <p>Logo, Farben, Fragen, Bilder und Preise – im Editor mit Live-Ansicht auf dem Handy.</p>
+      </article>
+      <article class="step" data-r style="--d:160ms">
+        <div class="ill" aria-hidden="true"><div class="share"><span class="url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>konfigurator.deine-firma.de</span><div class="qr" data-qr></div></div></div>
+        <span class="num">03</span><h3 class="h4">Teilen</h3>
+        <p>Als Link, auf deiner Website, in Anzeigen oder per QR-Code. Jede Eingabe landet sofort bei dir.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Fragen ================= -->
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="sec-head center" data-r>
+      <span class="pill"><i></i>Fragen</span>
+      <h2 class="h2">Gut zu wissen.</h2>
+    </div>
+    <div class="qa" data-r>
+      <div class="qi"><button type="button" aria-expanded="false">Brauchen meine Kunden oder Mitarbeiter eine App?<span class="pl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="qb"><div><p>Nein. Ein TapTell-Funnel öffnet sich direkt im Browser – über einen Link, deine Website, eine Anzeige oder einen QR-Code, auf jedem Smartphone.</p></div></div></div>
+      <div class="qi"><button type="button" aria-expanded="false">Kann ich meine eigene Domain verwenden?<span class="pl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="qb"><div><p>Ja. Du verbindest z. B. konfigurator.deine-firma.de mit einem DNS-Eintrag, das SSL-Zertifikat wird automatisch ausgestellt. Alternativ bindest du den Funnel direkt in deine bestehende Website ein.</p></div></div></div>
+      <div class="qi"><button type="button" aria-expanded="false">Wohin gehen die Anfragen?<span class="pl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="qb"><div><p>In dein Dashboard, auf Wunsch per E-Mail an dein Team und per Webhook in Tools wie Make, Zapier, n8n oder dein CRM. Mit Regeln, z. B. ein Sofort-Alarm bei schlechter Bewertung.</p></div></div></div>
+      <div class="qi"><button type="button" aria-expanded="false">Ist TapTell DSGVO-konform?<span class="pl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="qb"><div><p>TapTell ist für den europäischen Markt gebaut: Daten liegen auf Servern in der EU, Einwilligungen werden pro Anfrage gespeichert und die Funnels setzen kein Cookie-Tracking ein.</p></div></div></div>
+      <div class="qi"><button type="button" aria-expanded="false">Kann ich meine bestehenden Funnels übernehmen?<span class="pl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="qb"><div><p>Ja. Wir bauen bestehende Funnels originalgetreu nach – inklusive Logik, Bildern und deiner bisherigen Links, damit gedruckte QR-Codes weiter funktionieren.</p></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Abschluss ================= -->
+<section class="cta">
+  <div class="wrap">
+    <div class="cbox" data-r>
+      <svg class="plus" style="left:12%;top:22%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2v20M2 12h20"/></svg>
+      <svg class="plus" style="right:10%;top:56%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2v20M2 12h20"/></svg>
+      <h2 class="h2">Bereit für deinen ersten Funnel?</h2>
+      <p class="lead">Wir zeigen dir in 15 Minuten, wie er aussieht – mit deinem Logo, deinen Fragen und deinen Daten.</p>
+      <div class="ctas">
+        <a class="btn grad" data-contact href="#">Demo anfragen <svg class="mv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+        <a class="btn ghost-d" href="#demo">Noch mal ausprobieren</a>
+      </div>
+      <div class="devw" aria-hidden="true">
+        <div class="dev"><div class="bz"><div class="scr" id="scr3" inert>
+          <div class="island"></div>
+          <div class="sbar"><span>9:41</span><span class="ic"><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="8" rx="2" fill="currentColor"/></svg></span></div>
+          <div class="host" id="host3"></div>
+        </div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
 
 <footer>
-  <div class="wrap fgrid">
-    <div class="fbrand"><img src="../src/logo-t.png" alt="TapTell"><p>Instant Data. Made Simple.<br>Mobile Funnels für Betriebe.</p></div>
-    <nav aria-label="Produkt"><b>Produkt</b><a href="#demo">Live-Demo</a><a href="#funktionen">Funktionen</a><a href="#anwendungen">Anwendungen</a><a href="#faq">Fragen</a></nav>
-    <nav aria-label="Rechtliches"><b>Rechtliches</b><a href="#">Impressum</a><a href="#">Datenschutz</a><a href="#">AGB</a></nav>
+  <div class="wrap">
+    <div class="ftop">
+      <div>
+        <a class="logo" href="#top"><b>TAP</b>TELL</a>
+        <p>Mobile Funnels für Betriebe – Konfiguratoren, Leads, Montageberichte und Feedback. Server in der EU.</p>
+        <a class="mail" data-contact href="#"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></i>kontakt@taptell.de</a>
+      </div>
+      <div class="fcols">
+        <nav aria-label="Produkt"><b>Produkt</b><a href="#vorteile">Vorteile</a><a href="#funktionen">Funktionen</a><a href="#dashboard">Dashboard</a><a href="#faq">Fragen</a></nav>
+        <nav aria-label="Rechtliches"><b>Rechtliches</b><a href="#">Impressum</a><a href="#">Datenschutz</a><a href="#">AGB</a></nav>
+      </div>
+    </div>
+    <div class="fbot"><span>© <span id="year">2026</span> TapTell</span><span>Instant Data. Made Simple.</span></div>
   </div>
-  <div class="wrap fbot"><span>© <span id="year">2026</span> TapTell</span><span>Server in der EU</span></div>
+  <div class="giant" aria-hidden="true"><b>TAP</b><span>TELL</span></div>
 </footer>
 
 <script src="../src/player.js"></script>
 <script src="../src/templates.js"></script>
+<script src="../landing/demo-funnel.js"></script>
 <script>
 (function(){
   'use strict';
   /* ----- Kontakt-Ziel: hier anpassen (z. B. Kalender-Link oder mailto:) ----- */
   var CONTACT_URL = 'mailto:kontakt@taptell.de?subject=Demo%20TapTell';
-  document.body.classList.remove('no-js');
   document.querySelectorAll('[data-contact]').forEach(function(a){ a.setAttribute('href', CONTACT_URL); });
-
+  document.getElementById('year').textContent = new Date().getFullYear();
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ----- Navigation: Kante erst beim Scrollen ----- */
+  /* ----- Navigation: Material erst beim Scrollen ----- */
   var nav = document.getElementById('nav');
-  var onScroll = function(){ nav.classList.toggle('scrolled', window.scrollY > 8); };
-  window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+  var onNav = function(){ nav.classList.toggle('scrolled', window.scrollY > 8); };
+  window.addEventListener('scroll', onNav, {passive:true}); onNav();
+
+  /* ----- Hero-Choreografie: startet, sobald die Schrift da ist ----- */
+  var go = function(){ requestAnimationFrame(function(){ document.documentElement.classList.add('ready'); }); };
+  if(document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, new Promise(function(r){ setTimeout(r, 600); })]).then(go); else go();
 
   /* ----- Einblenden beim Scrollen ----- */
   var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); } });
-  }, {rootMargin:'0px 0px -8% 0px', threshold:0.12});
-  document.querySelectorAll('[data-reveal]').forEach(function(el){ io.observe(el); });
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {rootMargin:'0px 0px -10% 0px', threshold:0.15});
+  document.querySelectorAll('[data-r]').forEach(function(el){ io.observe(el); });
 
-  /* ----- Deko-QR-Muster (Illustration) ----- */
+  /* ----- Leichte Parallaxe der schwebenden Karten (nur Maus/Desktop, nicht bei reduzierter Bewegung) ----- */
+  var par = [].slice.call(document.querySelectorAll('[data-par]'));
+  if(!reduce && par.length){
+    var ticking = false;
+    var upd = function(){
+      ticking = false; var vh = window.innerHeight;
+      par.forEach(function(el){
+        var r = el.parentNode.getBoundingClientRect(); if(r.bottom < -200 || r.top > vh + 200) return;
+        var y = ((r.top + r.height / 2) - vh / 2) * (+el.getAttribute('data-par'));
+        el.style.transform = 'translate3d(0,' + y.toFixed(1) + 'px,0)';
+      });
+    };
+    window.addEventListener('scroll', function(){ if(!ticking){ ticking = true; requestAnimationFrame(upd); } }, {passive:true});
+    upd();
+  }
+
+  /* ----- Laufband: Inhalt doppeln für eine nahtlose Schleife ----- */
+  var track = document.getElementById('track');
+  [].slice.call(track.children).forEach(function(c){ var d = c.cloneNode(true); d.classList.add('dup'); d.setAttribute('aria-hidden', 'true'); track.appendChild(d); });
+
+  /* ----- Deko-QR-Muster ----- */
   var pattern = [1,1,1,0,1,1,1, 1,0,1,0,1,0,1, 1,1,1,0,1,1,1, 0,0,0,1,0,0,0, 1,0,1,1,0,1,1, 0,1,0,0,1,0,1, 1,1,1,0,1,1,0];
   document.querySelectorAll('[data-qr]').forEach(function(q){ q.innerHTML = pattern.map(function(v){ return '<i class="'+(v?'':'o')+'"></i>'; }).join(''); });
 
-  /* ----- Live-Demo im Handy (echter TapTell-Player) ----- */
-  var host = document.getElementById('host'), note = document.getElementById('dnote'), noteT;
-  var noteTitle = document.getElementById('dnoteT'), noteSub = document.getElementById('dnoteS');
-  var current = 'terrasse', loaded = {};
-  var KIND = {terrasse:'Neue Anfrage', solar:'Neuer Lead', abnahme:'Neuer Montagebericht', feedback:'Neues Feedback'};
-  /* Mitteilung oben im Handy: so käme der Eingang bei dir an */
+  /* ----- Echte TapTell-Funnels in den Handys (Demo: es wird nichts gesendet) ----- */
+  var fontsLoaded = {};
+  function loadFonts(f){ FP.usedFonts(f).forEach(function(n){ if(fontsLoaded[n]) return; fontsLoaded[n] = 1; var u = FP.fontLink(n); if(!u) return; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; document.head.appendChild(l); }); }
+  var note = document.getElementById('note1'), noteT;
   function notify(title, sub){
-    noteTitle.textContent = title; noteSub.textContent = sub;
+    document.getElementById('noteT').textContent = title; document.getElementById('noteS').textContent = sub;
     note.classList.remove('on'); void note.offsetWidth; note.classList.add('on');
-    clearTimeout(noteT); noteT = setTimeout(function(){ note.classList.remove('on'); }, 3200);
+    clearTimeout(noteT); noteT = setTimeout(function(){ note.classList.remove('on'); }, 3400);
   }
-  function loadFonts(f){ FP.usedFonts(f).forEach(function(n){ if(loaded[n]) return; loaded[n] = 1; var u = FP.fontLink(n); if(!u) return; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; document.head.appendChild(l); }); }
-  function mount(id){
-    var f = FS_T.newFunnel(id); loadFonts(f);
-    var fresh = document.createElement('div'); fresh.className = 'host'; fresh.id = 'host'; fresh.setAttribute('aria-live', 'polite');
-    host.replaceWith(fresh); host = fresh;
-    var scr = host.parentNode; scr.scrollTop = 0;
-    scr.querySelector('.sbar').style.color = (f.theme && f.theme.text) || '#111';
+  /* Bildpfade: „/assets/…“ und „@datei“ (assets/landing/) relativ zur Seite auflösen –
+     so klappt es auf taptell.de, unter /landing/ und beim direkten Öffnen der Datei */
+  var ROOT = location.protocol === 'file:' ? '../' : '/';
+  function fixPaths(o){
+    if(typeof o === 'string'){
+      if(o.charAt(0) === '@' && /\.(jpe?g|png|webp)$/i.test(o)) return ROOT + 'assets/landing/' + o.slice(1);
+      if(o.indexOf('/assets/') === 0) return ROOT + o.slice(1);
+      return o;
+    }
+    if(Array.isArray(o)) return o.map(fixPaths);
+    if(o && typeof o === 'object'){ var r = {}; for(var k in o) r[k] = fixPaths(o[k]); return r; }
+    return o;
+  }
+  function getFunnel(tpl){
+    if(tpl === 'demo') return window.TT_DEMO ? fixPaths(JSON.parse(JSON.stringify(window.TT_DEMO))) : FS_T.newFunnel('gehlen-tisch');
+    var f = FS_T.newFunnel(tpl); return f ? fixPaths(f) : null;
+  }
+  function mount(tpl, hostId, interactive){
+    if(!window.FP || !window.FS_T) return;
+    var f = getFunnel(tpl); if(!f) return; loadFonts(f);
+    var host = document.getElementById(hostId), scr = host.parentNode;
     scr.style.background = (f.theme && f.theme.bg) || '#fff';
-    current = id; note.classList.remove('on');
+    scr.querySelector('.sbar').style.color = (f.theme && f.theme.text) || '#111';
     FP.mount(host, f, {live:false, scrollEl:scr,
-      onSubmit:function(){ notify((KIND[current] || 'Neue Anfrage') + ' · ' + (f.name || 'Demo'), 'Demo – es wurde nichts gesendet'); },
-      onUrl:function(){ notify('Weiter zum Link', 'Demo – Links öffnen sich hier nicht'); }});
+      onSubmit:function(){ if(interactive) notify('Neue Anfrage · ' + (f.name || 'Demo'), 'Demo – es wurde nichts gesendet'); },
+      onUrl:function(){ if(interactive) notify('Weiter zum Link', 'Demo – Links öffnen sich hier nicht'); }});
   }
-  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab')), ind = document.querySelector('.tabs .ind');
-  function moveInd(t){ ind.style.width = t.offsetWidth + 'px'; ind.style.transform = 'translateX(' + (t.offsetLeft - 4) + 'px)'; }
-  tabs.forEach(function(t){
-    t.addEventListener('click', function(){
-      if(t.getAttribute('aria-selected') === 'true') return;
-      tabs.forEach(function(x){ x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
-      moveInd(t);
-      if(reduce){ mount(t.getAttribute('data-tpl')); return; }
-      host.classList.add('swap'); /* kurz ausblenden, neu laden, einblenden */
-      setTimeout(function(){ mount(t.getAttribute('data-tpl')); host.classList.add('swap'); requestAnimationFrame(function(){ requestAnimationFrame(function(){ host.classList.remove('swap'); }); }); }, 170);
-    });
-    t.addEventListener('keydown', function(e){ var i = tabs.indexOf(t); if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){ e.preventDefault(); var n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]; n.focus(); n.click(); } });
-  });
-  var sel = tabs[0]; ind.style.transition = 'none'; moveInd(sel); requestAnimationFrame(function(){ ind.style.transition = ''; });
-  window.addEventListener('resize', function(){ moveInd(tabs.filter(function(x){ return x.getAttribute('aria-selected') === 'true'; })[0]); });
-  if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ moveInd(tabs.filter(function(x){ return x.getAttribute('aria-selected') === 'true'; })[0]); });
-  mount('terrasse');
+  mount('demo', 'host1', true);
+  /* die anderen beiden erst laden, wenn sie in Sichtweite kommen */
+  var lazy = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(!e.isIntersecting) return; lazy.unobserve(e.target);
+      if(e.target.id === 'host2') mount('gehlen-feedback', 'host2', false);
+      if(e.target.id === 'host3') mount('demo', 'host3', false); });
+  }, {rootMargin:'400px 0px'});
+  lazy.observe(document.getElementById('host2')); lazy.observe(document.getElementById('host3'));
 
-  /* ----- Preis-Karte: Option wählen, Spanne zählt sanft mit ----- */
-  var priceVal = document.getElementById('priceVal'), cur = 2500, raf;
-  var fmt = function(n){ return Math.round(n / 50) * 50; };
-  var money = function(n){ return n.toLocaleString('de-DE') + ' €'; };
-  var show = function(t){ priceVal.textContent = money(fmt(t * .9)) + ' – ' + money(fmt(t * 1.1)); };
+  /* ----- Preis-Karte: Ölung wählen, Spanne zählt sanft mit ----- */
+  var priceVal = document.getElementById('priceVal'), cur = 950, raf;
+  var money = function(n){ return (Math.round(n / 50) * 50).toLocaleString('de-DE') + ' €'; };
+  var show = function(p){ var t = p * 2.2; priceVal.textContent = money(t * .9) + ' – ' + money(t * 1.1); };
   function animateTo(target){
     cancelAnimationFrame(raf); var from = cur, start = performance.now(), dur = reduce ? 0 : 520;
     var step = function(now){ var p = dur ? Math.min(1, (now - start) / dur) : 1, e = 1 - Math.pow(1 - p, 4); cur = from + (target - from) * e; show(cur); if(p < 1) raf = requestAnimationFrame(step); };
     raf = requestAnimationFrame(step);
   }
-  document.querySelectorAll('#priceDemo .o').forEach(function(o){
-    o.style.cursor = 'pointer'; o.setAttribute('role', 'button'); o.setAttribute('tabindex', '0');
-    var pick = function(){ document.querySelectorAll('#priceDemo .o').forEach(function(x){ x.classList.toggle('sel', x === o); }); animateTo(290 + (+o.getAttribute('data-p')) * 2.2); };
-    o.addEventListener('click', pick); o.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(); } });
+  document.querySelectorAll('#opts .opt').forEach(function(o){
+    o.addEventListener('click', function(){
+      document.querySelectorAll('#opts .opt').forEach(function(x){ x.setAttribute('aria-pressed', x === o ? 'true' : 'false'); });
+      animateTo(+o.getAttribute('data-p'));
+    });
   });
   show(cur);
 
-  /* ----- Feedback-Karte: Smiley wählen, Weg wechselt ----- */
-  var pill = document.getElementById('routePill'), route = null;
-  var svg = function(d){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
-  var ROUTES = {
-    google: svg('<path d="M12 3.5l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6L12 16.1l-5.1 2.8 1.1-5.6-4.2-3.9 5.7-.7z"/>') + 'Google-Bewertung',
-    direct: svg('<path d="M4 5h16v11H8l-4 3.5z"/><path d="M8 9.5h8M8 12.5h5"/>') + 'Direkt an dich'
+  /* ----- Feedback-Karte: Gesicht wählen, Weg wechselt ----- */
+  var rt = document.getElementById('rt'), rtI = document.getElementById('rtI'), rtT = document.getElementById('rtT'), route = '';
+  var ICON = {
+    good:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6L12 16.1l-5.1 2.8 1.1-5.6-4.2-3.9 5.7-.7z"/></svg>',
+    bad:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 3.5z"/><path d="M8 9.5h8M8 12.5h5"/></svg>'
   };
+  var TEXT = {good:'<small>Weiter zu</small><b>Google-Bewertung</b>', bad:'<small>Geht zuerst an dich</small><b>Rückruf und Sofort-Alarm</b>'};
   function setRoute(r, instant){
     if(r === route) return; route = r;
-    if(instant || reduce){ pill.innerHTML = ROUTES[r]; return; }
-    pill.classList.add('swap'); setTimeout(function(){ pill.innerHTML = ROUTES[r]; pill.classList.remove('swap'); }, 160);
+    var apply = function(){ rt.className = 'rt ' + r; rtI.innerHTML = ICON[r]; rtT.innerHTML = TEXT[r]; };
+    if(instant || reduce){ apply(); return; }
+    rtT.classList.add('out');
+    setTimeout(function(){ apply(); requestAnimationFrame(function(){ rtT.classList.remove('out'); }); }, 160);
   }
-  var faces = Array.prototype.slice.call(document.querySelectorAll('#smiles button'));
-  faces.forEach(function(b, i){
-    b.innerHTML = svg('<circle cx="12" cy="12" r="9"/><path d="' + b.getAttribute('data-m') + '"/><path d="M9 10h.01M15 10h.01" stroke-width="2.6"/>');
-    b.setAttribute('aria-pressed', b.classList.contains('on') ? 'true' : 'false');
+  document.querySelectorAll('#smis button').forEach(function(b){
     b.addEventListener('click', function(){
-      faces.forEach(function(x){ x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
-      setRoute(i >= 3 ? 'google' : 'direct');
+      document.querySelectorAll('#smis button').forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      setRoute(+b.getAttribute('data-v') >= 4 ? 'good' : 'bad');
     });
   });
-  setRoute('google', true);
+  setRoute('good', true);
 
-  /* ----- Navigation: aktiver Abschnitt ----- */
-  var links = Array.prototype.slice.call(document.querySelectorAll('.nav .links a'));
-  var spy = new IntersectionObserver(function(es){ es.forEach(function(e){
-    if(!e.isIntersecting) return;
-    var href = e.target.getAttribute('data-spy');
-    links.forEach(function(a){ a.setAttribute('aria-current', a.getAttribute('href') === href ? 'true' : 'false'); });
-  }); }, {rootMargin:'-45% 0px -50% 0px'});
-  document.querySelectorAll('main > section').forEach(function(s){
-    s.setAttribute('data-spy', s.id ? '#' + s.id : ''); spy.observe(s);
+  /* ----- Fragen: aufklappen ----- */
+  document.querySelectorAll('.qi button').forEach(function(b){
+    b.addEventListener('click', function(){ var it = b.parentNode, on = !it.classList.contains('open'); it.classList.toggle('open', on); b.setAttribute('aria-expanded', on); });
   });
-
-  var y = document.getElementById('year'); if(y) y.textContent = new Date().getFullYear();
 })();
 </script>
 </body>

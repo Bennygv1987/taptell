@@ -278,12 +278,46 @@ function readImage(file, maxW, cb){
   var rd = new FileReader();
   rd.onload = function(){
     if(/svg/.test(file.type)) return cb(rd.result);
-    var img = new Image(); img.onload = function(){ var c = document.createElement('canvas'), sc = Math.min(1, maxW/img.width); c.width = img.width*sc; c.height = img.height*sc; c.getContext('2d').drawImage(img,0,0,c.width,c.height); cb(c.toDataURL(/png/.test(file.type)?'image/png':'image/jpeg', .82)); };
+    var img = new Image(); img.onload = function(){ var c = document.createElement('canvas'), sc = Math.min(1, maxW/img.width); c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc); c.getContext('2d').drawImage(img,0,0,c.width,c.height); cb(encodeCanvas(c, !/jpe?g/i.test(file.type))); };
     img.onerror = function(){ toast('Dieses Bildformat konnte nicht geladen werden.'); };
     img.src = rd.result;
   };
   rd.onerror = function(){ toast('Bild konnte nicht gelesen werden.'); };
   rd.readAsDataURL(file);
+}
+/* Fotos werden als JPG gespeichert. PNG bleibt nur, wenn das Bild wirklich durchsichtige Stellen hat
+   (Logos, Freisteller) – ein Foto als PNG ist 30–50× größer und macht den Funnel auf dem Handy langsam. */
+function hasAlpha(c){ var d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for(var i = 3; i < d.length; i += 4) if(d[i] < 250) return true; return false; }
+function encodeCanvas(c, mayHaveAlpha){ return mayHaveAlpha && hasAlpha(c) ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', .82); }
+/* Bereits eingebettete Bilder nachträglich verkleinern („Bilder verkleinern“ im Funnel-Reiter) */
+var HEAVY_IMG = 150000; /* ab ca. 110 KB lohnt sich ein Blick */
+function heavyImages(f){
+  var out = [];
+  (function walk(o, path){
+    if(!o || typeof o !== 'object') return;
+    Object.keys(o).forEach(function(k){
+      var v = o[k];
+      if(typeof v === 'string'){ if(v.length > HEAVY_IMG && /^data:image\/(png|jpe?g|webp|gif|bmp);base64,/i.test(v)) out.push({o:o, k:k, w:/\.options\./.test(path + '.') ? 900 : k === 'logoImg' ? 600 : 1400}); }
+      else walk(v, path + '.' + k);
+    });
+  })({pages:f.pages, theme:f.theme}, '');
+  return out;
+}
+function funnelBytes(f){ return JSON.stringify({pages:f.pages, theme:f.theme}).length; }
+function fmtSize(n){ return n >= 1e6 ? (n / 1e6).toLocaleString('de-DE', {maximumFractionDigits:1}) + ' MB' : Math.max(1, Math.round(n / 1e3)) + ' KB'; }
+function shrinkImage(src, maxW){
+  return new Promise(function(res){
+    var m = /^data:image\/([a-z]+);/i.exec(src), img = new Image();
+    img.onload = function(){
+      var sc = Math.min(1, maxW / img.width), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.width * sc)); c.height = Math.max(1, Math.round(img.height * sc));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      var out = encodeCanvas(c, !/jpe?g/i.test(m ? m[1] : ''));
+      res(out.length < src.length * .85 ? out : null);
+    };
+    img.onerror = function(){ res(null); };
+    img.src = src;
+  });
 }
 function mediaServer(){ return REMOTE ? sb : null; }
 function libraryButton(){
@@ -933,9 +967,9 @@ function renderRight(){
 var PANEL_GROUPS = {
   page:[['', ['Seite', 'Weiterleitung', 'Hintergrund']]],
   design:[['Grundlagen', ['Stil-Pakete', 'Themes', 'Farben', 'Schnellfarben', 'Typografie']], ['Elemente', ['Buttons', 'Felder & Antwortkarten']], ['Layout', ['Header & Navigation', 'Abstände', 'Desktop', 'Animation & Hintergrund']], ['Extras', ['Kontakt-Knopf', 'Chat-Modus', 'Eigenes CSS']]],
-  set:[['Funnel', ['Allgemein', 'Kunde & Freigabe', 'Personalisierung']], ['Anfragen', ['Preisberechnung', 'Automationen', 'Integrationen']], ['Rechtliches & Code', ['Cookie-Banner', 'Eigenes CSS']]]
+  set:[['Funnel', ['Allgemein', 'Ladezeit', 'Kunde & Freigabe', 'Personalisierung']], ['Anfragen', ['Preisberechnung', 'Automationen', 'Integrationen']], ['Rechtliches & Code', ['Cookie-Banner', 'Eigenes CSS']]]
 };
-var PANEL_OPEN = {page:{'Seite':1}, design:{'Stil-Pakete':1, 'Farben':1}, set:{'Allgemein':1}};
+var PANEL_OPEN = {page:{'Seite':1}, design:{'Stil-Pakete':1, 'Farben':1}, set:{'Allgemein':1, 'Ladezeit':1}};
 function enhancePanel(rp, tab){
   if(tab === 'el') return;
   var body = rp.querySelector('#rps') || rp, secs = [].slice.call(body.querySelectorAll('.psec')).filter(function(x){ return x.querySelector(':scope > h5'); });
@@ -1286,6 +1320,10 @@ function panelSettings(){
     + '<label class="tgl"><span>„Weitermachen, wo du aufgehört hast“</span><input type="checkbox" data-s="resume" data-bool data-inv'+(s.resume===false?'':' checked')+'><span class="sw"></span></label><div class="hint" style="margin:-6px 0 12px">Wer abbricht und wiederkommt, kann weitermachen. Gespeichert werden nur Auswahl-Antworten, keine Kontaktdaten, nur auf dem Gerät des Besuchers.</div>'
     + '<div class="fld"><label>Link-Adresse</label><div class="slugf"><span>/</span><input data-fslug value="'+esc(f.slug)+'" spellcheck="false"></div><div class="hint" id="fslugh">'+esc(publicUrl(f))+'</div></div>'
     + '<div class="fld"><label>Status</label><div class="segf"><button data-a="fstatus" data-v="draft" class="'+(f.status!=='live'?'on':'')+'">Entwurf</button><button data-a="fstatus" data-v="live" class="'+(f.status==='live'?'on':'')+'">Live</button></div></div></div>';
+  var heavy = heavyImages(f), bytes = funnelBytes(f), slow = bytes > 1.5e6 || heavy.length > 0;
+  h += '<div class="psec"><h5>'+I('images',13)+'Ladezeit</h5><div class="ldz'+(slow ? ' slow' : '')+'"><span>Funnel-Größe</span><b>'+fmtSize(bytes)+'</b></div>'
+    + '<div class="hint">'+(heavy.length ? heavy.length+(heavy.length > 1 ? ' große Bilder bremsen' : ' großes Bild bremst')+' den Start auf dem Handy. Verkleinern rechnet Fotos in JPG um – sichtbar bleibt alles gleich.' : (bytes > 1.5e6 ? 'Groß, aber ohne einzelne schwere Bilder.' : 'Lädt auch im Mobilfunknetz schnell.'))+'</div>'
+    + (heavy.length ? '<button class="btn sm" style="width:100%;justify-content:center;margin-top:8px" data-a="shrinkImages">'+I('images',13)+'Bilder verkleinern</button>' : '') + '</div>';
   h += '<div class="psec"><h5>'+I('folder',13)+'Kunde & Freigabe</h5><div class="fld"><label>Kunde</label><select class="inp" data-fclient>'+'<option value="">– Intern (kein Kunde) –</option>'+(db.clients||[]).map(function(c){ return '<option value="'+c.id+'"'+(f.clientId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select></div>'
     + (f.clientId ? '<label class="tgl"><span>Für den Kunden freigeschaltet</span><input type="checkbox" data-fshare'+(f.shared?' checked':'')+'><span class="sw"></span></label><div class="hint">Freigeschaltet sieht der Kunde in seinem Login den Funnel, alle Kontakte und die Analytics. Bearbeiten kannst nur du.</div>' : '<div class="hint">Ordne den Funnel einem Kunden zu, um ihn für dessen Login freizuschalten.</div>') + '</div>';
   h += '<div class="psec"><h5>'+I('receipt',13)+'Preisberechnung</h5><div class="row2"><div class="fld"><label>Währung</label><select class="inp" data-s="currency">'+['EUR','CHF','USD','GBP'].map(function(c){ return '<option'+(s.currency===c?' selected':'')+'>'+c+'</option>'; }).join('')+'</select></div><div class="fld"><label>Grundpreis</label><input class="inp" type="number" data-s="basePrice" data-num value="'+(s.basePrice||'')+'" placeholder="0"></div></div>'
@@ -2939,6 +2977,16 @@ window.addEventListener('beforeunload', function(e){ if(REMOTE && (syncing || sa
 var ACT = {
   logout:function(){ logout(); },
   ccPreview:function(){ FP.showConsent(F(), {preview:true}); },
+  shrinkImages:async function(el){
+    var f = F(), list = heavyImages(f); if(!f || !list.length || el.disabled) return;
+    el.disabled = true; el.innerHTML = I('images',13)+'Wird verkleinert …';
+    var before = funnelBytes(f), done = 0;
+    snap(true);
+    for(var i = 0; i < list.length; i++){ var out = await shrinkImage(list[i].o[list[i].k], list[i].w); if(out){ list[i].o[list[i].k] = out; done++; } }
+    if(done) touch();
+    if(F() === f){ if(done) renderCanvas(true); renderRight(); }
+    toast(done ? (done > 1 ? done+' Bilder' : '1 Bild')+' verkleinert: '+fmtSize(before)+' → '+fmtSize(funnelBytes(f))+'. Mit „Veröffentlichen“ geht es live.' : 'Die Bilder sind schon so klein wie möglich.');
+  },
   afid:function(el){ S.afid = el.getAttribute('data-id'); render(); },
   theme:function(){ var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); try{ localStorage.setItem('tt-theme', t); }catch(e){} render(); },
   demoLogin:function(el){ var u = (db.users||[]).filter(function(x){ return x.id === el.getAttribute('data-id'); })[0]; if(u) loginLocal(u); },
