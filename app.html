@@ -3198,13 +3198,15 @@ FP.renderBlock = function(b, ctx){
   if(p.oIcon) cl0 += ' oic-'+esc(p.oIcon);
   if(p.liStyle) cl0 += ' li-'+esc(p.liStyle);
   if(p.color && b.type !== 'heading' && b.type !== 'text'){ st += '--tx:'+p.color+';--mt:'+p.color+';color:'+p.color+';--uc:'+p.color+';'; cl0 += ' uc'; } /* --uc: auch Elemente, die ihre Schriftfarbe sonst aus der Markenfarbe nehmen (Badge, Button) */
-  var boxed = p.bgc || +p.bwid || p.shd;
-  if(p.bgc) st += 'background:'+p.bgc+';';
+  /* Buttons haben eigene Farbe, Rahmen und Schatten. Eine Fläche dahinter (z. B. aus übernommenem Stil) lag als Kasten hinter dem gerundeten Button – darum hier ignorieren */
+  var nobox = b.type === 'button';
+  var boxed = !nobox && (p.bgc || +p.bwid || p.shd);
+  if(p.bgc && !nobox) st += 'background:'+p.bgc+';';
   if(+p.pad) st += 'padding:'+p.pad+'px;';
   st += FP.padSides(p, ['padT','padR','padB','padL']);
-  if(boxed || (p.brad !== undefined && p.brad !== '')) st += 'border-radius:'+(p.brad !== undefined && p.brad !== '' ? p.brad+'px' : 'var(--r)')+';';
-  if(+p.bwid) st += 'border:'+p.bwid+'px solid '+(p.bc||'color-mix(in srgb,var(--tx) 14%,transparent)')+';';
-  if(p.shd) st += 'box-shadow:'+({sm:'0 1px 3px rgba(0,0,0,.08)',md:'0 8px 24px -8px rgba(0,0,0,.18)',lg:'0 20px 50px -14px rgba(0,0,0,.3)'}[p.shd]||'none')+';';
+  if(!nobox && (boxed || (p.brad !== undefined && p.brad !== ''))) st += 'border-radius:'+(p.brad !== undefined && p.brad !== '' ? p.brad+'px' : 'var(--r)')+';';
+  if(+p.bwid && !nobox) st += 'border:'+p.bwid+'px solid '+(p.bc||'color-mix(in srgb,var(--tx) 14%,transparent)')+';';
+  if(p.shd && !nobox) st += 'box-shadow:'+({sm:'0 1px 3px rgba(0,0,0,.08)',md:'0 8px 24px -8px rgba(0,0,0,.18)',lg:'0 20px 50px -14px rgba(0,0,0,.3)'}[p.shd]||'none')+';';
   if(ctx.chat){ if(FP.CHAT_BOT[b.type]){ cl0 += ' bot'; st += '--d:'+(ctx.chat.i++)+';'; } else cl0 += ' ans'; }
   var cl = 'fp-b'+cl0+(p.bleed && (b.type==='image'||b.type==='compare'||b.type==='video') ? ' bleed' : '')+(err?' fp-err':'')+(b.type==='summary'&&p.sticky&&!ctx.edit?' fp-stk':'')+(p.half?' half':'')+(p.vis&&p.vis!=='all'?' fp-vis-'+p.vis:'');
   if(p.anim && p.anim !== 'none' && !ctx.edit && !ctx.noAnim){ cl += ' fp-ea-'+p.anim; if(+p.delay) st += 'animation-delay:'+p.delay+'ms;'; }
