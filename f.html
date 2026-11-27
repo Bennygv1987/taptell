@@ -98,8 +98,13 @@ html,body{margin:0;min-height:100%}html{-webkit-text-size-adjust:100%;overscroll
 .fp-btn.ghost{background:transparent;color:var(--mt);font-weight:500;padding:10px}
 .fp-btn.auto{width:auto;padding-inline:calc(var(--bpx,22px) + 8px)}
 .fp-btn.shadow{box-shadow:0 10px 26px -10px color-mix(in srgb,var(--p) 75%,transparent)}
-.fp-btn.pulse{animation:fpPulse 2.2s infinite}
-@keyframes fpPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--p) 45%,transparent)}60%{box-shadow:0 0 0 12px transparent}}
+/* Puls: eigener Ring, der die Rundung des Buttons übernimmt und dessen Schatten nicht ersetzt */
+.fp-btn.pulse{position:relative;--pls:12px;--plo:45%}
+.fp-btn.pulse.pl-soft{--pls:7px;--plo:30%}
+.fp-btn.pulse.pl-strong{--pls:20px;--plo:65%}
+.fp-btn.pulse::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;animation:fpPulse 2.2s var(--ease-out) infinite}
+@keyframes fpPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--pc,var(--p)) var(--plo),transparent)}70%,100%{box-shadow:0 0 0 var(--pls) transparent}}
+@keyframes fpPulseR{0%,100%{box-shadow:0 0 0 3px color-mix(in srgb,var(--pc,var(--p)) var(--plo),transparent)}50%{box-shadow:0 0 0 3px transparent}}
 .fp-sub{display:block;text-align:center;font-size:12.5px;color:var(--mt);margin-top:8px}
 .fp-q{font-family:var(--hf);font-weight:650;font-size:calc(17px*var(--sc,1));margin:0 0 4px;letter-spacing:-.01em}
 .fp-qd{font-size:14px;color:var(--mt);margin:0 0 12px}
@@ -344,8 +349,8 @@ a.fp-tt:active{transform:scale(.97)}
 .fp-opts.checklist .fp-opt .chk svg{width:11px;height:11px}
 .fp-opts.checklist .fp-opt .ico{width:auto;height:auto;background:none;font-size:17px}
 .fp-opts.checklist .fp-opt.sel{border-color:var(--p)}
-.fp-btn.gradient{background:linear-gradient(135deg,color-mix(in srgb,var(--p) 78%,transparent),var(--p) 50%,color-mix(in srgb,var(--p) 78%,transparent))}
-.fp-btn.gradient.shadow{box-shadow:0 .5px 1px rgba(0,0,0,.05),0 15px 30px -6px color-mix(in srgb,var(--p) 40%,transparent),0 12px 26px -10px color-mix(in srgb,var(--p) 55%,transparent)}
+.fp-btn.gradient{--pc:var(--g2,var(--p));background:linear-gradient(var(--ga,135deg),var(--g1,color-mix(in srgb,var(--p) 70%,#fff)),var(--g2,color-mix(in srgb,var(--p) 80%,#000)))}
+.fp-btn.gradient.shadow{box-shadow:0 .5px 1px rgba(0,0,0,.05),0 15px 30px -6px color-mix(in srgb,var(--g2,var(--p)) 40%,transparent),0 12px 26px -10px color-mix(in srgb,var(--g2,var(--p)) 55%,transparent)}
 .fp-btn span{display:inline-block}
 .fp.prog-top .fp-top{padding-top:var(--tpt,14px)}
 .fp.prog-top .fp-prog,.fp.prog-top .fp-steps,.fp.prog-top .fp-progw{margin:0 0 var(--hg,22px)}
@@ -397,7 +402,7 @@ a.fp-tt:active{transform:scale(.97)}
   .fp-anim-stagger>*{animation-name:fpFade;animation-delay:0ms!important}
   .fp-opts>*{animation:none!important}
   .fp-opt:active,.fp-btn:active,.fp-emo button:active,.fp-star:active,.fp-sopt:active{transform:none}
-  .fp-face.pop{animation:none}.fp-btn.pulse{animation:none}
+  .fp-face.pop{animation:none}.fp-btn.pulse::before{animation:fpPulseR 2.2s ease infinite}
 }
 
 /* Ziffern/Buchstaben in Kreisen optisch exakt mittig (unabhängig von den Schrift-Metriken) */
@@ -1311,7 +1316,7 @@ FP.usedFonts = function(f){ var t = f.theme || {}, out = [t.font, t.headingFont]
 
 FP.themeVars = function(t){
   t = t || {};
-  return '--p:'+(t.primary||'#4353ff')+';--pt:'+(t.primaryText||'#fff')+';--bg:'+(t.bg||'#fff')+';--sf:'+(t.surface||'#f4f5f7')+';--tx:'+(t.text||'#111318')+';--mt:'+(t.muted||'#6b7280')+';--r:'+(t.radius!=null?t.radius:14)+'px;--br:'+(t.btnRadius!=null?t.btnRadius:12)+'px;--ff:'+FP.fontStack(t.font||'Inter')+';--hf:'+FP.fontStack(t.headingFont||t.font||'Inter')+';'
+  return '--p:'+(t.primary||'#4353ff')+';--pt:'+(t.primaryText||'#fff')+';--bg:'+(t.bg||'#fff')+';--sf:'+(t.surface||'#f4f5f7')+';--tx:'+(t.text||'#111318')+';--mt:'+(t.muted||'#6b7280')+';--r:'+(t.radius!=null?t.radius:14)+'px;--br:'+(t.btnRadius!=null?t.btnRadius:12)+'px;--ff:'+FP.fontStack(t.font||'Inter')+';--hf:'+FP.fontStack(t.headingFont||t.font||'Inter')+';'+(t.btnG1?'--g1:'+t.btnG1+';':'')+(t.btnG2?'--g2:'+t.btnG2+';':'')+(t.btnGAng!=null&&t.btnGAng!==''?'--ga:'+(+t.btnGAng)+'deg;':'')
     +'--sc:'+((+t.scale||100)/100)+';--hw:'+(t.headingWeight||700)+';--hls:'+((t.headingLs!=null&&t.headingLs!==''?+t.headingLs:-2)/100)+'em;--htt:'+(t.headingUpper?'uppercase':'none')+';--lh:'+(t.lineHeight||1.55)+';'+(t.headingLh?'--hlh:'+t.headingLh+';':'')+'--bpy:'+(t.btnPad!=null&&t.btnPad!==''?t.btnPad:16)+'px;--bpx:'+(t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22)+'px;--bw:'+(t.btnWeight||600)+';--btt:'+(t.btnUpper?'uppercase':'none')+';--bls:'+(t.btnUpper?'.05em':'normal')+';--pad:'+(t.pad!=null&&t.pad!==''?t.pad:20)+'px;'
     + [['spTop','tpt'],['spHead','hg'],['spContent','cg'],['spBlock','bk'],['spBottom','bpb']].map(function(x){ var v = t[x[0]]; return v != null && v !== '' ? '--'+x[1]+':'+(+v)+'px;' : ''; }).join('')
     /* kleineres Logo → flacherer Kopf (Mindesthöhe sonst 30px für den Zurück-Button) */
@@ -1804,8 +1809,9 @@ FP.renderBlock = function(b, ctx){
       var th = ctx.f.theme || {}, bv = p.variant || th.btnVariant || '';
       if(bv === 'filled') bv = '';
       var icH = FP.btnIcon(p);
-      var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse':'');
+      var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse'+(p.pulseI?' pl-'+(p.pulseI==='strong'?'strong':'soft'):''):'');
       var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '') + (p.radiusOn ? '--br:'+(+p.radius||0)+'px;' : '');
+      if(bv === 'gradient'){ if(p.gradA) bst += '--g1:'+esc(p.gradA)+';'; if(p.gradB) bst += '--g2:'+esc(p.gradB)+';'; if(p.gradAng != null && p.gradAng !== '') bst += '--ga:'+(+p.gradAng)+'deg;'; }
       if(+p.bSize) bst += 'font-size:'+(+p.bSize)+'px;';
       if(p.icColor) bst += '--bic:'+esc(p.icColor)+';';
       if(+p.btnBw || p.btnBc) bst += 'border:'+(p.btnBw !== '' && p.btnBw != null ? +p.btnBw : 1)+'px solid '+esc(p.btnBc || 'color-mix(in srgb,currentColor 25%,transparent)')+';'; /* eigener Rahmen, z. B. weißer Button mit feiner Linie */

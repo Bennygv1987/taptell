@@ -247,7 +247,7 @@ FP.usedFonts = function(f){ var t = f.theme || {}, out = [t.font, t.headingFont]
 
 FP.themeVars = function(t){
   t = t || {};
-  return '--p:'+(t.primary||'#4353ff')+';--pt:'+(t.primaryText||'#fff')+';--bg:'+(t.bg||'#fff')+';--sf:'+(t.surface||'#f4f5f7')+';--tx:'+(t.text||'#111318')+';--mt:'+(t.muted||'#6b7280')+';--r:'+(t.radius!=null?t.radius:14)+'px;--br:'+(t.btnRadius!=null?t.btnRadius:12)+'px;--ff:'+FP.fontStack(t.font||'Inter')+';--hf:'+FP.fontStack(t.headingFont||t.font||'Inter')+';'
+  return '--p:'+(t.primary||'#4353ff')+';--pt:'+(t.primaryText||'#fff')+';--bg:'+(t.bg||'#fff')+';--sf:'+(t.surface||'#f4f5f7')+';--tx:'+(t.text||'#111318')+';--mt:'+(t.muted||'#6b7280')+';--r:'+(t.radius!=null?t.radius:14)+'px;--br:'+(t.btnRadius!=null?t.btnRadius:12)+'px;--ff:'+FP.fontStack(t.font||'Inter')+';--hf:'+FP.fontStack(t.headingFont||t.font||'Inter')+';'+(t.btnG1?'--g1:'+t.btnG1+';':'')+(t.btnG2?'--g2:'+t.btnG2+';':'')+(t.btnGAng!=null&&t.btnGAng!==''?'--ga:'+(+t.btnGAng)+'deg;':'')
     +'--sc:'+((+t.scale||100)/100)+';--hw:'+(t.headingWeight||700)+';--hls:'+((t.headingLs!=null&&t.headingLs!==''?+t.headingLs:-2)/100)+'em;--htt:'+(t.headingUpper?'uppercase':'none')+';--lh:'+(t.lineHeight||1.55)+';'+(t.headingLh?'--hlh:'+t.headingLh+';':'')+'--bpy:'+(t.btnPad!=null&&t.btnPad!==''?t.btnPad:16)+'px;--bpx:'+(t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22)+'px;--bw:'+(t.btnWeight||600)+';--btt:'+(t.btnUpper?'uppercase':'none')+';--bls:'+(t.btnUpper?'.05em':'normal')+';--pad:'+(t.pad!=null&&t.pad!==''?t.pad:20)+'px;'
     + [['spTop','tpt'],['spHead','hg'],['spContent','cg'],['spBlock','bk'],['spBottom','bpb']].map(function(x){ var v = t[x[0]]; return v != null && v !== '' ? '--'+x[1]+':'+(+v)+'px;' : ''; }).join('')
     /* kleineres Logo → flacherer Kopf (Mindesthöhe sonst 30px für den Zurück-Button) */
@@ -740,8 +740,9 @@ FP.renderBlock = function(b, ctx){
       var th = ctx.f.theme || {}, bv = p.variant || th.btnVariant || '';
       if(bv === 'filled') bv = '';
       var icH = FP.btnIcon(p);
-      var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse':'');
+      var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse'+(p.pulseI?' pl-'+(p.pulseI==='strong'?'strong':'soft'):''):'');
       var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '') + (p.radiusOn ? '--br:'+(+p.radius||0)+'px;' : '');
+      if(bv === 'gradient'){ if(p.gradA) bst += '--g1:'+esc(p.gradA)+';'; if(p.gradB) bst += '--g2:'+esc(p.gradB)+';'; if(p.gradAng != null && p.gradAng !== '') bst += '--ga:'+(+p.gradAng)+'deg;'; }
       if(+p.bSize) bst += 'font-size:'+(+p.bSize)+'px;';
       if(p.icColor) bst += '--bic:'+esc(p.icColor)+';';
       if(+p.btnBw || p.btnBc) bst += 'border:'+(p.btnBw !== '' && p.btnBw != null ? +p.btnBw : 1)+'px solid '+esc(p.btnBc || 'color-mix(in srgb,currentColor 25%,transparent)')+';'; /* eigener Rahmen, z. B. weißer Button mit feiner Linie */
