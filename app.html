@@ -4535,6 +4535,65 @@ function tGehlenFeedback(){
     pages:[pStart, pProblem, pWunsch, pDankeJa, pKontakt, pGut, pDankeNein, pGoogle]};
 }
 
+/* Beauty-Feedback (Google-konform) – Ablauf wie „Feedback-Funnel Holz Gehlen“, aber ohne Review Gating:
+   Jede Person sieht einen Weg zu Google (Startseite, Danke-Seiten). Bei 1–3 Smileys gibt es zusätzlich den direkten Draht ins Studio.
+   Logik: bewertung ≤ 3 → Kritik → Rückmeldung (Ja → Kontakt → Danke, Nein → Danke anonym); 4–5 → Lob → Google.
+   Beim Einrichten ersetzen: Google-Link (GOOGLE), Studioname, Namen im Team, Logo und Farben. */
+function tBeautyFeedback(){
+  var GOOGLE = 'https://g.page/r/', STUDIO = 'Studio Lumi', TEAM = ['Lena','Mia','Jonas'];
+  var h = function(text, extra){ return B('heading', Object.assign({text:text, level:1, align:'center', mb:10}, extra||{})); };
+  var team = function(key){ return B('choice', {question:'Wer hat dich betreut?', desc:'Optional', key:key, layout:'chips', multi:false, autoNext:false, required:false, mb:20,
+    options:TEAM.map(function(n){ return O(n, ''); }).concat([O('Weiß ich nicht', '')])}); };
+  var note = function(key, ph){ return B('input', {label:'', placeholder:ph, inputType:'textarea', key:key, rows:4, required:false, mb:24}); };
+  var googleBtn = function(extra){ return B('button', Object.assign({label:'Auf Google bewerten', action:'url', url:GOOGLE, icon:'google', iconLeft:true, arrow:false, variant:'gradient', full:true, shadow:true, mt:8}, extra||{})); };
+  var googleSoft = function(text){ return [B('divider', {mt:28, mb:16}), B('text', {text:text, align:'center', size:14, mb:4}),
+    B('button', {label:'Auf Google bewerten', action:'url', url:GOOGLE, icon:'google', iconLeft:true, arrow:false, variant:'ghost', full:false, shadow:false, align:'center'})]; };
+  var end = {hideProgress:true, allowBack:false, submitOnEnter:true, autoButton:false};
+
+  var pGoogle = P('Google', done('Danke, das bedeutet uns viel!', 'Magst du deine Erfahrung auch auf Google teilen? Das hilft anderen, uns zu finden, und dauert nur eine Minute.', [googleBtn({mt:20})]), end);
+  var pDankeJa = P('Danke Kontakt', done('Danke für deine Ehrlichkeit!', 'Deine Nachricht ist bei uns angekommen. Wir melden uns so schnell wie möglich bei dir.',
+    googleSoft('Du möchtest deine Erfahrung trotzdem öffentlich teilen?')), end);
+  var pDankeNein = P('Danke anonym', done('Danke für dein ehrliches Feedback', 'Es hilft uns, jeden Tag ein bisschen besser zu werden.',
+    googleSoft('Du möchtest deine Erfahrung auch öffentlich teilen?')), end);
+  var pKontakt = P('Kontakt', [
+    h('Wie erreichen wir dich?', {level:2}),
+    B('text', {text:'Wir melden uns persönlich und finden eine Lösung.', align:'center', mb:24}),
+    B('input', {label:'Vorname', placeholder:'Dein Vorname', key:'vorname', required:true, mb:12}),
+    B('input', {label:'Telefon oder WhatsApp', placeholder:'0170 1234567', inputType:'tel', key:'telefon', required:true, mb:16}),
+    B('checkbox', {text:'Ich bin einverstanden, dass '+STUDIO+' mich zu meinem Feedback kontaktiert.', key:'einwilligung', required:true, mb:20}),
+    B('button', {label:'Absenden', action:'page', target:pDankeJa.id})]);
+  var pWunsch = P('Rückmeldung', [B('badge', {text:'Nur noch ein Schritt', align:'center', mb:18}),
+    h('Dürfen wir uns bei dir melden?', {level:2}),
+    B('text', {text:'Wir würden das gerne wiedergutmachen.', align:'center', mb:24}),
+    B('choice', {question:'', key:'kontaktwunsch', layout:'list', multi:false, autoNext:true, required:true, options:[
+      O('Ja, gerne', '', {goto:pKontakt.id}),
+      O('Nein, danke', '', {sub:'Dein Feedback bleibt anonym.', goto:pDankeNein.id})]})]);
+  var pKritik = P('Kritik', [
+    h('Das tut uns leid.\nWas lief nicht so gut?', {level:2, mb:20}),
+    B('choice', {question:'', key:'kritik', layout:'checklist', multi:true, autoNext:false, required:true, mb:20, options:[
+      O('Ergebnis', ''), O('Beratung', ''), O('Wartezeit', ''), O('Freundlichkeit', ''), O('Sauberkeit', ''), O('Preis', '')]}),
+    team('team_kritik'),
+    note('kritik_kommentar', 'Magst du uns mehr erzählen? (optional)'),
+    B('button', {label:'Weiter'})], {next:pWunsch.id});
+  var pLob = P('Lob', [
+    h('Schön, das freut uns!\nWas hat dir besonders gefallen?', {level:2, mb:20}),
+    B('choice', {question:'', key:'lob', layout:'checklist', multi:true, autoNext:false, required:false, mb:20, options:[
+      O('Ergebnis', ''), O('Beratung', ''), O('Freundlichkeit', ''), O('Atmosphäre', ''), O('Pünktlichkeit', ''), O('Preis-Leistung', '')]}),
+    team('team_lob'),
+    note('lob_kommentar', 'Noch etwas, das du uns sagen möchtest? (optional)'),
+    B('button', {label:'Weiter'})], {next:pGoogle.id});
+  var pStart = P('Bewertung', [B('badge', {text:'Dauert nur 30 Sekunden', align:'center', mb:18}),
+    hero(IMG.salon, {ratio:'16:10'}),
+    h('Wie war dein Besuch __bei uns__?', {mb:24}),
+    B('rating', {label:'', style:'emoji', max:5, key:'bewertung', autoNext:true, required:true, align:'center', minLabel:'Gar nicht gut', maxLabel:'Sehr gut',
+      routes:[{min:1, max:3, goto:pKritik.id}, {min:4, max:5, goto:pLob.id}]}),
+    B('button', {label:'Direkt auf Google bewerten', action:'url', url:GOOGLE, icon:'google', iconLeft:true, arrow:false, variant:'ghost', full:false, shadow:false, align:'center', mt:20})], {autoButton:false});
+
+  return {name:'Beauty-Feedback', desc:'Smiley-Bewertung für Friseure und Kosmetikstudios: Google für alle, bei Kritik zusätzlich der direkte Draht ins Studio. Feedback pro Teammitglied.', cats:['Feedback','Gesundheit'],
+    theme:modern({primary:'#9b4d6a', primaryText:'#ffffff', logoText:STUDIO}), settings:{currency:'EUR', address:'du'},
+    pages:[pStart, pLob, pKritik, pWunsch, pKontakt, pDankeJa, pDankeNein, pGoogle]};
+}
+
 function tBlank(){
   return {name:'Leerer Funnel', desc:'Starte mit einer leeren Seite.', cats:[], theme:modern({primary:'#111113', primaryText:'#ffffff'}), settings:{currency:'EUR'},
     pages:[P('Seite 1',[B('heading',{text:'Deine erste Seite'}), B('text',{}), B('button',{})]), P('Danke',[B('heading',{text:'Vielen Dank!', align:'center'})],{hideProgress:true})]};
@@ -4804,7 +4863,7 @@ function aiFallback(prompt, o){
 Object.keys(SPECS).forEach(function(k){ var sp = SPECS[k]; TEMPLATES_EXTRA.push({id:k, make:function(){ return fromSpec(sp); }}); });
 
 var TEMPLATES = [
-  {id:'gehlen-tisch', make:tGehlen}, {id:'gehlen-feedback', make:tGehlenFeedback}, {id:'koelner-zoo', make:tZoo}, {id:'schwimmbad', make:tSchwimmbad}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
+  {id:'gehlen-tisch', make:tGehlen}, {id:'gehlen-feedback', make:tGehlenFeedback}, {id:'beauty-feedback', make:tBeautyFeedback},{id:'koelner-zoo', make:tZoo}, {id:'schwimmbad', make:tSchwimmbad}, {id:'terrasse', make:tTerrasse}, {id:'solar', make:tSolar}, {id:'immo', make:tImmo}, {id:'strategy', make:tStrategy},
   {id:'montage', make:tMontage}, {id:'recruiting', make:tRecruiting}, {id:'quiz', make:tQuiz}, {id:'feedback', make:tFeedback}, {id:'abnahme', make:tAbnahme},
   {id:'freebie', make:tFreebie}, {id:'blank', make:tBlank}
 ];
