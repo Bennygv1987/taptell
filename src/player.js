@@ -4,7 +4,7 @@ var FP = {};
 var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 /* Hervorhebung __Wort__: Schwung (wie Onepage: flacher Bogen, feine Linie) und Kreis als SVG; Marker, Fläche, Rahmen usw. per CSS (Klasse hl-* am Element) */
 var UL = '<svg class="fp-ulsv u" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 0,30 q 50,-35 100,0"/></svg><svg class="fp-ulsv c" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M 54,4 C 82,3 99,10 98,21 C 97,33 74,38 48,37 C 20,36 2,30 3,19 C 4,9 22,3 44,4 C 50,4 57,6 62,8"/></svg>';
-function stripInk(text){ return String(text).replace(/\{farbe:#[0-9a-f]{6}\}|\{\/farbe\}/gi, '').replace(/\{anim:@?[\w-]{1,40}\}\s?/g, ''); }
+function stripInk(text){ return String(text).replace(/\{farbe:#[0-9a-f]{6}\}|\{\/farbe\}/gi, '').replace(/\{anim:@?[\w-]{1,40}(?:\*[\d.]{1,4})?\}\s?/g, ''); }
 FP.stripInk = stripInk;
 /* Nur Textknoten einfärben. Generierte Linkattribute und SVGs bleiben intakt. */
 function renderInk(html){
@@ -19,7 +19,7 @@ function renderInk(html){
     }).join('');
   }).join('');
 }
-var md = function(s){ return renderInk(esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g,'$1<em>$2</em>').replace(/\+\+(.+?)\+\+/g,'<u>$1</u>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\{anim:(@?[\w-]{1,40})\}/g, animTok).replace(/\n/g,'<br>')); };
+var md = function(s){ return renderInk(esc(s).replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g,'$1<em>$2</em>').replace(/\+\+(.+?)\+\+/g,'<u>$1</u>').replace(/==(.+?)==/g,'<span class="fp-hl">$1</span>').replace(/__(.+?)__/g,'<span class="fp-ul">$1'+UL+'</span>').replace(/\[\[(.+?)\]\]/g,'<mark class="fp-mk">$1</mark>').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\{anim:(@?[\w-]{1,40})(?:\*(\d(?:\.\d{1,2})?))?\}/g, animTok).replace(/\n/g,'<br>')); };
 FP.esc = esc; FP.md = md;
 
 /* Animierte Icons im Text, eingefügt wie ein Emoji: {anim:herz}. Eingebaute Icons sind SVG mit CSS-Animation
@@ -40,10 +40,12 @@ FP.ANIM_ICONS = {
   rakete:['Rakete', '<g class="ai-rocket"><path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 00-2.9-.1z"/><path d="M12 15l-3-3a22 22 0 012-4A12.9 12.9 0 0122 2c0 2.7-.8 7.5-6 11a22 22 0 01-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/></g>'],
   punkt:['Live-Punkt', '<circle class="ai-ring" cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>']
 };
-function animTok(all, name){
-  if(name.charAt(0) === '@') return '<span class="fp-ai fp-ail" data-ai="'+name+'" data-ail="'+esc(name.slice(1))+'" contenteditable="false" aria-hidden="true"></span>';
+/* Größe als Faktor zur Textgröße: {anim:herz*2} = doppelt so groß (0,5 bis 4) */
+function animTok(all, name, scale){
+  var sc = scale ? Math.max(0.5, Math.min(4, +scale)) : 1, da = name + (sc !== 1 ? '*' + sc : ''), sty = sc !== 1 ? ' style="--ais:'+sc+'"' : '';
+  if(name.charAt(0) === '@') return '<span class="fp-ai fp-ail" data-ai="'+da+'" data-ail="'+esc(name.slice(1))+'"'+sty+' contenteditable="false" aria-hidden="true"></span>';
   var ic = FP.ANIM_ICONS[name]; if(!ic) return all;
-  return '<span class="fp-ai ai-'+name+'" data-ai="'+name+'" contenteditable="false" role="img" aria-label="'+ic[0]+'">'+AI_SVG(ic[1])+'</span>';
+  return '<span class="fp-ai ai-'+name+'" data-ai="'+da+'"'+sty+' contenteditable="false" role="img" aria-label="'+ic[0]+'">'+AI_SVG(ic[1])+'</span>';
 }
 
 /* Lottie im Block „Animation“ und als Icon im Text abspielen. Gibt eine Aufräumfunktion zurück. */
@@ -195,6 +197,18 @@ Object.assign(FP.ICONS, {
   'd-mail':DI('<path class="o" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M3.5 7.2l8.5 6 8.5-6V9l-8.5 6-8.5-6z"/>'),
   'd-user':DI('<circle cx="12" cy="8" r="4"/><path class="o" d="M4 20a8 8 0 0116 0v1H4z"/>')
 });
+/* Button-Icon: Linien-Icon, Marke, Emoji oder Bild (3D-Icon / eigenes Bild, als data-URL im Funnel gespeichert) */
+FP.btnIcon = function(p){
+  var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow');
+  if(ic === 'emoji') return p.iconEmoji ? '<span class="bie" aria-hidden="true">'+esc(String(p.iconEmoji).slice(0, 16))+'</span>' : '';
+  if(ic === 'img') return p.iconImg && /^(data:image\/|https:\/\/)/.test(p.iconImg) ? '<img class="bii" src="'+esc(p.iconImg)+'" alt="" aria-hidden="true">' : '';
+  if(ic === 'whatsapp') return FP.WA;
+  if(/^br-/.test(ic) && FP.BRANDS[ic.slice(3)]) return FP.BRANDS[ic.slice(3)].svg;
+  return ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
+};
+/* Mit Icon: Raster aus drei Spalten, damit der Text genau in der Mitte bleibt.
+   Das Icon steht neben dem Text oder (iconEdge) am Rand des Buttons. */
+FP.btnIcCls = function(icH, p){ return icH ? ' hic'+(p && p.iconLeft ? ' il' : '')+(p && p.iconEdge ? ' ie' : '') : ''; };
 FP.BTN_ICONS = {
   arrow:BI('<path d="M5 12h14M13 6l6 6-6 6"/>'), chevron:BI('<path d="M9 6l6 6-6 6"/>'), send:BI('<path d="M21.5 2.5L10.5 13.5"/><path d="M21.5 2.5l-7 19-4-8-8-4z"/>'),
   check:BI('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), calendar:BI('<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>'),
@@ -690,8 +704,8 @@ FP.renderBlock = function(b, ctx){
       break;
     case 'lottie':
       /* Block „Animation“: eigene Lottie-Datei (Upload) oder Link zu einer .json-Datei */
-      var lsz2 = Math.max(24, Math.min(480, +p.size || 160)), lsrc = /^https?:\/\//.test(p.src || '') ? p.src : '';
-      h = p.json || lsrc ? '<div class="fp-lot" data-lot="'+b.id+'"'+(p.json ? ' data-json="'+esc(p.json)+'"' : ' data-src="'+esc(lsrc)+'"')+' data-loop="'+(p.loop === false ? 0 : 1)+'" data-speed="'+(+p.speed || 1)+'"'+(p.alt ? ' role="img" aria-label="'+esc(p.alt)+'"' : ' aria-hidden="true"')+' style="width:'+lsz2+'px;height:'+lsz2+'px"></div>'
+      var lsz2 = Math.max(24, Math.min(640, +p.size || 160)), lsrc = /^https?:\/\//.test(p.src || '') ? p.src : '';
+      h = p.json || lsrc ? '<div class="fp-lot" data-lot="'+b.id+'"'+(p.json ? ' data-json="'+esc(p.json)+'"' : ' data-src="'+esc(lsrc)+'"')+' data-loop="'+(p.loop === false ? 0 : 1)+'" data-speed="'+(+p.speed || 1)+'"'+(p.alt ? ' role="img" aria-label="'+esc(p.alt)+'"' : ' aria-hidden="true"')+' style="width:'+lsz2+'px;aspect-ratio:1"></div>'
         : (ctx.edit ? '<div class="fp-lot empty" style="width:'+lsz2+'px;height:'+lsz2+'px"><span>Lottie-Datei hochladen<br>oder Link einfügen</span></div>' : '');
       break;
     case 'loader':
@@ -725,7 +739,7 @@ FP.renderBlock = function(b, ctx){
     case 'button':
       var th = ctx.f.theme || {}, bv = p.variant || th.btnVariant || '';
       if(bv === 'filled') bv = '';
-      var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow'), icH = ic === 'whatsapp' ? FP.WA : /^br-/.test(ic) && FP.BRANDS[ic.slice(3)] ? FP.BRANDS[ic.slice(3)].svg : ic !== 'none' && FP.BTN_ICONS[ic] ? FP.BTN_ICONS[ic] : '';
+      var icH = FP.btnIcon(p);
       var cls = 'fp-btn ' + bv + (p.shadow!==false?' shadow':'') + (p.full===false?' auto':'') + (p.pulse?' pulse':'');
       var bst = (p.btnBg ? '--p:'+p.btnBg+';' : '') + (p.btnColor ? '--pt:'+p.btnColor+';' : '') + (p.radiusOn ? '--br:'+(+p.radius||0)+'px;' : '');
       if(+p.bSize) bst += 'font-size:'+(+p.bSize)+'px;';
@@ -735,7 +749,7 @@ FP.renderBlock = function(b, ctx){
       var subIn = p.sub && p.subIn;
       var lbl = subIn ? '<span class="tx"><span class="ln">'+T(p.label||'Weiter')+'</span><span class="sb">'+T(p.sub)+'</span></span>' : '<span>'+T(p.label||'Weiter')+'</span>';
       if(subIn) cls += ' two';
-      h = '<button class="'+cls+'" style="'+bst+'" data-act="btn" data-bid="'+b.id+'">'+(p.iconLeft?icH+lbl:lbl+icH)+'</button>' + (p.sub && !subIn ? '<span class="fp-sub">'+T(p.sub)+'</span>' : '');
+      h = '<button class="'+cls+FP.btnIcCls(icH, p)+'" style="'+bst+'" data-act="btn" data-bid="'+b.id+'">'+(p.iconLeft?icH+lbl:lbl+icH)+'</button>' + (p.sub && !subIn ? '<span class="fp-sub">'+T(p.sub)+'</span>' : '');
       break;
     case 'choice':
       var sel = [].concat(v == null ? [] : v), lay = p.layout || 'list';
@@ -998,8 +1012,7 @@ FP.renderShell = function(f, idx, inner, opts){
   var head = (logo || opts.back) ? '<div class="fp-head'+(t.chat?' left':'')+(t.logoAlign==='left'?' left':'')+(opts.back?' hb':'')+'">'+(opts.back?'<button class="fp-back" data-act="back" aria-label="Zurück">'+IC.back+'</button>':'')+logo+'</div>' : '';
   var ov = bgImg ? '<div class="fp-ov" style="background:'+(t.overlay||'rgba(0,0,0,.35)')+'"></div>' : '';
   var top = (head || prog) ? '<div class="fp-top">'+(t.progressTop?prog+head:head+prog)+'</div>' : '<div style="height:var(--tpt,10px)"></div>';
-  var ccLink = FP.consentOn(f) && !opts.edit ? '<button type="button" class="fp-ccre" data-act="consent">Cookie-Einstellungen</button>' : '';
-  var foot = (t.footer || ccLink) ? '<div class="fp-foot">'+(t.footer ? md(t.footer) : '')+ccLink+'</div>' : '';
+  var foot = FP.footer(f, opts.edit);
   var cls = 'fp'+(opts.edit?' is-edit':'')+(page.wide?' wide':'')+(t.inputStyle&&t.inputStyle!=='outline'?' in-'+t.inputStyle:'')+(t.optStyle&&t.optStyle!=='filled'?' opt-'+t.optStyle:'')+(t.progressTop?' prog-top':'');
   /* Eigenes CSS: im Live-Funnel global; in Vorschauen (mehrere Funnels auf einer Seite) auf diesen Funnel begrenzt */
   var fsid = opts.scope ? String(f.id || 'f').replace(/[^\w-]/g,'') : '';
@@ -1021,9 +1034,9 @@ FP.renderShell = function(f, idx, inner, opts){
   var spImg = !t.chat && t.split ? (page.splitImg || t.splitImg || '') : '';
   if(spImg){
     var slq = FP.lqSrc(spImg);
-    return '<div class="'+cls+' split'+(t.splitSide === 'right' ? ' sp-r' : '')+'"'+(fsid?' data-fs="'+fsid+'"':'')+' style="'+style+'">'+css+'<div class="fp-sp"><div class="fp-spm" style="background-image:url(&quot;'+esc(spImg)+'&quot;)'+(slq?',url(&quot;'+slq+'&quot;)':'')+'"></div><div class="fp-spc">'+ov+top+'<div class="fp-body">'+inner+'</div>'+foot+'</div></div>'+(opts.fab||'')+'</div>';
+    return '<div class="'+cls+' split'+(t.splitSide === 'right' ? ' sp-r' : '')+'"'+(fsid?' data-fs="'+fsid+'"':'')+' style="'+style+'">'+css+'<div class="fp-sp"><div class="fp-spm" style="background-image:url(&quot;'+esc(spImg)+'&quot;)'+(slq?',url(&quot;'+slq+'&quot;)':'')+'"></div><div class="fp-spc">'+ov+top+'<div class="fp-body">'+inner+'</div>'+foot+'</div></div>'+(opts.fab||'')+(opts.overlay||'')+'</div>';
   }
-  return '<div class="'+cls+'"'+(fsid?' data-fs="'+fsid+'"':'')+' style="'+style+'">'+css+ov+top+'<div class="fp-body">'+inner+'</div>'+foot+(opts.fab||'')+'</div>';
+  return '<div class="'+cls+'"'+(fsid?' data-fs="'+fsid+'"':'')+' style="'+style+'">'+css+ov+top+'<div class="fp-body">'+inner+'</div>'+foot+(opts.fab||'')+(opts.overlay||'')+'</div>';
 };
 
 /* ---------- Konfetti: fällt von oben, nach erfolgreicher Anfrage auf der Danke-Seite ---------- */
@@ -1074,14 +1087,19 @@ FP.renderPage = function(f, idx, ctx){
   else if(chatIn) inner = '<div class="fp-typing" aria-hidden="true"><i></i><i></i><i></i></div>' + inner;
   if(!FP.hasButton(page) && idx < f.pages.length - 1 && page.autoButton !== false){
     var av = t.btnVariant && t.btnVariant !== 'filled' ? t.btnVariant : '';
-    var ab = '<div class="fp-b fp-auto" style="margin-top:6px"><button class="fp-btn shadow '+av+'" data-act="next"><span>'+esc(page.buttonLabel||t.nextLabel||'Weiter')+'</span>'+FP.BTN_ICONS.arrow+'</button></div>';
+    var ab = '<div class="fp-b fp-auto" style="margin-top:6px"><button class="fp-btn shadow hic '+av+'" data-act="next"><span>'+esc(page.buttonLabel||t.nextLabel||'Weiter')+'</span>'+FP.BTN_ICONS.arrow+'</button></div>';
     inner += t.stickyCta ? '<div class="fp-sticky">'+ab+'</div>' : ab;
   }
   if(ctx.edit && !(page.blocks||[]).length) inner = '<div class="fp-empty-drop">Elemente hierher ziehen</div>' + inner;
-  if(ctx.resume) inner = '<div class="fp-resume" role="region" aria-label="Weitermachen"><div class="rt"><b>Willkommen zurück!</b><span>Möchtest du dort weitermachen, wo du aufgehört hast?</span></div><div class="ra"><button type="button" class="fp-rsb" data-act="resume">Weitermachen</button><button type="button" class="fp-rsx" data-act="fresh">Neu starten</button></div></div>' + inner;
+  /* „Weitermachen“: Banner wie eine iOS-Mitteilung, fährt von oben ein, nach oben wegwischbar */
+  var resume = '';
+  if(ctx.resume){
+    var rt = f.theme || {}, rIcon = rt.logoImg ? '<span class="ri" style="background-image:url(&quot;'+esc(rt.logoImg)+'&quot;)"></span>' : '<span class="ri ri-t">'+esc(String(rt.logoText || f.name || 'T').trim().charAt(0).toUpperCase() || 'T')+'</span>';
+    resume = '<div class="fp-resume" role="dialog" aria-live="polite" aria-label="Weitermachen" data-rsw><div class="rc">'+rIcon+'<div class="rt"><b>Willkommen zurück</b><span>Mach dort weiter, wo du aufgehört hast.</span></div></div><div class="ra"><button type="button" class="fp-rsx" data-act="fresh">Neu starten</button><button type="button" class="fp-rsb" data-act="resume">Weitermachen</button></div><i class="rg" aria-hidden="true"></i></div>';
+  }
   var anim = ctx.edit || ctx.noAnim || chatIn ? '' : (t.animation === 'none' ? '' : ' fp-anim-' + (t.animation||'slide') + (ctx.dir==='back'?' back':''));
   var body = '<div class="fp-page'+(page.vcenter?' v-center':'')+anim+(chat?' chat':'')+(chatIn?' chat-in':'')+'" data-page="'+page.id+'"'+(chat?' style="--dn:'+nBot+'"':'')+'>'+inner+'</div>';
-  return FP.renderShell(f, idx, body, {edit:ctx.edit, back:ctx.back && !FP.loaderOf(page), scope:ctx.scope, noFab:ctx.noFab});
+  return FP.renderShell(f, idx, body, {edit:ctx.edit, back:ctx.back && !FP.loaderOf(page), scope:ctx.scope, noFab:ctx.noFab, overlay:resume});
 };
 
 /* ---------- interactive runtime ---------- */
@@ -1096,6 +1114,23 @@ FP.CC_CATS = [
   {k:'perf', l:'Performance', s:'ccPerf', d:'Anonyme Auswertung, wie der Funnel genutzt wird, um ihn zu verbessern.'},
   {k:'mkt', l:'Marketing', s:'ccMkt', d:'Messung von Werbekampagnen, z. B. Meta-Pixel oder Google Ads.'}
 ];
+/* Fußzeile: Impressum · Datenschutz · Cookies verwalten, darunter das TapTell-Abzeichen (ausblendbar).
+   Im Editor nur Text, damit ein Klick nichts öffnet. */
+FP.TT_MARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6.5" fill="#1c2e3d"/><path fill="#fff" d="M5.5 7h12.5v2.3h-2.2V17h-2.4V9.3h-2.2V17H8.8V9.3H5.5z"/></svg>';
+FP.footLinks = function(f, edit){
+  var t = f.theme || {}, s = f.settings || {}, out = [];
+  var a = function(href, label){ return edit ? '<span class="fp-fl">'+label+'</span>' : '<a class="fp-fl" href="'+esc(href)+'" target="_blank" rel="noopener">'+label+'</a>'; };
+  if(/^(https?:|mailto:)/.test(t.footImp || '')) out.push(a(t.footImp, 'Impressum'));
+  var priv = t.footPriv || s.ccPrivacy; if(/^(https?:|mailto:)/.test(priv || '')) out.push(a(priv, 'Datenschutz'));
+  if(FP.consentOn(f) && t.footCc !== false) out.push(edit ? '<span class="fp-fl">Cookies verwalten</span>' : '<button type="button" class="fp-fl fp-ccre" data-act="consent">Cookies verwalten</button>');
+  return out;
+};
+FP.footer = function(f, edit){
+  var t = f.theme || {}, links = FP.footLinks(f, edit);
+  var badge = t.footBadge ? (edit ? '<span class="fp-tt">' : '<a class="fp-tt" href="https://taptell.de/?ref=funnel" target="_blank" rel="noopener">') + FP.TT_MARK + '<span>Erstellt mit <b class="wm"><b>TAP</b>TELL</b></span>' + (edit ? '</span>' : '</a>') : '';
+  if(!t.footer && !links.length && !badge) return '';
+  return '<div class="fp-foot">' + (t.footer ? '<div class="fp-ft">'+md(t.footer)+'</div>' : '') + (links.length ? '<nav class="fp-fls" aria-label="Rechtliches">'+links.join('<span class="fp-fsep" aria-hidden="true">·</span>')+'</nav>' : '') + badge + '</div>';
+};
 FP.consentOn = function(f){ return !!(f && f.settings && f.settings.ccOn); };
 FP.getConsent = function(f){ try{ return JSON.parse(localStorage.getItem('tt-consent-' + (f.id || 'f'))); }catch(e){ return null; } };
 FP.allowed = function(f, cat){ if(!FP.consentOn(f)) return true; var c = FP.getConsent(f); return !!(c && c[cat]); };
@@ -1116,7 +1151,7 @@ FP.showConsent = function(f, opts, done){
       + '<div class="cc-cats' + (edit ? ' ed' : '') + '">' + cats.map(function(c){ var on = c.k === 'ess' || val[c.k]; return '<div class="cc-cat"><button type="button" class="cc-sw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '" data-cc-cat="' + c.k + '"' + (c.k === 'ess' ? ' disabled' : '') + '><i></i></button><span><b>' + c.l + '</b>' + (edit ? '<small>' + c.d + '</small>' : '') + '</span></div>'; }).join('') + '</div>'
       + '<div class="cc-acts"><button type="button" class="cc-b pri" data-cc="all">' + esc(s.ccAccept || 'Alle akzeptieren') + '</button><button type="button" class="cc-b" data-cc="none">' + esc(s.ccDecline || 'Ablehnen') + '</button>'
       + (edit ? '<button type="button" class="cc-b" data-cc="save">' + esc(s.ccSave || 'Auswahl speichern') + '</button>' : '<button type="button" class="cc-b" data-cc="edit">' + esc(s.ccEdit || 'Bearbeiten') + '</button>') + '</div>'
-      + (s.ccPrivacy ? '<a class="cc-link" href="' + esc(s.ccPrivacy) + '" target="_blank" rel="noopener">Datenschutzerklärung</a>' : '') + '</div>';
+      + (function(){ var imp = t.footImp, priv = s.ccPrivacy || t.footPriv, l = []; if(/^(https?:|mailto:)/.test(imp || '')) l.push('<a class="cc-link" href="' + esc(imp) + '" target="_blank" rel="noopener">Impressum</a>'); if(/^(https?:|mailto:)/.test(priv || '')) l.push('<a class="cc-link" href="' + esc(priv) + '" target="_blank" rel="noopener">Datenschutzerklärung</a>'); return l.length ? '<div class="cc-links">' + l.join('') + '</div>' : ''; })() + '</div>';
   };
   var finish = function(v){
     v.ts = Date.now();
@@ -1393,6 +1428,7 @@ FP.mount = function(root, f, opts){
     else if(act === 'back') back();
     else if(act === 'logo') toStart();
     else if(act === 'fab'){ var fb = el.closest('[data-fab]'), op = !fb.classList.contains('open'); fb.classList.toggle('open', op); el.setAttribute('aria-expanded', op); }
+    else if((act === 'resume' || act === 'fresh') && !el.__rsGo && rsOut(function(){ el.__rsGo = 1; el.click(); })){}
     else if(act === 'resume' && st.resume){ var rs = st.resume; st.resume = null; Object.assign(st.answers, rs.answers || {}); st.hist = (rs.hist || []).filter(function(x){ return pages[x]; }); st.i = rs.i; st.started = true; st.dir = 'fwd'; emit('page', {pageId:pages[st.i].id, index:st.i}); render(); }
     else if(act === 'fresh'){ st.resume = null; try{ localStorage.removeItem(resumeKey); }catch(x){} render(true); }
     else if(act === 'btn'){
@@ -1461,6 +1497,22 @@ FP.mount = function(root, f, opts){
     var a = e.target.closest && e.target.closest('a[href]'); if(!a || !root.contains(a)) return;
     var href = a.getAttribute('href') || ''; if(href.charAt(0) === '#') return;
     emit('click', {pageId:(pages[st.i] || {}).id, label:(a.getAttribute('aria-label') || a.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80), url:/wa\.me|whatsapp/.test(href) ? 'WhatsApp' : href.slice(0, 300)});
+  });
+  /* Weitermachen-Banner: erst ausfahren lassen, dann handeln; nach oben wischen blendet es aus */
+  function rsOut(then){
+    var bn = root.querySelector('.fp-resume'); if(!bn || bn.classList.contains('out')) return false;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    bn.style.transform = ''; bn.classList.add('out'); setTimeout(then, reduce ? 0 : 200); return true;
+  }
+  root.addEventListener('pointerdown', function(e){
+    var bn = e.target.closest('[data-rsw]'); if(!bn || e.target.closest('button') || bn.classList.contains('out')) return;
+    var y0 = e.clientY, t0 = Date.now(), dy = 0, id = e.pointerId;
+    bn.style.transition = 'none';
+    var mv = function(ev){ if(ev.pointerId !== id) return; dy = ev.clientY - y0; bn.style.transform = 'translateY(' + (dy < 0 ? dy : dy * 0.25) + 'px)'; };
+    var up = function(ev){ if(ev.pointerId !== id) return; window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+      bn.style.transition = ''; var v = -dy / Math.max(1, Date.now() - t0);
+      if(dy < -40 || v > 0.11){ st.resume = null; bn.style.transform = ''; bn.classList.add('out'); setTimeout(function(){ if(bn.parentNode) bn.remove(); }, 220); } else bn.style.transform = ''; };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
   });
   root.addEventListener('click', function(e){ var o = root.querySelector('[data-fab].open'); if(o && !o.contains(e.target)){ o.classList.remove('open'); var ob = o.querySelector('[data-act="fab"]'); if(ob) ob.setAttribute('aria-expanded', 'false'); } }, true);
   root.addEventListener('change', function(e){

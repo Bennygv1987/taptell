@@ -993,7 +993,9 @@ function newFunnel(tplId, overrides){
 /* Funnel aus fertigen Vorlagen-Daten (z. B. aus der KI-Erstellung) */
 function newFunnelFrom(d, tplId, overrides){
   var now = Date.now();
-  return Object.assign({id:uid()+uid().slice(0,4), name:d.name, template:tplId, status:'draft', createdAt:now, updatedAt:now, theme:d.theme, settings:Object.assign({currency:'EUR', basePrice:0, baseLabel:'Grundpreis', webhook:'', redirect:'', pixel:''}, d.settings||{}), pages:d.pages, stats:{views:0, starts:0, completes:0, pages:{}, daily:{}}}, overrides||{});
+  /* Neue Funnels zeigen das TapTell-Abzeichen in der Fußzeile (im Design-Tab ausblendbar) */
+  var th = Object.assign({footBadge:true}, d.theme || {});
+  return Object.assign({id:uid()+uid().slice(0,4), name:d.name, template:tplId, status:'draft', createdAt:now, updatedAt:now, theme:th, settings:Object.assign({currency:'EUR', basePrice:0, baseLabel:'Grundpreis', webhook:'', redirect:'', pixel:''}, d.settings||{}), pages:d.pages, stats:{views:0, starts:0, completes:0, pages:{}, daily:{}}}, overrides||{});
 }
 
 window.FS_T = {uid:uid, clone:clone, THEMES:THEMES, THEME_BASE:THEME_BASE, theme:theme, DEF:DEF, LIB:LIB, SECTIONS:SECTIONS, B:B, P:P, O:O, fromLib:fromLib, TEMPLATES:TEMPLATES, CATS:CATS, newFunnel:newFunnel, newFunnelFrom:newFunnelFrom, art:art, liftCss:liftCss, fromSpec:function(s){ return centerPages(fromSpec(s)); }, centerPages:centerPages, IMG:IMG, SPECS:SPECS, aiFallback:aiFallback};

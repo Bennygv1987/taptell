@@ -541,6 +541,8 @@ function funnelMenu(btn, id){
     {k:'r', l:'Umbenennen', ic:'type', fn:function(){ promptBox('Funnel umbenennen','Name',f.name,function(v){ f.name = v; save(); render(); }); }},
     {k:'color', l:'Übersichtsfarbe', ic:'palette', fn:function(){ overviewColorPicker(f, btn); }},
     {k:'d', l:'Duplizieren', ic:'dup', fn:function(){ duplicateFunnel(f); }},
+    {k:'mf', l:'Nach vorne schieben', ic:'chevUp', fn:function(){ moveFunnel(id, -1); }},
+    {k:'mb', l:'Nach hinten schieben', ic:'chevDown', fn:function(){ moveFunnel(id, 1); }},
     {k:'s', l:f.status==='live'?'Offline nehmen':'Live schalten', ic:'rocket', fn:function(){ f.status = f.status==='live'?'draft':'live'; save(); render(); toast(f.status==='live'?'Funnel ist live':'Funnel ist jetzt Entwurf'); }},
     {k:'x', l:'Exportieren / Einbetten', ic:'code', fn:function(){ publishModal(f); }},
     {k:'a', l:'Analytics', ic:'chart', fn:function(){ S.afid = id; go('analytics'); }},
@@ -548,6 +550,124 @@ function funnelMenu(btn, id){
     {k:'del', l:'Löschen', ic:'trash', danger:true, fn:function(){ confirmBox('Funnel löschen?','„'+f.name+'“ wird dauerhaft gelöscht. Bestehende Kontakte bleiben erhalten.','Löschen',function(){ db.funnels = db.funnels.filter(function(x){ return x.id !== id; }); save(); render(); toast('Funnel gelöscht'); }, true); }}
   ]);
 }
+/* ---------- Funnel-Übersicht: Reihenfolge per Ziehen ----------
+   Maus: ab 5 px Bewegung. Touch: kurz gedrückt halten (scrollen bleibt normal möglich).
+   Die Karte klebt am Zeiger, die anderen rücken weich nach (FLIP), Loslassen gleitet in die Lücke.
+   Gespeichert wird nur die Reihenfolge (App-Einstellungen), kein Funnel wird dadurch „geändert“. */
+function applyFunnelOrder(ids){
+  var pos = {}, byId = {}; ids.forEach(function(id, i){ pos[id] = i; });
+  var slots = [], arr = db.funnels.slice();
+  arr.forEach(function(f, i){ byId[f.id] = f; if(pos[f.id] != null) slots.push(i); });
+  slots.forEach(function(si, k){ arr[si] = byId[ids[k]]; });
+  var same = arr.every(function(f, i){ return f === db.funnels[i]; });
+  db.funnels = arr; db.funnelOrder = arr.map(function(f){ return f.id; });
+  if(!same) save();
+}
+function moveFunnel(id, d){
+  var ids = Array.prototype.map.call(document.querySelectorAll('.main .grid > .fcard[data-id]'), function(c){ return c.getAttribute('data-id'); });
+  var i = ids.indexOf(id), j = i + d; if(i < 0 || j < 0 || j >= ids.length) return;
+  ids.splice(j, 0, ids.splice(i, 1)[0]); applyFunnelOrder(ids); render();
+  var c = document.querySelector('.main .grid > .fcard[data-id="'+id+'"] [data-a="fmenu"]'); if(c) c.focus({preventScroll:false});
+}
+(function(){
+  var D = null, blockClick = false;
+  function layoutRect(el){ var r = el.getBoundingClientRect(), m = new DOMMatrixReadOnly(getComputedStyle(el).transform); return {left:r.left - m.m41, top:r.top - m.m42, right:r.right - m.m41, bottom:r.bottom - m.m42}; }
+  var RM = function(){ return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; };
+  function flip(grid, fn){
+    if(RM()) return fn();
+    var els = Array.prototype.filter.call(grid.children, function(c){ return c !== D.card; });
+    var before = els.map(function(el){ return el.getBoundingClientRect(); });
+    fn();
+    els.forEach(function(el, i){
+      var a = before[i], b = layoutRect(el), dx = a.left - b.left, dy = a.top - b.top;
+      if(!dx && !dy) return;
+      el.style.transition = 'none'; el.style.transform = 'translate('+dx+'px,'+dy+'px)';
+      el.getBoundingClientRect();
+      el.style.transition = 'transform var(--dur-modal) var(--ease-out)'; el.style.transform = '';
+    });
+  }
+  function hit(x, y){
+    var grid = D.grid, cards = Array.prototype.filter.call(grid.children, function(c){ return c !== D.card && c.classList.contains('fcard'); });
+    for(var i = 0; i < cards.length; i++){
+      var r = layoutRect(cards[i]); if(x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+      var t = cards[i]; if(t === D.lastT) return; D.lastT = t;
+      var kids = Array.prototype.slice.call(grid.children), phi = kids.indexOf(D.ph), ti = kids.indexOf(t);
+      flip(grid, function(){ grid.insertBefore(D.ph, phi < ti ? t.nextSibling : t); });
+      return;
+    }
+    D.lastT = null;
+  }
+  function start(){
+    var c = D.card, r = c.getBoundingClientRect();
+    D.started = true; D.r = r; D.grid = c.parentNode; D.origNext = c.nextSibling;
+    D.ph = document.createElement('div'); D.ph.className = 'fcard-ph'; D.ph.style.height = r.height + 'px';
+    D.grid.insertBefore(D.ph, c);
+    c.classList.add('fdrag'); c.style.cssText = 'position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;margin:0;z-index:60;transition:scale var(--dur-pop) var(--ease-out),box-shadow var(--dur-pop) var(--ease-out);transform:translate(0,0)';
+    requestAnimationFrame(function(){ if(D && D.card === c) c.classList.add('lift'); });
+    document.documentElement.classList.add('fdragging');
+    if(D.touch && navigator.vibrate) try{ navigator.vibrate(8); }catch(e){}
+    D.sc = c.closest('.main') || document.scrollingElement;
+    D.raf = requestAnimationFrame(tick);
+  }
+  function tick(){
+    if(!D || !D.started) return;
+    var sc = D.sc, r = sc === document.scrollingElement ? {top:0, bottom:window.innerHeight} : sc.getBoundingClientRect(), edge = 70, v = 0;
+    if(D.y < r.top + edge) v = -Math.ceil((r.top + edge - D.y) / 5); else if(D.y > r.bottom - edge) v = Math.ceil((D.y - (r.bottom - edge)) / 5);
+    if(v){ var before = sc.scrollTop; sc.scrollTop += Math.max(-18, Math.min(18, v)); if(sc.scrollTop !== before){ D.lastT = null; hit(D.x, D.y); } }
+    D.raf = requestAnimationFrame(tick);
+  }
+  function end(cancel){
+    if(!D) return; var d = D; D = null;
+    clearTimeout(d.timer); cancelAnimationFrame(d.raf);
+    window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onCancel); window.removeEventListener('keydown', onKey, true);
+    if(!d.started) return;
+    blockClick = true; setTimeout(function(){ blockClick = false; }, 0);
+    if(cancel) flip(d.grid, function(){ d.grid.insertBefore(d.ph, d.origNext && d.origNext.parentNode === d.grid ? d.origNext : null); });
+    var c = d.card, pr = layoutRect(d.ph);
+    c.classList.remove('lift');
+    c.style.transition = 'transform var(--dur-modal) var(--ease-out),scale var(--dur-modal) var(--ease-out),box-shadow var(--dur-modal) var(--ease-out)';
+    c.style.transform = 'translate('+(pr.left - d.r.left)+'px,'+(pr.top - d.r.top)+'px)';
+    var done = false, fin = function(){
+      if(done) return; done = true;
+      if(d.ph.parentNode) d.ph.parentNode.replaceChild(c, d.ph);
+      c.classList.remove('fdrag'); c.style.cssText = '';
+      document.documentElement.classList.remove('fdragging');
+      Array.prototype.forEach.call(d.grid.children, function(el){ el.style.transition = ''; el.style.transform = ''; });
+      if(!cancel) applyFunnelOrder(Array.prototype.map.call(d.grid.querySelectorAll(':scope > .fcard[data-id]'), function(x){ return x.getAttribute('data-id'); }));
+    };
+    if(RM()) return fin();
+    c.addEventListener('transitionend', function(e){ if(e.propertyName === 'transform') fin(); });
+    setTimeout(fin, 320);
+  }
+  function onMove(e){
+    if(!D || e.pointerId !== D.id) return;
+    D.x = e.clientX; D.y = e.clientY;
+    var dx = D.x - D.x0, dy = D.y - D.y0;
+    if(!D.started){
+      if(D.touch){ if(Math.abs(dx) > 8 || Math.abs(dy) > 8) end(true); return; } /* Finger bewegt sich vor dem Halten: normales Scrollen */
+      if(Math.abs(dx) + Math.abs(dy) < 5) return;
+      start();
+    }
+    e.preventDefault();
+    D.card.style.transform = 'translate('+dx+'px,'+dy+'px)';
+    hit(D.x, D.y);
+  }
+  function onUp(e){ if(D && e.pointerId === D.id) end(false); }
+  function onCancel(e){ if(D && e.pointerId === D.id) end(!D.started); }
+  function onKey(e){ if(e.key === 'Escape' && D && D.started){ e.preventDefault(); e.stopPropagation(); end(true); } }
+  document.addEventListener('pointerdown', function(e){
+    if(D || e.button !== 0 || !e.isPrimary || S.view !== 'funnels' || !isAdmin()) return;
+    var card = e.target.closest && e.target.closest('.main .grid > .fcard[data-id][data-a="edit"]');
+    if(!card || e.target.closest('.menu,button,a,input,select,textarea')) return;
+    D = {card:card, id:e.pointerId, x0:e.clientX, y0:e.clientY, x:e.clientX, y:e.clientY, touch:e.pointerType !== 'mouse', started:false};
+    if(D.touch) D.timer = setTimeout(function(){ if(D && !D.started) start(); }, 320);
+    window.addEventListener('pointermove', onMove, {passive:false}); window.addEventListener('pointerup', onUp); window.addEventListener('pointercancel', onCancel); window.addEventListener('keydown', onKey, true);
+  });
+  /* Während des Ziehens auf Touch: Seite nicht mitscrollen; Langdruck-Menü unterdrücken */
+  document.addEventListener('touchmove', function(e){ if(D && D.started) e.preventDefault(); }, {passive:false});
+  document.addEventListener('contextmenu', function(e){ if(D && D.touch) e.preventDefault(); });
+  document.addEventListener('click', function(e){ if(blockClick){ e.preventDefault(); e.stopPropagation(); blockClick = false; } }, true);
+})();
 function duplicateFunnel(f){
   var c = clone(f); c.id = uid()+uid().slice(0,4); c.name = f.name + ' (Kopie)'; c.slug = uniqueSlug(c.name, c.id); c.status = 'draft'; c.published = null; c.versions = []; delete c._dirty; delete c._av; c.createdAt = c.updatedAt = Date.now(); c.stats = {views:0,starts:0,completes:0,pages:{},daily:{}}; delete c.demo;
   var map = {};
@@ -821,7 +941,7 @@ var FIELDS = {
     ['edgeTop','select','Oben',FP.EDGE_LIST],['edgeTopH','range','Höhe oben',[8,160,2,'px',40],function(p){ return !!p.edgeTop; }],['edgeTopFlip','toggle','Oben spiegeln',null,function(p){ return !!p.edgeTop && /slant|brush|torn|wave/.test(p.edgeTop); }],
     ['edgeBot','select','Unten',FP.EDGE_LIST],['edgeBotH','range','Höhe unten',[8,160,2,'px',40],function(p){ return !!p.edgeBot; }],['edgeBotFlip','toggle','Unten spiegeln',null,function(p){ return !!p.edgeBot && /slant|brush|torn|wave/.test(p.edgeBot); }],
     ['_eh','note','Am schönsten mit „Volle Breite ohne Seitenrand“ und Ecken auf 0. Der Hintergrund der Seite scheint durch.']],
-  lottie:[['json','lottie','Lottie-Datei (.json)'],['src','text','Oder Link zur .json-Datei','z. B. von LottieFiles: bei der Animation „Lottie JSON“ wählen und den Link kopieren. .lottie-Dateien bitte als JSON herunterladen.',function(p){ return !p.json; }],['size','range','Größe',[24,480,4,'px',160]],['speed','range','Tempo',[0.25,3,0.25,'×',1]],['loop','toggle','Endlos wiederholen'],['alt','text','Beschreibung für Screenreader (optional)']],
+  lottie:[['json','lottie','Lottie-Datei (.json)'],['src','text','Oder Link zur .json-Datei','z. B. von LottieFiles: bei der Animation „Lottie JSON“ wählen und den Link kopieren. .lottie-Dateien bitte als JSON herunterladen.',function(p){ return !p.json; }],['size','range','Größe',[24,640,4,'px',160]],['speed','range','Tempo',[0.25,3,0.25,'×',1]],['loop','toggle','Endlos wiederholen'],['alt','text','Beschreibung für Screenreader (optional)']],
   video:[['url','text','YouTube- oder Vimeo-Link','Wird im veröffentlichten Funnel eingebettet.'],['bleed','toggle','Volle Breite ohne Seitenrand'],['radius','range','Ecken',[0,40,1]]],
   list:[['items','strings','Punkte'],['icon','select','Symbol',[['check','Haken'],['number','Zahlen'],['star','Stern'],['heart','Herz'],['shield','Schild'],['bolt','Blitz'],['leaf','Blatt'],['clock','Uhr'],['euro','Euro'],['sparkle','Funkeln'],['thumb','Daumen']]]],
   testimonial:[['quote','textarea','Zitat'],['name','text','Name'],['role','text','Untertitel'],['stars','range','Sterne',[0,5,1]],['img','image','Foto']],
@@ -867,7 +987,7 @@ var FIELDS = {
   upload:[['label','text','Label'],['cta','text','Button-Text'],['hint','text','Hinweis'],['accept','text','Dateitypen'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   signature:[['label','text','Label'],['hint','text','Hinweis im Feld'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
   checkbox:[['text','textarea','Text','Link: Doppelklick auf den Text im Handy, Wort markieren, Link-Symbol – oder hier [Datenschutzerklärung](https://…) schreiben. Links öffnen sich in einem neuen Fenster.'],['size','num','Schriftgröße (px)'],['required','toggle','Pflichtfeld'],['key','key','Feld-Schlüssel']],
-  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','select','Icon',[['arrow','→ Pfeil'],['chevron','› Chevron'],['send','Senden'],['check','Haken'],['calendar','Kalender'],['phone','Telefon'],['mail','E-Mail'],['download','Download'],['gift','Geschenk'],['star','Stern'],['heart','Herz'],['lock','Schloss'],['sparkle','Funkeln'],['whatsapp','WhatsApp (einfarbig)'],['br-whatsapp','WhatsApp (Original)'],['br-instagram','Instagram (Original)'],['br-facebook','Facebook (Original)'],['br-tiktok','TikTok (Original)'],['br-linkedin','LinkedIn (Original)'],['br-youtube','YouTube (Original)'],['br-x','X (Original)'],['br-telegram','Telegram (Original)'],['none','Kein Icon']]],['row2','row',[['bSize','num','Schriftgröße (px)'],['icColor','color','Icon-Farbe']]],['iconLeft','toggle','Icon links'],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['row2','row',[['btnBw','num','Rahmen (px)'],['btnBc','color','Rahmenfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
+  button:[['label','text','Beschriftung'],['sub','text','Untertitel (optional)'],['subIn','toggle','Untertitel im Button anzeigen',null,function(p){ return !!p.sub; }],['radiusOn','toggle','Eigene Rundung (statt Theme)'],['radius','range','Ecken',[0,40,1],function(p){ return p.radiusOn; }],['action','select','Aktion',[['next','Nächste Seite'],['page','Zu Seite springen'],['submit','Absenden (Lead speichern)'],['url','Link öffnen'],['wa','WhatsApp-Chat öffnen']]],['waNumber','text','WhatsApp-Nummer',null,function(p){ return p.action==='wa'; }],['waText','textarea','Erste Nachricht (optional)','Steht beim Öffnen schon im Chat. Variablen wie {{vorname}} gehen auch.',function(p){ return p.action==='wa'; }],['target','page','Zielseite',null,function(p){ return p.action==='page' || p.action==='submit'; }],['url','text','URL',null,function(p){ return p.action==='url'; }],['variant','select','Stil',[['','Wie im Theme'],['filled','Gefüllt'],['gradient','Verlauf'],['soft','Soft'],['outline','Rahmen'],['ghost','Nur Text']]],['icon','btnicon','Icon'],['row2','row',[['bSize','num','Schriftgröße (px)'],['icColor','color','Icon-Farbe']]],['iconLeft','toggle','Icon links',null,function(p){ return !!FP.btnIcon(p); }],['iconEdge','toggle','Icon an den Rand','Der Text bleibt mittig, das Icon rückt an den Button-Rand.',function(p){ return !!FP.btnIcon(p) && p.full !== false; }],['row2','row',[['btnBg','color','Button-Farbe'],['btnColor','color','Textfarbe']]],['row2','row',[['btnBw','num','Rahmen (px)'],['btnBc','color','Rahmenfarbe']]],['full','toggle','Volle Breite'],['bpad','pad4','Innenabstand',{keys:['bpt','bpr','bpb','bpl'], ph:function(){ var t = F().theme || {}, y = t.btnPad!=null&&t.btnPad!==''?t.btnPad:16, x = t.btnPadX!=null&&t.btnPadX!==''?t.btnPadX:22; return [y,x,y,x]; }, hint:'Leer = Wert aus dem Theme.'}],['shadow','toggle','Schatten'],['pulse','toggle','Puls-Animation']],
   summary:[['variant','select','Darstellung',[['','Zusammenfassung'],['offer','Angebot (mit Datum & Gültigkeit)']],function(p){ return !p.compact; }],['validDays','num','Gültig (Tage)',null,function(p){ return p.variant==='offer' && !p.compact; }],['compact','toggle','Kompakt (nur Gesamtpreis)'],['title','text','Titel'],['totalLabel','text','Label Gesamt',null,function(p){ return !p.compact; }],['prefix','text','Präfix (z. B. „ab“)'],['note','text','Hinweis'],['showItems','toggle','Positionen anzeigen',null,function(p){ return !p.compact; }],['sticky','toggle','Unten fixieren','Bleibt beim Scrollen am unteren Rand sichtbar, solange das Element weiter unten auf der Seite steht.']],
   box:[['count','num','Enthält die nächsten … Elemente','Die Elemente direkt darunter liegen in der Box. Mit den Pfeilen in der Element-Leiste schiebst du Elemente hinein oder heraus.'],['bxStyle','seg','Stil',[['card','Karte'],['sand','Sand'],['tint','Getönt'],['outline','Rahmen'],['glass','Glas'],['soft','Soft UI'],['solid','Farbig'],['plain','Ohne']]],['_bh','note','Hintergrund, Rahmen, Schatten, Ecken und Innenabstand stellst du unten unter „Stil → Box“ ein.']],
   social:[['whatsapp','text','WhatsApp-Nummer'],['waText','text','Erste WhatsApp-Nachricht (optional)'],['instagram','text','Instagram-Link'],['facebook','text','Facebook-Link'],['tiktok','text','TikTok-Link'],['linkedin','text','LinkedIn-Link'],['youtube','text','YouTube-Link'],['x','text','X-Link'],['telegram','text','Telegram-Link'],['mail','text','E-Mail-Adresse'],['size','range','Größe',[24,72,2,'px',40]],['chip','toggle','Mit weißem Hintergrund & Schatten'],['labels','toggle','Namen anzeigen']],
@@ -1097,13 +1217,17 @@ function varMenu(btn){
 }
 function insertVar(inp, key){ insertTok(inp, '{{'+key+'}}'); }
 /* Animiertes Icon in ein Textfeld einfügen: kleines Fenster mit Live-Vorschau, wächst aus dem Knopf */
+var AI_SIZE = 1;
+function aiSuffix(){ return AI_SIZE !== 1 ? '*' + AI_SIZE : ''; }
 function animMenu(btn){
   var fld = btn.closest('.fld'), inp = fld && fld.querySelector('input.inp,textarea.inp'); if(!inp) return;
   var old = document.getElementById('aipop'); if(old){ var same = old._btn === btn; old._close(); if(same) return; }
+  var m0 = inp.value.match(/\{anim:@?[\w-]{1,40}(?:\*([\d.]{1,4}))?\}/); if(m0) AI_SIZE = m0[1] ? +m0[1] : 1;
   var f = F(), lib = (f.theme && f.theme.anims) || [], pop = document.createElement('div');
   pop.id = 'aipop'; pop.className = 'aipop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Animation einfügen'); pop._btn = btn;
   pop.innerHTML = '<div class="aih">Animierte Icons</div><div class="aig">' + Object.keys(FP.ANIM_ICONS).map(function(k){ return '<button type="button" data-aiins="'+k+'" title="'+esc(FP.ANIM_ICONS[k][0])+'" aria-label="'+esc(FP.ANIM_ICONS[k][0])+'">'+FP.md('{anim:'+k+'}')+'</button>'; }).join('') + '</div>'
     + '<div class="aih">Eigene Lottie-Animationen</div>' + (lib.length ? '<div class="ail">' + lib.map(function(x){ return '<div class="ailr"><button type="button" class="ailb" data-aiins="@'+esc(x.id)+'"><span class="fp-ai fp-ail" data-ail="'+esc(x.id)+'"></span>'+esc(x.name)+'</button><button type="button" class="ibtn" data-aidel="'+esc(x.id)+'" title="Aus diesem Funnel entfernen" aria-label="Entfernen">'+I('trash',13)+'</button></div>'; }).join('') + '</div>' : '<p class="hint" style="margin:0 0 8px">Noch keine. Lade eine Lottie-Datei hoch – sie erscheint dann so groß wie der Text.</p>')
+    + '<div class="aih">Größe im Text</div><div class="segf aisz">' + [[1,'1×'],[1.5,'1,5×'],[2,'2×'],[3,'3×']].map(function(x){ return '<button type="button" data-aisz="'+x[0]+'" class="'+(AI_SIZE === x[0] ? 'on' : '')+'">'+x[1]+'</button>'; }).join('') + '</div>'
     + '<button type="button" class="btn sm" data-aiadd style="width:100%;justify-content:center">'+I('upload',13)+'Lottie hinzufügen</button>'
     + '<p class="hint" style="margin:8px 0 0">Icons übernehmen Akzentfarbe und Textgröße.</p>';
   document.body.appendChild(pop);
@@ -1116,11 +1240,89 @@ function animMenu(btn){
   pop._close = close;
   document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', onKey);
   pop.addEventListener('click', function(e){
-    var b = e.target.closest('[data-aiins]'); if(b){ close(); insertTok(inp, '{anim:'+b.getAttribute('data-aiins')+'}'); return; }
+    var z = e.target.closest('[data-aisz]');
+    if(z){ AI_SIZE = +z.getAttribute('data-aisz'); pop.querySelectorAll('[data-aisz]').forEach(function(x){ x.classList.toggle('on', x === z); });
+      /* Icons, die schon im Feld stehen, sofort mit anpassen */
+      var nv = inp.value.replace(/\{anim:(@?[\w-]{1,40})(?:\*[\d.]{1,4})?\}/g, function(all, n){ return '{anim:' + n + aiSuffix() + '}'; });
+      if(nv !== inp.value){ inp.value = nv; inp.dispatchEvent(new Event('input', {bubbles:true})); }
+      return; }
+    var b = e.target.closest('[data-aiins]'); if(b){ close(); insertTok(inp, '{anim:'+b.getAttribute('data-aiins')+aiSuffix()+'}'); return; }
     var d = e.target.closest('[data-aidel]'); if(d){ var id = d.getAttribute('data-aidel'); snap(true); f.theme.anims = lib.filter(function(x){ return x.id !== id; }); touch(); close(); renderCanvas(true); toast('Animation entfernt'); return; }
-    if(e.target.closest('[data-aiadd]')){ close(); lottieAddModal(function(item){ insertTok(inp, '{anim:@'+item.id+'}'); }); }
+    if(e.target.closest('[data-aiadd]')){ close(); lottieAddModal(function(item){ insertTok(inp, '{anim:@'+item.id+aiSuffix()+'}'); }); }
   });
   var first = pop.querySelector('button'); if(first) first.focus({preventScroll:true});
+}
+/* ---------- Button-Icon: Auswahlfenster (Icons · Emoji · 3D · Marken · eigenes Bild) ---------- */
+var BTN_IC_NAMES = {arrow:'Pfeil', chevron:'Chevron', send:'Senden', check:'Haken', calendar:'Kalender', phone:'Telefon', mail:'E-Mail', download:'Download', gift:'Geschenk', star:'Stern', heart:'Herz', lock:'Schloss', sparkle:'Funkeln', plane:'Flugzeug', google:'Google', whatsapp:'WhatsApp'};
+var BTN_EMOJIS = '👉 ➡️ ✅ ✔️ 🚀 🔥 ⭐ ✨ 🎁 🎉 🏆 💡 💰 💶 🏠 🔧 🛠️ ⚙️ 📅 📞 📱 ✉️ 📝 📸 🛒 💳 ⏳ ⏰ 👍 👋 🤝 👏 ❤️ 😍 🤩 😊 🔒 🔑 🛡️ 📈 🔍 📍 🚗 ☀️ 💧 ⚡ 🌱 🌡️ 🚿 ❄️ 💯 💬 🔔 💼 🎓 🎯 👑 💎 ☕'.split(' ');
+var BTN_3D = [['rocket','Rakete'],['fire','Feuer'],['star','Stern'],['sparkles','Funkeln'],['check','Haken'],['gift','Geschenk'],['party','Konfetti'],['trophy','Pokal'],['bulb','Idee'],['moneybag','Geldsack'],['euro','Euro'],['house','Haus'],['tools','Werkzeug'],['wrench','Schlüssel'],['gear','Zahnrad'],['calendar','Kalender'],['phone','Telefon'],['mobile','Handy'],['mail','Brief'],['memo','Notiz'],['camera','Kamera'],['cart','Warenkorb'],['card','Karte'],['hourglass','Sanduhr'],['alarm','Wecker'],['thumbsup','Daumen hoch'],['wave','Winken'],['handshake','Handschlag'],['clap','Applaus'],['heart','Herz'],['hearteyes','Verliebt'],['starstruck','Begeistert'],['arrow','Pfeil'],['flag','Zielflagge'],['lock','Schloss'],['key','Schlüssel'],['shield','Schild'],['chart','Wachstum'],['search','Lupe'],['pin','Ort'],['car','Auto'],['sun','Sonne'],['droplet','Tropfen'],['bolt','Strom'],['seedling','Pflanze'],['thermo','Thermometer'],['shower','Dusche'],['snow','Schneeflocke'],['brick','Ziegel'],['hundred','100'],['chat','Sprechblase'],['bell','Glocke'],['briefcase','Koffer'],['graduation','Abschluss'],['target','Ziel'],['crown','Krone'],['gem','Diamant'],['coffee','Kaffee']];
+function btnIconName(p){
+  var ic = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow');
+  if(ic === 'none') return 'Kein Icon';
+  if(ic === 'emoji') return p.iconEmoji ? 'Emoji' : 'Kein Icon';
+  if(ic === 'img'){ var n = BTN_3D.filter(function(x){ return x[0] === p.iconName; })[0]; return n ? '3D · ' + n[1] : 'Eigenes Bild'; }
+  if(/^br-/.test(ic)) return (FP.BRANDS[ic.slice(3)] || {}).n || ic.slice(3);
+  return BTN_IC_NAMES[ic] || ic;
+}
+function btnIconField(p, label, ovb){
+  var pv = FP.btnIcon(p);
+  return '<div class="fld"><label>'+esc(label)+(ovb||'')+'</label><button type="button" class="icpick" data-a="btnIconPick" aria-haspopup="dialog"><span class="icpv">'+(pv || I('x',13))+'</span><span class="icpn">'+esc(btnIconName(p))+'</span>'+I('chevDown',14)+'</button></div>';
+}
+var ICPOP_TAB = 'ic';
+function btnIconMenu(btn){
+  var old = document.getElementById('aipop'); if(old){ var same = old._btn === btn; old._close(); if(same) return; }
+  var b = selBlock(); if(!b) return;
+  var p = b.props, pop = document.createElement('div');
+  pop.id = 'aipop'; pop.className = 'aipop icpop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Icon wählen'); pop._btn = btn;
+  var cur = p.icon != null && p.icon !== '' ? p.icon : (p.action === 'wa' ? 'whatsapp' : p.arrow === false ? 'none' : 'arrow');
+  var on = function(v){ return v ? ' on' : ''; };
+  var tabs = [['ic','Icons'],['em','Emoji'],['d3','3D'],['br','Marken']];
+  var body = function(){
+    if(ICPOP_TAB === 'em') return '<input class="inp icem" placeholder="Emoji eingeben oder einfügen" value="'+esc(cur === 'emoji' ? p.iconEmoji || '' : '')+'" aria-label="Eigenes Emoji" maxlength="16">'
+      + '<div class="aig ice">' + BTN_EMOJIS.map(function(e){ return '<button type="button" class="'+on(cur === 'emoji' && p.iconEmoji === e).trim()+'" data-icv="emoji" data-ice="'+esc(e)+'" aria-label="'+esc(e)+'">'+esc(e)+'</button>'; }).join('') + '</div>';
+    if(ICPOP_TAB === 'd3') return '<div class="aig ic3">' + BTN_3D.map(function(x){ return '<button type="button" class="'+on(cur === 'img' && p.iconName === x[0]).trim()+'" data-ic3="'+x[0]+'" title="'+esc(x[1])+'" aria-label="'+esc(x[1])+'"><img src="assets/icons3d/'+x[0]+'.webp" alt="" loading="lazy" width="28" height="28"></button>'; }).join('') + '</div><p class="hint" style="margin:0 0 4px">3D-Icons: Fluent Emoji von Microsoft (MIT).</p>';
+    if(ICPOP_TAB === 'br') return '<div class="aig icb3">' + Object.keys(FP.BRANDS).map(function(k){ return '<button type="button" class="'+on(cur === 'br-'+k).trim()+'" data-icv="br-'+k+'" title="'+esc(FP.BRANDS[k].n || k)+'" aria-label="'+esc(FP.BRANDS[k].n || k)+'">'+FP.BRANDS[k].svg+'</button>'; }).join('') + '</div>';
+    return '<div class="aig icl">' + Object.keys(FP.BTN_ICONS).concat(['whatsapp']).map(function(k){ return '<button type="button" class="'+on(cur === k).trim()+'" data-icv="'+k+'" title="'+esc(BTN_IC_NAMES[k] || k)+'" aria-label="'+esc(BTN_IC_NAMES[k] || k)+'">'+(k === 'whatsapp' ? FP.WA : FP.BTN_ICONS[k])+'</button>'; }).join('') + '</div>';
+  };
+  var paint = function(){
+    pop.innerHTML = '<div class="segf ictabs" role="tablist">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="'+(ICPOP_TAB === t[0])+'" class="'+(ICPOP_TAB === t[0] ? 'on' : '')+'" data-ictab="'+t[0]+'">'+t[1]+'</button>'; }).join('') + '</div>'
+      + '<div class="icbody">' + body() + '</div>'
+      + '<div class="icfoot"><label class="btn sm">'+I('upload',13)+'Eigenes Bild<input type="file" accept="image/png,image/webp,image/svg+xml,image/jpeg,image/gif" hidden data-icup></label><button type="button" class="btn sm ghost" data-icv="none">'+I('x',13)+'Kein Icon</button></div>';
+    var em = pop.querySelector('.icem');
+    if(em){ em.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); if(em.value.trim()) apply({icon:'emoji', iconEmoji:em.value.trim()}); } }); em.addEventListener('change', function(){ if(em.value.trim()) apply({icon:'emoji', iconEmoji:em.value.trim()}, true); }); }
+  };
+  /* keep = Fenster offen lassen (z. B. beim Tippen eines Emojis) */
+  var apply = function(o, keep){
+    snap(true);
+    ['iconEmoji','iconImg','iconName'].forEach(function(k){ delete p[k]; });
+    Object.assign(p, o); touch(); renderCanvas(true);
+    if(!keep){ close(); renderRight(); var t = document.querySelector('[data-a="btnIconPick"]'); if(t) t.focus({preventScroll:true}); }
+  };
+  document.body.appendChild(pop); paint();
+  var place = function(){ var r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight, left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left)), top = r.bottom + 6;
+    if(top + h > window.innerHeight - 8 && r.top - h - 6 > 8){ top = r.top - h - 6; pop.style.transformOrigin = Math.round(r.left + r.width / 2 - left) + 'px 100%'; } else pop.style.transformOrigin = Math.round(r.left + r.width / 2 - left) + 'px 0';
+    pop.style.left = left + 'px'; pop.style.top = Math.max(8, Math.min(top, window.innerHeight - h - 8)) + 'px'; };
+  place();
+  var outside = function(e){ if(!pop.contains(e.target) && !btn.contains(e.target)) close(); };
+  var onKey = function(e){ if(e.key === 'Escape'){ close(); btn.focus(); } };
+  var close = function(){ pop.remove(); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', onKey); };
+  pop._close = close;
+  document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', onKey);
+  pop.addEventListener('click', function(e){
+    var t = e.target.closest('[data-ictab]'); if(t){ ICPOP_TAB = t.getAttribute('data-ictab'); paint(); place(); var f0 = pop.querySelector(ICPOP_TAB === 'em' ? '.icem' : '.icbody button'); if(f0) f0.focus({preventScroll:true}); return; }
+    var v = e.target.closest('[data-icv]');
+    if(v){ var val = v.getAttribute('data-icv'); if(val === 'emoji') return apply({icon:'emoji', iconEmoji:v.getAttribute('data-ice')}); return apply({icon:val}); }
+    var d = e.target.closest('[data-ic3]');
+    if(d){ var k = d.getAttribute('data-ic3');
+      fetch('assets/icons3d/' + k + '.webp').then(function(r){ if(!r.ok) throw 0; return r.blob(); }).then(function(bl){ var rd = new FileReader(); rd.onload = function(){ apply({icon:'img', iconImg:rd.result, iconName:k}); }; rd.readAsDataURL(bl); }).catch(function(){ toast('Icon konnte nicht geladen werden'); });
+    }
+  });
+  pop.addEventListener('change', function(e){
+    if(!e.target.matches('[data-icup]')) return; var file = e.target.files[0]; if(!file) return;
+    if(file.size > 4e6){ toast('Bild zu groß (max. 4 MB)'); return; }
+    readImage(file, 192, function(data){ if(data.length > 300000){ toast('Bild ist zu groß für ein Icon – bitte kleiner wählen'); return; } apply({icon:'img', iconImg:data}); });
+  });
+  var first = pop.querySelector('.icbody .on') || pop.querySelector('.ictabs .on'); if(first) first.focus({preventScroll:true});
 }
 function lottieAddModal(done){
   var f = F(), data = '';
@@ -1176,6 +1378,7 @@ function field(spec, p, scope){
         + pk.map(function(x, i){ var pv = p[x]; return '<label><input class="inp" type="number" min="0" max="120" inputmode="numeric" data-'+scope+'="'+x+'" data-num value="'+(pv==null?'':esc(pv))+'" placeholder="'+esc(pph[i])+'" aria-label="'+esc(label)+' '+pnames[i]+'"><span>'+pnames[i]+'</span></label>'; }).join('')
         + '</div>'+(extra.hint?'<div class="hint">'+esc(extra.hint)+'</div>':'')+'</div>';
     case 'range': var un = extra[3] != null ? extra[3] : (k==='stars'||k==='max'?'':'px'), rdef = extra[4] == null ? extra[0] : (typeof extra[4] === 'function' ? extra[4]() : extra[4]); return w('<div class="rng"><input type="range" '+a+' data-num data-unit="'+un+'" min="'+extra[0]+'" max="'+extra[1]+'" step="'+extra[2]+'" value="'+(v==null||v===''?rdef:v)+'"><span>'+(v==null||v===''?rdef:v)+un+'</span></div>');
+    case 'btnicon': return btnIconField(p, label, ovb);
     case 'font': return w(fontSelect(scope, k, v || '', true));
     case 'select': return w('<select class="inp" '+a+' data-rp>'+extra.map(function(o){ return '<option value="'+o[0]+'"'+(String(v)===String(o[0])?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select>');
     case 'seg': return w('<div class="segf">'+extra.map(function(o){ return '<button data-a="seg" data-scope="'+scope+'" data-k="'+k+'" data-v="'+esc(o[0])+'" data-t="'+(typeof o[0])+'" class="'+(String(v==null?'':v)===String(o[0])?'on':'')+'">'+esc(o[1])+'</button>'; }).join('')+'</div>');
@@ -1216,7 +1419,7 @@ function optionsEditor(p){
    Inhalt = was drinsteht. Design = wie es aussieht (aufklappbare Abschnitte, jeder Regler nur einmal).
    Mehr = Verhalten, Sichtbarkeit, Feld-Schlüssel. Leere Werte kommen aus dem Theme, geänderte zeigen einen Punkt mit Zurücksetzen. */
 var DESIGN_K = {};
-('hl level size lh variant upper bleed ratio height radius fit edgeTop edgeTopH edgeTopFlip edgeBot edgeBotH edgeBotFlip icon iconLeft btnBg btnColor btnBw btnBc bSize icColor full bpad shadow pulse radiusOn '
+('hl level size lh variant upper bleed ratio height radius fit edgeTop edgeTopH edgeTopFlip edgeBot edgeBotH edgeBotFlip icon iconLeft iconEdge btnBg btnColor btnBw btnBc bSize icColor full bpad shadow pulse radiusOn '
  + 'faceStyle faceNoText faceBare faceEnds cols colsD optAlign optFw optSubFw zoom coverFade coverAlign coverFadeS coverTx coverSize coverRad chipStyle chipArr chipIcon chipGrad chipRad chipSize '
  + 'calStyle calAcc calAccText calShape calDays calDayShadow calSelShadow slotStyle slotCols calCard calBg calText calRadius bxStyle chip labels gray speed acolor hand flip rotate textSide showBar showValue').split(' ').forEach(function(k){ DESIGN_K[k] = 1; });
 var DESIGN_T = {social:{size:1}, arrow:{size:1, style:1, anim:1}, loader:{size:1, anim:1}};
@@ -1441,7 +1644,15 @@ function panelDesign(){
     + (t.animation === 'none' ? '' : field(['animDur','range','Dauer des Übergangs',[0.1,2,0.1,' s',function(){ return ({spring:.5,wipe:.4,tilt:.4,blur:.4,stagger:.4,up:.3,slide:.3,zoom:.3,fade:.3})[t.animation||'slide'] || .3; }]], t, 't'))
     + tgl('morph','Bild-Übergang zwischen Seiten','Das gewählte Antwortbild wächst ins Titelbild der nächsten Seite. Funktioniert in Chrome, Edge und Safari; sonst normaler Übergang.')
     + field(['bgImage','image','Hintergrundbild (alle Seiten)'], t, 't') + (t.bgImage?'<div class="fld"><label>Overlay</label>'+colorField('t','overlay',t.overlay)+'<div class="hint">z. B. rgba(0,0,0,0.4) für bessere Lesbarkeit</div></div>':'')
-    + '<div class="fld"><label>Footer-Text</label><input class="inp" data-t="footer" value="'+esc(t.footer||'')+'" placeholder="Impressum · Datenschutz"></div></div>';
+    + '</div>';
+  /* Fußzeile wie bei großen Funnel-Tools: Rechtliches als Links, darunter das TapTell-Abzeichen */
+  var ccOn = FP.consentOn(F());
+  h += '<div class="psec"><h5>Fußzeile</h5>'
+    + '<div class="fld"><label>Impressum (Link)</label><input class="inp" data-t="footImp" value="'+esc(t.footImp||'')+'" placeholder="https://kunde.de/impressum" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false"></div>'
+    + '<div class="fld"><label>Datenschutz (Link)</label><input class="inp" data-t="footPriv" value="'+esc(t.footPriv||'')+'" placeholder="'+esc((F().settings||{}).ccPrivacy || 'https://kunde.de/datenschutz')+'" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false">'+((F().settings||{}).ccPrivacy && !t.footPriv ? '<div class="hint">Leer = Link aus dem Cookie-Banner.</div>' : '')+'</div>'
+    + field(['footCc','toggle','„Cookies verwalten“ zeigen', ccOn ? 'Öffnet die Cookie-Einstellungen erneut, damit Besucher ihre Wahl ändern können.' : 'Erscheint, sobald der Cookie-Banner unter Einstellungen aktiv ist.', null, true], t, 't')
+    + field(['footBadge','toggle','TapTell-Abzeichen zeigen','„Erstellt mit TapTell“ unter den Links. Führt zu taptell.de.'], t, 't')
+    + '<div class="fld"><label>Eigener Text (optional)</label><input class="inp" data-t="footer" value="'+esc(t.footer||'')+'" placeholder="© 2026 Muster GmbH"></div></div>';
   h += '<div class="psec"><h5>'+I('code',13)+'Eigenes CSS</h5><textarea class="inp" data-t="customCss" rows="5" style="font-family:ui-monospace,monospace;font-size:var(--fs-12)" placeholder=".fp-btn{letter-spacing:.02em}\n.fp-h1{font-size:32px}">'+esc(t.customCss||'')+'</textarea><div class="hint">Klassen: .fp-h1/.fp-h2 (Überschriften), .fp-txt, .fp-btn, .fp-opt, .fp-in, .fp-badge, .fp-prog</div></div>';
   return h;
 }
@@ -2965,7 +3176,7 @@ function leadToRow(l){ var data = {}; Object.keys(l).forEach(function(k){ if(LEA
 function rowToLead(r){ return Object.assign({}, r.data || {}, {id:r.id, funnelId:r.funnel_id, funnelName:r.funnel_name, name:r.name, email:r.email, phone:r.phone, total:+r.total || 0, status:r.status, notes:r.notes || '', createdAt:Date.parse(r.created_at)}); }
 function clientToRow(c){ return {id:c.id, name:c.name, logo:c.logo || null, contact:c.contact || null, data:c.data || {}, created_at:new Date(c.createdAt||Date.now()).toISOString()}; }
 function rowToClient(r){ return {id:r.id, name:r.name, logo:r.logo || '', contact:r.contact || '', data:r.data || {}, createdAt:Date.parse(r.created_at)}; }
-function settingsPayload(){ return {brand:db.brand, defaults:db.defaults, fonts:db.fonts}; }
+function settingsPayload(){ var o = {brand:db.brand, defaults:db.defaults, fonts:db.fonts}; if(db.funnelOrder) o.funnelOrder = db.funnelOrder.filter(function(id){ return db.funnels.some(function(f){ return f.id === id; }); }); return o; }
 
 async function afterLogin(u){
   clearTimeout(timeoutRetry); timeoutRetry = null; lastSaveError = ''; setSaved(true);
@@ -2999,6 +3210,8 @@ async function loadRemote(){
   db.lists = (q[6].data || []).map(rowToList);
   db.users = (q[5].data || []).map(function(p){ return {id:p.id, email:p.email, name:p.name, role:p.role, clientId:p.client_id}; });
   if(set.brand) db.brand = set.brand; if(set.defaults) db.defaults = set.defaults; if(set.fonts) db.fonts = set.fonts;
+  /* Eigene Reihenfolge aus der Übersicht; neue Funnels (noch nicht einsortiert) stehen vorne */
+  if(Array.isArray(set.funnelOrder)){ db.funnelOrder = set.funnelOrder; var fo = {}; set.funnelOrder.forEach(function(id, i){ fo[id] = i + 1; }); db.funnels = db.funnels.map(function(f, i){ return [f, fo[f.id] || 0, i]; }).sort(function(a, b){ return a[1] - b[1] || a[2] - b[2]; }).map(function(x){ return x[0]; }); }
   SNAP = {funnels:{}, leads:{}, clients:{}, recipient_lists:{}, settings:JSON.stringify(settingsPayload())};
   db.lists.forEach(function(l){ SNAP.recipient_lists[l.id] = JSON.stringify(listToRow(l)); });
   db.funnels.forEach(function(f){ SNAP.funnels[f.id] = JSON.stringify(funnelToRow(f)); VSNAP[f.id] = JSON.stringify((f.versions || []).map(function(v){ return v.id; })); });
@@ -3239,6 +3452,7 @@ var ACT = {
   rrDel:function(el){ var b = selBlock(); if(!b) return; snap(true); b.props.routes.splice(+el.getAttribute('data-i'),1); touch(); renderRight(); renderLeft(); renderCanvas(true); },
   insVar:function(el){ varMenu(el); },
   insAnim:function(el){ animMenu(el); },
+  btnIconPick:function(el){ btnIconMenu(el); },
   printReport:function(){ window.print(); },
   fontAdobe:function(){
     var cur = ((db.fonts.uploaded || []).filter(function(x){ return x.kit; })[0] || {}).kit || '';
