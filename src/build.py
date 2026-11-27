@@ -2,12 +2,14 @@ import pathlib, base64, shutil
 d = pathlib.Path(__file__).parent
 r = lambda n: (d/n).read_text()
 logo = 'data:image/png;base64,' + base64.b64encode((d/'logo-t.png').read_bytes()).decode()
+mark = 'data:image/jpeg;base64,' + base64.b64encode((d/'logo-mark.jpg').read_bytes()).decode()
+touch = 'data:image/jpeg;base64,' + base64.b64encode((d/'logo-touch.jpg').read_bytes()).decode()
 logow = 'data:image/png;base64,' + base64.b64encode((d/'logo-w.png').read_bytes()).decode()
 import re as _re
 # supabase-js fest gepinnt – dieselben Werte wie in app.js (SUPABASE_JS / SUPABASE_JS_SRI)
 _m = _re.search(r"var SUPABASE_JS = '([^']+)', SUPABASE_JS_SRI = '([^']+)'", r('app.js'))
 SUPABASE_JS, SUPABASE_JS_SRI = _m.group(1), _m.group(2)
-app = r('app.js').replace('%%TT_LOGO%%', logo).replace('%%TT_LOGO_W%%', logow)
+app = r('app.js').replace('%%TT_LOGO%%', logo).replace('%%TT_LOGO_W%%', logow).replace('%%TT_MARK%%', mark)
 mail_module = (d.parent/'supabase/functions/_shared/automation-mail.mjs').read_text()
 mail_script = 'var TTMail = (function(){\n' + mail_module.replace('export function ', 'function ') + '\nreturn {automationMessage, sampleLead, varsFor, renderText};})();'
 def page(config_tag):
@@ -18,7 +20,8 @@ def page(config_tag):
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TapTell – Mobile Funnels</title>
 <script>try{{var t=localStorage.getItem('tt-theme');document.documentElement.setAttribute('data-theme',t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))}}catch(e){{}}</script>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c2e3d'/%3E%3Ctext x='32' y='44' font-family='Arial' font-weight='800' font-size='30' fill='white' text-anchor='middle'%3ETT%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="{mark}">
+<link rel="apple-touch-icon" href="{touch}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">

@@ -437,14 +437,14 @@ function render(){
   var nav = isAdmin()
     ? [['§','Arbeitsbereich'],['funnels','Funnels','funnel',vf.length],['contacts','Kontakte','users',nLeadsNew],['analytics','Analytics','chart'],['§','Verwaltung'],['customers','Kunden','folder',(db.clients||[]).length],['templates','Vorlagen','layout'],['settings','Einstellungen','settings']]
     : [['funnels','Übersicht','grid',vf.length],['contacts','Kontakte','users',nLeadsNew],['analytics','Analytics','chart']];
-  var brand = cl ? '<div class="brand">'+(cl.logo?'<div class="lg" style="background:#fff center/contain no-repeat url(&quot;'+esc(cl.logo)+'&quot;);box-shadow:0 0 0 1px var(--line)"></div>':'<div class="lg">'+I('layers')+'</div>')+'<div>'+esc(cl.name)+'<small>Kundenportal · TapTell</small></div></div>'
-    : '<div class="brand tt"><img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true"><small>'+(REMOTE?'Admin':'Admin · Demo-Modus')+'</small></div>';
+  var brand = cl ? '<div class="brand">'+(cl.logo?'<div class="lg" style="background:#fff center/contain no-repeat url(&quot;'+esc(cl.logo)+'&quot;);box-shadow:0 0 0 1px var(--line)"></div>':'<img class="lg lg-m" src="'+TT_MARK+'" alt="" aria-hidden="true">')+'<div>'+esc(cl.name)+'<small>Kundenportal · TapTell</small></div></div>'
+    : '<div class="brand tt"><div class="ttrow">'+'<img class="lg-m" src="'+TT_MARK+'" alt="" aria-hidden="true">'+'<span class="ttwm"><img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true"><small>'+(REMOTE?'Admin':'Admin · Demo-Modus')+'</small></span></div></div>';
   var html = '<div class="shell"><aside class="side">' + brand
     + (isAdmin() ? (function(){ var s = scopeId(), c = s && s !== '-' ? clientById(s) : null; return '<button class="scope" data-a="scope" title="Arbeitsbereich wechseln"><span class="sav">'+(c && c.logo ? '<i style="background:#fff center/contain no-repeat url(&quot;'+esc(c.logo)+'&quot;)"></i>' : I(!s?'grid':s==='-'?'layers':'folder',14))+'</span><span class="stx"><small>Arbeitsbereich</small><b>'+esc(scopeLabel())+'</b></span>'+I('chevDown',14)+'</button>'; })() : '')
     + nav.map(function(n){ if(n[0] === '§') return '<div class="sec">'+n[1]+'</div>'; return '<button class="nav'+(S.view===n[0]?' on':'')+'" data-a="nav" data-v="'+n[0]+'">'+I(n[2])+n[1]+(n[3]?'<span class="ct">'+n[3]+'</span>':'')+'</button>'; }).join('')
     + '<div class="foot"><div class="av">'+esc((S.user.name||S.user.email||'?')[0].toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="color:var(--ink);font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(S.user.name||S.user.email)+'</div><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(S.user.role==='admin'?'Administrator':'Kunde')+'</div></div><button class="btn ghost sm ic" data-a="theme" title="Hell oder dunkel">'+I(document.documentElement.getAttribute('data-theme')==='dark'?'sun':'moon',15)+'</button><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',15)+'</button></div></aside>'
     /* Handy: Kopfzeile + Tab-Leiste unten (die Seitenleiste ist dort ausgeblendet) */
-    + '<header class="mtop">'+(cl ? '<b>'+esc(cl.name)+'</b>' : '<img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true">')+'<span style="flex:1"></span><button class="btn ghost sm ic" data-a="theme" title="Hell oder dunkel">'+I(document.documentElement.getAttribute('data-theme')==='dark'?'sun':'moon',16)+'</button><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',16)+'</button></header>'
+    + '<header class="mtop">'+(cl ? '<b>'+esc(cl.name)+'</b>' : '<img class="lg-m" src="'+TT_MARK+'" alt="" aria-hidden="true">'+'<img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true">')+'<span style="flex:1"></span><button class="btn ghost sm ic" data-a="theme" title="Hell oder dunkel">'+I(document.documentElement.getAttribute('data-theme')==='dark'?'sun':'moon',16)+'</button><button class="btn ghost sm ic" data-a="logout" title="Abmelden">'+I('ext',16)+'</button></header>'
     + '<main class="main" id="main"></main>'
     + '<nav class="tabbar" aria-label="Navigation">' + nav.filter(function(n){ return n[0] !== '§' && n[0] !== 'templates'; }).slice(0,5).map(function(n){ return '<button class="'+(S.view===n[0]?'on':'')+'" data-a="nav" data-v="'+n[0]+'">'+I(n[2],20)+'<span>'+n[1]+'</span></button>'; }).join('') + '</nav></div>';
   $('#app').innerHTML = html;
@@ -2956,7 +2956,7 @@ function listToRow(l){ return {id:l.id, client_id:l.clientId || null, name:l.nam
 function rowToList(r){ return {id:r.id, clientId:r.client_id || '', name:r.name, emails:r.emails || []}; }
 
 /* ================= TENANTS, AUTH & REMOTE ================= */
-var TT_LOGO = '%%TT_LOGO%%', TT_LOGO_W = '%%TT_LOGO_W%%';
+var TT_LOGO = '%%TT_LOGO%%', TT_LOGO_W = '%%TT_LOGO_W%%', TT_MARK = '%%TT_MARK%%';
 var CONFIG = window.FS_CONFIG || null;
 var REMOTE = !!(CONFIG && CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);
 var sb = null;
@@ -2998,7 +2998,7 @@ function fixSlugs(){
 function renderLogin(){
   var demo = !REMOTE;
   var users = demo ? (db.users||[]) : [];
-  $('#app').innerHTML = '<div class="login"><div class="lcard"><div class="lbrand"><img src="'+TT_LOGO+'" alt="TapTell"><span>'+(demo?'Demo-Modus':'Mobile Funnels')+'</span></div>'
+  $('#app').innerHTML = '<div class="login"><div class="lcard"><div class="lbrand"><img class="lg-m" src="'+TT_MARK+'" alt="" aria-hidden="true"><img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true"><span>'+(demo?'Demo-Modus':'Mobile Funnels')+'</span></div>'
     + '<h2>Willkommen zurück</h2><p class="lsub">Melde dich mit deinem Zugang an.</p>'
     + '<form id="lform"><div class="fld"><label>E-Mail</label><input class="inp" id="lmail" type="email" autocomplete="username" required></div><div class="fld"><label>Passwort</label><input class="inp" id="lpw" type="password" autocomplete="current-password" required></div>'
     + '<div id="lerr" class="lerr"></div><button class="btn pri" style="width:100%;justify-content:center;height:40px" type="submit">Anmelden</button></form>'
@@ -3028,7 +3028,7 @@ function loginLocal(u){
   S.view = 'funnels'; render();
 }
 function renderSetPassword(){
-  $('#app').innerHTML = '<div class="login"><div class="lcard"><div class="lbrand"><img src="'+TT_LOGO+'" alt="TapTell"><span>Zugang einrichten</span></div><h2>Passwort festlegen</h2><p class="lsub">Lege ein Passwort für <b>'+esc(S.user.email)+'</b> fest.</p><form id="pform"><div class="fld"><label>Neues Passwort</label><input class="inp" id="pw1" type="password" minlength="8" autocomplete="new-password" required></div><div class="fld"><label>Wiederholen</label><input class="inp" id="pw2" type="password" minlength="8" autocomplete="new-password" required></div><div id="lerr" class="lerr"></div><button class="btn pri" style="width:100%;justify-content:center;height:40px" type="submit">Speichern & weiter</button></form></div></div>';
+  $('#app').innerHTML = '<div class="login"><div class="lcard"><div class="lbrand"><img class="lg-m" src="'+TT_MARK+'" alt="" aria-hidden="true"><img class="lg-l" src="'+TT_LOGO+'" alt="TapTell"><img class="lg-d" src="'+TT_LOGO_W+'" alt="" aria-hidden="true"><span>Zugang einrichten</span></div><h2>Passwort festlegen</h2><p class="lsub">Lege ein Passwort für <b>'+esc(S.user.email)+'</b> fest.</p><form id="pform"><div class="fld"><label>Neues Passwort</label><input class="inp" id="pw1" type="password" minlength="8" autocomplete="new-password" required></div><div class="fld"><label>Wiederholen</label><input class="inp" id="pw2" type="password" minlength="8" autocomplete="new-password" required></div><div id="lerr" class="lerr"></div><button class="btn pri" style="width:100%;justify-content:center;height:40px" type="submit">Speichern & weiter</button></form></div></div>';
   $('#pform').onsubmit = function(e){
     e.preventDefault(); var a = $('#pw1').value, b = $('#pw2').value, err = $('#lerr');
     if(a.length < 8){ err.textContent = 'Mindestens 8 Zeichen.'; return; }
