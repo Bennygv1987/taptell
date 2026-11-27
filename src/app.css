@@ -536,7 +536,8 @@ pre.code,textarea.code{background:var(--n900);color:#d6d9e4;border-radius:var(--
 .brand.tt{padding:8px 10px 18px}
 .brand.tt .ttrow{display:flex;align-items:center;gap:10px;min-width:0}
 .brand.tt .ttwm{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
-.brand.tt .ttwm img{height:var(--fs-22);max-width:100%;object-fit:contain;width:auto;display:block}
+.brand.tt .ttwm img{height:var(--fs-22);max-width:100%;object-fit:contain;width:auto}
+.brand.tt .ttwm .lg-l{display:block}.brand.tt .ttwm .lg-d{display:none}:root[data-theme="dark"] .brand.tt .ttwm .lg-l{display:none}:root[data-theme="dark"] .brand.tt .ttwm .lg-d{display:block}
 .lg-m{display:block;flex:none;width:calc(var(--fs-16) * 2.5);height:calc(var(--fs-16) * 2.5);border-radius:var(--r-lg);object-fit:cover;box-shadow:var(--sh)}
 .brand img.lg.lg-m{width:var(--fs-28);height:var(--fs-28);border-radius:var(--r-md)}
 .brand.tt .lg-d{display:none}
